@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aliquota marginale effettiva, anno d'imposta 2026</title>
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+
+<header class="page-header">
+  <a class="back-link" href="index.html">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M10 3.5 5.5 8l4.5 4.5"/>
+    </svg>
+    Torna al calcolatore
+  </a>
+  <p class="eyebrow">Anno d'imposta <strong>2026</strong></p>
+  <h1>Aliquota marginale effettiva</h1>
+  <p class="lede">
+    Quanto resta in tasca di ogni euro lordo aggiuntivo. È la cosa che mi ha
+    sorpreso di più costruendo il calcolatore: la risposta non è l'aliquota IRPEF
+    del proprio scaglione, e in tre punti scende invece di salire.
+  </p>
+  <p class="case-note">
+    Stesso caso modellato del calcolatore, su 13 mensilità. Ogni numero di questa
+    pagina è calcolato chiamando il motore, nessuno è scritto a mano.
+  </p>
+</header>
+
+<main>
+
+  <div class="section-lead">
+    <h2 class="section-title">Quanto rende ogni euro in più</h2>
+    <p>
+      Il calcolatore dice quanto si prende netto con una certa RAL. Questa è la
+      domanda che viene subito dopo, e ha una risposta meno ovvia.
+    </p>
+  </div>
+
+  <section class="block">
+    <h3>La curva</h3>
+    <p class="block-note">
+      È una scala, non una curva morbida. Fra due soglie il modello è lineare,
+      quindi dentro una fascia ogni euro in più rende sempre lo stesso e la linea
+      è piatta. Alla soglia cambia di colpo, e lì la linea si interrompe perché
+      sul punto esatto la marginale non è definita.
+    </p>
+
+    <div class="chart-scroll">
+      <div id="curve"></div>
+    </div>
+  </section>
+
+  <section class="block standalone">
+    <h3>Gli stessi gradini, in numeri</h3>
+    <p class="block-note">
+      Due fasce consecutive con la stessa percentuale sono separate da una soglia
+      che sposta il netto ma non cambia la pendenza, quindi qui compaiono come una
+      sola riga.
+    </p>
+
+    <table class="detail bands" id="band-table">
+      <thead>
+        <tr>
+          <th scope="col">Fascia di RAL</th>
+          <th scope="col" class="num">Marginale</th>
+          <th scope="col" class="num">Di 100 € restano</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="finding" id="finding"></div>
+  </section>
+
+  <div class="section-lead section-lead-extra">
+    <h2 class="section-title">Dove sono le soglie</h2>
+    <p>
+      Sono undici nell'intervallo del grafico e non si comportano tutte allo stesso
+      modo: sei non fanno saltare niente, le altre cinque sì, in due direzioni
+      opposte.
+    </p>
+  </div>
+
+  <section class="block">
+    <h3>Le undici soglie</h3>
+    <p class="block-note">
+      I numeri corrispondono ai marcatori sul grafico. Le soglie di legge sono
+      espresse sull'imponibile, non sulla RAL: la posizione sull'asse è ricavata
+      convertendo ciascuna soglia in retribuzione lorda. Fa eccezione il contributo
+      aggiuntivo dell'1%, l'unico già definito sul lordo.
+    </p>
+
+    <div class="table-scroll">
+      <table class="detail breakpoints" id="breakpoint-table">
+      <thead>
+        <tr>
+          <th scope="col" class="num">RAL</th>
+          <th scope="col">Cosa cambia</th>
+          <th scope="col" class="num">Soglia</th>
+          <th scope="col" class="num">Salto del netto</th>
+          <th scope="col">Effetto</th>
+        </tr>
+      </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="block standalone">
+    <h3>Tre tipi di soglia</h3>
+    <div class="reading-grid">
+      <div class="reading-item">
+        <p class="reading-title">Continue: cambia solo la pendenza</p>
+        <p>
+          Il netto non fa nessun salto, cambia solo quanto rende l'euro successivo.
+          È il caso dei cambi di scaglione IRPEF, dell'inizio del décalage del cuneo
+          e del contributo aggiuntivo dell'1%. Sono la maggioranza.
+        </p>
+      </div>
+      <div class="reading-item">
+        <p class="reading-title">Salti in su: lasciano netti irraggiungibili</p>
+        <p>
+          Il netto scavalca una fascia di valori che nessuna RAL produce. Il gradino
+          della detrazione art. 13 ne lascia uno da oltre mille euro l'anno: in
+          questo modello nessuno può avere un netto dentro quella fascia. È il motivo
+          per cui la modalità inversa a volte risponde che la RAL non esiste.
+        </p>
+      </div>
+      <div class="reading-item">
+        <p class="reading-title">Salti in giù: stesso netto da due RAL</p>
+        <p>
+          Il netto scende mentre il lordo sale, quindi lo stesso netto si ottiene da
+          due retribuzioni diverse. Alla soglia dell'addizionale comunale di Milano
+          il netto cala di circa 184 euro: due euro di RAL in più fanno guadagnare
+          meno di prima.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="page-footer">
+  <p>
+    Prototipo a scopo dimostrativo. Non sostituisce un cedolino ed è valido solo
+    per il caso modellato.
+  </p>
+  <p>
+    Il calcolo avviene interamente nel tuo browser. La pagina non salva nulla,
+    non usa cookie, non carica risorse esterne e non invia da nessuna parte
+    quello che scrivi.
+  </p>
+</footer>
+
+<script src="src/parameters-2026.js"></script>
+<script src="src/engine.js"></script>
+<script src="src/ui-common.js"></script>
+<script src="src/ui-curve.js"></script>
+
+</body>
+</html>

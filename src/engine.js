@@ -1,0 +1,636 @@
+// @ts-check
+'use strict';
+
+/**
+ * Calculation engine. Pure functions only: no DOM, no globals, no I/O.
+ *
+ * Parameters are injected rather than imported so that a second tax year is a
+ * second parameter file and nothing else.
+ *
+ * @param {any} parameters
+ */
+var createEngine = function createEngine(parameters) {
+
+  var MAX_RAL = 10000000;
+
+  // ---------------------------------------------------------------- helpers
+
+  /**
+   * Keep the first `digits` decimals, truncating toward zero.
+   * Scaling alone misfires on binary-float values such as 0.0582 stored as
+   * 0.05819999..., so the scaled value is settled to a safe precision first.
+   * @param {number} value
+   * @param {number} digits
+   */
+  function truncate(value, digits) {
+    var factor = Math.pow(10, digits);
+    var scaled = Number((value * factor).toFixed(6));
+    return Math.trunc(scaled) / factor;
+  }
+
+  /**
+   * Progressive brackets. Used by both IRPEF and the regional surtax: same
+   * arithmetic, so it must not be written twice.
+   * @param {number} base
+   * @param {Array<{upTo: number|null, rate: number}>} brackets
+   */
+  function applyBrackets(base, brackets) {
+    var detail = [];
+    var total = 0;
+    var lower = 0;
+
+    for (var i = 0; i < brackets.length; i++) {
+      if (base <= lower) break;
+      var upper = brackets[i].upTo === null ? Infinity : brackets[i].upTo;
+      var amountInBracket = Math.min(base, upper) - lower;
+      var tax = amountInBracket * brackets[i].rate;
+
+      detail.push({
+        from: lower,
+        to: brackets[i].upTo,
+        rate: brackets[i].rate,
+        amountInBracket: amountInBracket,
+        tax: tax
+      });
+
+      total += tax;
+      lower = upper;
+    }
+
+    return { total: total, detail: detail };
+  }
+
+  /** Italian thousands separator and decimal comma, for on-screen formulas. */
+  function formatAmount(value) {
+    var sign = value < 0 ? '-' : '';
+    var parts = Math.abs(value).toFixed(2).split('.');
+    return sign + parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + parts[1];
+  }
+
+  function formatRate(rate) {
+    var pct = (rate * 100).toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+    return pct.replace('.', ',') + '%';
+  }
+
+  // ------------------------------------------------------------ validation
+
+  function normalizeOptions(options) {
+    var opts = options || {};
+    var months = opts.months === undefined ? parameters.payrollMonths.defaultValue : opts.months;
+
+    if (parameters.payrollMonths.allowed.indexOf(months) === -1) {
+      throw new RangeError(
+        'Mensilita non ammesse: ' + months +
+        '. Valori consentiti: ' + parameters.payrollMonths.allowed.join(', ') + '.'
+      );
+    }
+
+    // `exactRatios` skips the statutory truncation. It is not a tax option: it
+    // is the smooth model the inverse solver fits and the tests use to prove the
+    // breakpoint list is complete. Statutory behaviour is the default.
+    return { months: months, exactRatios: opts.exactRatios === true };
+  }
+
+  function validateRal(ral) {
+    if (typeof ral !== 'number' || !isFinite(ral)) {
+      throw new TypeError('La RAL deve essere un numero.');
+    }
+    if (ral < 0) {
+      throw new RangeError('La RAL non puo essere negativa.');
+    }
+    if (ral > MAX_RAL) {
+      throw new RangeError('La RAL supera il limite gestito di ' + formatAmount(MAX_RAL) + ' euro.');
+    }
+  }
+
+  // ------------------------------------------------------------- the steps
+
+  /** Step 1. The cap truncates the IVS rate and the additional 1% alike. */
+  function computeContributions(ral) {
+    var c = parameters.contributions;
+    var base = Math.min(ral, c.cap);
+    var ivs = c.ivsRate * base;
+    var additional = c.additionalRate * Math.max(0, base - c.additionalThreshold);
+
+    return {
+      ivs: ivs,
+      additionalRate: additional,
+      total: ivs + additional,
+      capApplied: ral > c.cap,
+      base: base
+    };
+  }
+
+  /**
+   * Step 4. Art. 13 TUIR.
+   *
+   * Comma 6 truncates the ratio to four decimals, which turns the deduction into
+   * a staircase stepping every 1,30 euro of income rather than a straight line.
+   * The step is worth at most `coefficient * 1e-4`, so under 20 cents. Passing
+   * `exactRatios` drops the truncation to recover the underlying affine model.
+   */
+  function computeEmploymentDeduction(income, exactRatios) {
+    var d = parameters.employmentDeduction;
+
+    var amount = 0;
+    var ratio = null;
+
+    if (income <= d.flatUpTo) {
+      amount = d.flatAmount;
+    } else {
+      for (var i = 0; i < d.bands.length; i++) {
+        var band = d.bands[i];
+        if (income <= band.upTo) {
+          ratio = (band.upTo - income) / band.span;
+          if (!exactRatios) ratio = truncate(ratio, d.truncationDigits);
+          amount = band.base + band.coefficient * ratio;
+          break;
+        }
+      }
+    }
+
+    var bonus = (income > d.bonus.over && income <= d.bonus.upTo) ? d.bonus.amount : 0;
+
+    return { employment: amount, bonus: bonus, ratio: ratio, total: amount + bonus };
+  }
+
+  /**
+   * Step 5. The two reliefs are alternative. The exempt sum is a percentage of
+   * employment income applied to the whole amount, not by bracket, and it never
+   * passes through IRPEF.
+   */
+  function computeWedgeRelief(totalIncome, employmentIncome) {
+    var w = parameters.wedgeRelief;
+
+    if (totalIncome <= w.exempt.maxTotalIncome) {
+      var rate = 0;
+      for (var i = 0; i < w.exempt.rates.length; i++) {
+        if (employmentIncome <= w.exempt.rates[i].upTo) {
+          rate = w.exempt.rates[i].rate;
+          break;
+        }
+      }
+      return { type: 'exempt', amount: employmentIncome * rate, rate: rate };
+    }
+
+    var d = w.deduction;
+    if (totalIncome <= d.fullUpTo) {
+      return { type: 'deduction', amount: d.amount, rate: null };
+    }
+    if (totalIncome <= d.taperTo) {
+      var taper = (d.taperTo - totalIncome) / (d.taperTo - d.fullUpTo);
+      return { type: 'deduction', amount: d.amount * taper, rate: null };
+    }
+
+    return { type: 'none', amount: 0, rate: null };
+  }
+
+  /** Step 7. Charged on taxable income, never reduced by tax credits. */
+  function computeSurtaxes(taxable) {
+    var regional = applyBrackets(taxable, parameters.regionalSurtax.brackets);
+    var m = parameters.municipalSurtax;
+    var exempt = taxable <= m.exemptionThreshold;
+
+    return {
+      regional: regional.total,
+      regionalDetail: regional.detail,
+      municipal: exempt ? 0 : taxable * m.rate,
+      municipalExempt: exempt,
+      total: regional.total + (exempt ? 0 : taxable * m.rate)
+    };
+  }
+
+  function computeEmployerCost(ral) {
+    var e = parameters.employerCost;
+    var contributions = ral * e.contributionRate;
+    var tfr = ral / e.tfrDivisor;
+    var inail = ral * e.inailRate;
+
+    return {
+      contributions: contributions,
+      tfr: tfr,
+      tfrAccruedToEmployee: tfr - ral * e.tfrGuaranteeFundRate,
+      inail: inail,
+      total: ral + contributions + tfr + inail
+    };
+  }
+
+  // ------------------------------------------------------------------ main
+
+  /**
+   * @param {number} ral
+   * @param {{months?: number}} [options]
+   */
+  function calculateNet(ral, options) {
+    validateRal(ral);
+    var opts = normalizeOptions(options);
+
+    var contributions = computeContributions(ral);
+    var taxable = ral - contributions.total;
+
+    // Single-income case: total income, employment income and taxable base are
+    // the same number. Kept as separate arguments so adding other income later
+    // does not mean rewriting the logic.
+    var totalIncome = taxable;
+    var employmentIncome = taxable;
+
+    var irpefGross = applyBrackets(taxable, parameters.irpef.brackets);
+    var deduction = computeEmploymentDeduction(totalIncome, opts.exactRatios);
+    var wedge = computeWedgeRelief(totalIncome, employmentIncome);
+
+    var wedgeDeduction = wedge.type === 'deduction' ? wedge.amount : 0;
+    var deductionsTotal = deduction.total + wedgeDeduction;
+    var irpefNet = Math.max(0, irpefGross.total - deductionsTotal);
+    var lostToInsufficientTax = Math.max(0, deductionsTotal - irpefGross.total);
+
+    var surtaxes = computeSurtaxes(taxable);
+    var exemptSum = wedge.type === 'exempt' ? wedge.amount : 0;
+
+    var netAnnual = ral - contributions.total - irpefNet - surtaxes.total + exemptSum;
+
+    var ledger = buildLedger({
+      ral: ral,
+      contributions: contributions,
+      taxable: taxable,
+      irpefGross: irpefGross.total,
+      deductionsTotal: deductionsTotal,
+      irpefNet: irpefNet,
+      surtaxes: surtaxes,
+      wedge: wedge,
+      exemptSum: exemptSum
+    });
+
+    return {
+      ral: ral,
+      months: opts.months,
+      contributions: {
+        ivs: contributions.ivs,
+        additionalRate: contributions.additionalRate,
+        total: contributions.total,
+        capApplied: contributions.capApplied
+      },
+      taxableIncome: taxable,
+      irpef: {
+        gross: irpefGross.total,
+        byBracket: irpefGross.detail,
+        deductions: {
+          employment: deduction.employment,
+          bonus65: deduction.bonus,
+          ratio: deduction.ratio,
+          wedge: wedgeDeduction,
+          total: deductionsTotal,
+          lostToInsufficientTax: lostToInsufficientTax
+        },
+        net: irpefNet
+      },
+      wedge: { type: wedge.type, amount: wedge.amount, rate: wedge.rate },
+      surtaxes: {
+        regional: surtaxes.regional,
+        regionalDetail: surtaxes.regionalDetail,
+        municipal: surtaxes.municipal,
+        municipalExempt: surtaxes.municipalExempt,
+        total: surtaxes.total
+      },
+      netAnnual: netAnnual,
+      netMonthly: netAnnual / opts.months,
+      employerCost: computeEmployerCost(ral),
+      ledger: ledger
+    };
+  }
+
+  /**
+   * The ordered gross-to-net trail. Load bearing, not decoration: the UI renders
+   * only this, and a test asserts that it reconstructs the net exactly.
+   */
+  function buildLedger(s) {
+    var c = parameters.contributions;
+    var entries = [];
+
+    entries.push({
+      id: 'contributions.ivs',
+      label: 'Contributi IVS a carico dipendente',
+      sign: -1,
+      base: s.contributions.base,
+      formula: formatRate(c.ivsRate) + ' di ' + formatAmount(s.contributions.base) +
+        (s.contributions.capApplied ? ' (base limitata al massimale)' : ''),
+      amount: s.contributions.ivs,
+      sourceId: c.ivsSourceId
+    });
+
+    if (s.contributions.additionalRate > 0) {
+      entries.push({
+        id: 'contributions.additional',
+        label: 'Contributo aggiuntivo IVS 1%',
+        sign: -1,
+        base: s.contributions.base - c.additionalThreshold,
+        formula: formatRate(c.additionalRate) + ' sulla quota oltre ' + formatAmount(c.additionalThreshold),
+        amount: s.contributions.additionalRate,
+        sourceId: c.sourceId
+      });
+    }
+
+    entries.push({
+      id: 'irpef.net',
+      label: 'IRPEF netta',
+      sign: -1,
+      base: s.taxable,
+      formula: formatAmount(s.irpefGross) + ' di imposta lorda meno ' +
+        formatAmount(s.deductionsTotal) + ' di detrazioni',
+      amount: s.irpefNet,
+      sourceId: parameters.irpef.sourceId
+    });
+
+    entries.push({
+      id: 'surtax.regional',
+      label: 'Addizionale regionale ' + parameters.region,
+      sign: -1,
+      base: s.taxable,
+      formula: 'scaglioni progressivi su ' + formatAmount(s.taxable),
+      amount: s.surtaxes.regional,
+      sourceId: parameters.regionalSurtax.sourceId
+    });
+
+    entries.push({
+      id: 'surtax.municipal',
+      label: 'Addizionale comunale ' + parameters.municipality,
+      sign: -1,
+      base: s.taxable,
+      formula: s.surtaxes.municipalExempt
+        ? 'esente, imponibile non superiore a ' + formatAmount(parameters.municipalSurtax.exemptionThreshold)
+        : formatRate(parameters.municipalSurtax.rate) + ' di ' + formatAmount(s.taxable),
+      amount: s.surtaxes.municipal,
+      sourceId: parameters.municipalSurtax.sourceId
+    });
+
+    if (s.exemptSum > 0) {
+      entries.push({
+        id: 'wedge.exempt',
+        label: 'Somma esente riduzione cuneo fiscale',
+        sign: 1,
+        base: s.taxable,
+        formula: formatRate(s.wedge.rate) + ' di ' + formatAmount(s.taxable) + ', non concorre al reddito',
+        amount: s.exemptSum,
+        sourceId: parameters.wedgeRelief.sourceId
+      });
+    }
+
+    return entries;
+  }
+
+  // ----------------------------------------------------------- breakpoints
+
+  /**
+   * Invert step 2. Contributions are piecewise linear in gross pay, so each
+   * regime inverts in closed form; the right one is the regime whose result
+   * lands inside its own range.
+   * @param {number} taxable
+   */
+  function grossFromTaxable(taxable) {
+    var c = parameters.contributions;
+
+    var plain = taxable / (1 - c.ivsRate);
+    if (plain <= c.additionalThreshold) return plain;
+
+    var withAdditional =
+      (taxable - c.additionalRate * c.additionalThreshold) /
+      (1 - c.ivsRate - c.additionalRate);
+    if (withAdditional <= c.cap) return withAdditional;
+
+    var frozen = c.ivsRate * c.cap + c.additionalRate * (c.cap - c.additionalThreshold);
+    return taxable + frozen;
+  }
+
+  /**
+   * Every threshold in the model, in one list. Three things read it: the chart
+   * annotations, the segment bounds of the exact inversion, and the choice of
+   * test cases. Values are derived from the parameters, never written twice.
+   */
+  function getBreakpoints() {
+    var d = parameters.employmentDeduction;
+    var w = parameters.wedgeRelief;
+    var candidates = [];
+
+    function add(space, threshold, id, label) {
+      candidates.push({ space: space, threshold: threshold, id: id, label: label });
+    }
+
+    // The no-tax area is not a parameter: it falls out of the capacity limit,
+    // because the minimum deduction exactly offsets tax at the first rate.
+    add('taxable', d.flatAmount / parameters.irpef.brackets[0].rate,
+      'no-tax-area', 'Uscita dall incapienza (no tax area)');
+
+    add('taxable', d.flatUpTo, 'employment-deduction-step', 'Gradino detrazione art. 13');
+    d.bands.forEach(function (band, i) {
+      add('taxable', band.upTo, 'employment-deduction-band-' + (i + 1),
+        'Cambio formula detrazione art. 13');
+    });
+    add('taxable', d.bonus.over, 'bonus65-start', 'Inizio maggiorazione 65 euro');
+    add('taxable', d.bonus.upTo, 'bonus65-end', 'Fine maggiorazione 65 euro');
+
+    w.exempt.rates.forEach(function (r, i) {
+      add('taxable', r.upTo, 'wedge-exempt-rate-' + (i + 1), 'Cambio fascia somma esente cuneo');
+    });
+    add('taxable', w.deduction.over, 'wedge-mode-switch', 'Passaggio da somma esente a detrazione');
+    add('taxable', w.deduction.fullUpTo, 'wedge-taper-start', 'Inizio decalage detrazione cuneo');
+    add('taxable', w.deduction.taperTo, 'wedge-taper-end', 'Azzeramento detrazione cuneo');
+
+    parameters.irpef.brackets.forEach(function (b, i) {
+      if (b.upTo !== null) add('taxable', b.upTo, 'irpef-bracket-' + (i + 1), 'Scaglione IRPEF');
+    });
+    parameters.regionalSurtax.brackets.forEach(function (b, i) {
+      if (b.upTo !== null) add('taxable', b.upTo, 'regional-bracket-' + (i + 1),
+        'Scaglione addizionale regionale');
+    });
+
+    add('taxable', parameters.municipalSurtax.exemptionThreshold,
+      'municipal-exemption', 'Soglia esenzione addizionale comunale');
+
+    add('gross', parameters.contributions.additionalThreshold,
+      'additional-contribution', 'Contributo aggiuntivo IVS 1%');
+    add('gross', parameters.contributions.cap,
+      'contribution-cap', 'Massimale contributivo');
+
+    // Several rules share a threshold, so merge by position and keep every label.
+    var byKey = {};
+    candidates.forEach(function (candidate) {
+      var ral = candidate.space === 'gross'
+        ? candidate.threshold
+        : grossFromTaxable(candidate.threshold);
+      var key = candidate.space + ':' + candidate.threshold.toFixed(6);
+
+      if (!byKey[key]) {
+        byKey[key] = {
+          ids: [candidate.id],
+          space: candidate.space,
+          threshold: candidate.threshold,
+          ral: ral,
+          labels: [candidate.label]
+        };
+      } else if (byKey[key].labels.indexOf(candidate.label) === -1) {
+        byKey[key].ids.push(candidate.id);
+        byKey[key].labels.push(candidate.label);
+      }
+    });
+
+    return Object.keys(byKey)
+      .map(function (key) {
+        var entry = byKey[key];
+        return {
+          id: entry.ids[0],
+          ids: entry.ids,
+          space: entry.space,
+          threshold: entry.threshold,
+          ral: entry.ral,
+          label: entry.labels.join(' + ')
+        };
+      })
+      .sort(function (a, b) { return a.ral - b.ral; });
+  }
+
+  // ------------------------------------------------------------- inversion
+
+  function segmentBounds() {
+    var points = [0];
+    getBreakpoints().forEach(function (bp) {
+      if (bp.ral > 0 && bp.ral < MAX_RAL) points.push(bp.ral);
+    });
+    points.push(MAX_RAL);
+    return points;
+  }
+
+  var REFINE_WINDOW = 0.5;
+  var REFINE_STEP = 0.001;
+
+  /**
+   * Smallest gross in the window whose net reaches the target. The affine
+   * candidate is within about 0.3 euro of the answer, so a short scan settles
+   * the staircase that the smooth model cannot see.
+   */
+  function refineCandidate(candidate, lo, hi, targetNet, opts) {
+    var from = Math.max(lo, candidate - REFINE_WINDOW);
+    var to = Math.min(hi, candidate + REFINE_WINDOW);
+
+    for (var x = from; x <= to + 1e-9; x += REFINE_STEP) {
+      if (calculateNet(x, opts).netAnnual >= targetNet - 1e-9) return x;
+    }
+
+    return null;
+  }
+
+  /**
+   * Inverse: the smallest gross whose net reaches the target.
+   *
+   * Net pay is affine between breakpoints once the art. 13 truncation is set
+   * aside, so each segment yields one closed-form candidate from two interior
+   * points; interior rather than endpoints, because the endpoints straddle the
+   * jumps. Each candidate is then refined against the statutory model.
+   *
+   * Two facts make "smallest gross reaching the target" the only sound
+   * definition. The model falls at two thresholds, so a target can have several
+   * solutions or land in a gap; and the truncation staircase leaves sub-euro
+   * gaps, so an exact hit need not exist at all.
+   *
+   * @param {number} targetNet
+   * @param {{months?: number}} [options]
+   */
+  function solveGrossFromNet(targetNet, options) {
+    var opts = normalizeOptions(options);
+
+    if (typeof targetNet !== 'number' || !isFinite(targetNet) || targetNet < 0) {
+      throw new RangeError('Il netto obiettivo deve essere un numero non negativo.');
+    }
+
+    var smooth = { months: opts.months, exactRatios: true };
+    var points = segmentBounds();
+    var solutions = [];
+    var reachable = [];
+
+    for (var i = 0; i < points.length - 1; i++) {
+      var lo = points[i];
+      var hi = points[i + 1];
+      if (hi - lo < 1e-9) continue;
+
+      var span = hi - lo;
+      var p1 = lo + span / 3;
+      var p2 = lo + (2 * span) / 3;
+      var n1 = calculateNet(p1, smooth).netAnnual;
+      var n2 = calculateNet(p2, smooth).netAnnual;
+
+      var slope = (n2 - n1) / (p2 - p1);
+
+      var edge = Math.min(span * 1e-9, 1e-6);
+      reachable.push({ ral: lo + edge, net: calculateNet(lo + edge, opts).netAnnual });
+      reachable.push({ ral: hi - edge, net: calculateNet(hi - edge, opts).netAnnual });
+
+      if (Math.abs(slope) < 1e-12) continue;
+
+      var intercept = n1 - slope * p1;
+      var candidate = (targetNet - intercept) / slope;
+      if (candidate < lo - 1 || candidate > hi + 1) continue;
+
+      var refined = refineCandidate(
+        Math.min(Math.max(candidate, lo), hi), lo, hi, targetNet, opts);
+
+      if (refined !== null) solutions.push(refined);
+    }
+
+    if (solutions.length > 0) {
+      solutions.sort(function (a, b) { return a - b; });
+      var best = solutions[0];
+      var result = calculateNet(best, opts);
+      return {
+        found: true,
+        ral: best,
+        solutions: solutions,
+        achievedNet: result.netAnnual,
+        residual: result.netAnnual - targetNet,
+        result: result
+      };
+    }
+
+    var below = null;
+    var above = null;
+    reachable.forEach(function (point) {
+      if (point.net <= targetNet && (below === null || point.net > below.net)) below = point;
+      if (point.net >= targetNet && (above === null || point.net < above.net)) above = point;
+    });
+
+    return { found: false, ral: null, solutions: [], nearestBelow: below, nearestAbove: above };
+  }
+
+  /**
+   * Independent oracle for the tests only. Assumes monotonicity, which the model
+   * violates at two thresholds; outside those it must agree with the exact
+   * solver, and two implementations agreeing is a real correctness argument.
+   */
+  function solveGrossFromNetBinary(targetNet, options) {
+    var opts = normalizeOptions(options);
+    var lo = 0;
+    var hi = MAX_RAL;
+
+    for (var i = 0; i < 100; i++) {
+      var mid = (lo + hi) / 2;
+      if (calculateNet(mid, opts).netAnnual < targetNet) lo = mid; else hi = mid;
+    }
+
+    return hi;
+  }
+
+  return {
+    parameters: parameters,
+    maxRal: MAX_RAL,
+    truncate: truncate,
+    applyBrackets: applyBrackets,
+    formatAmount: formatAmount,
+    formatRate: formatRate,
+    calculateNet: calculateNet,
+    grossFromTaxable: grossFromTaxable,
+    getBreakpoints: getBreakpoints,
+    solveGrossFromNet: solveGrossFromNet,
+    solveGrossFromNetBinary: solveGrossFromNetBinary
+  };
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = createEngine;
+}

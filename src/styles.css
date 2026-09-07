@@ -1,0 +1,597 @@
+/* Palette taken from the Jet HR site: white ground, near-black text with an
+   olive cast, sage surfaces, green and terracotta reserved for data semantics.
+   Inspiration only, none of their assets are reused.
+
+   Light only, on purpose: their product is light, and a single theme is one
+   less thing to justify. Fonts are the system stack, so the page makes no
+   network request of any kind. */
+
+:root {
+  color-scheme: light;
+
+  --page: #f4f6f3;
+  --surface: #ffffff;
+  --surface-sunken: #f1f4f1;
+  --surface-strong: #e6ebe2;
+
+  --line: #e3e7e0;
+  --line-strong: #ccd4c6;
+
+  --text: #11150a;
+  --text-muted: #59615f;
+  --text-faint: #888a85;
+
+  --accent: #11150a;
+  --on-accent: #ffffff;
+  --link: #35648f;
+
+  --positive: #2f7d55;
+  --negative: #b4543a;
+
+  --bar-total: #11150a;
+  --bar-down: #b4543a;
+  --bar-up: #2f7d55;
+
+  --shadow: 0 1px 2px rgba(17, 21, 10, 0.05), 0 8px 24px rgba(17, 21, 10, 0.04);
+  --radius: 12px;
+  --radius-sm: 8px;
+
+  /* Wide on purpose: this is a dense data tool, not an article. Only the prose
+     blocks keep a narrow measure, so lines stay readable while tables and the
+     chart use the screen they are given. */
+  --measure: 100rem;
+  --gutter: clamp(1rem, 3vw, 2.5rem);
+  --prose: 46rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text);
+  font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+.num, table { font-variant-numeric: tabular-nums; }
+
+.page-header, main, .page-footer {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* ------------------------------------------------------------------ header */
+
+.page-header { padding-top: 2.75rem; padding-bottom: 1.75rem; }
+
+/* Only on the second page: there are two pages, so one way back is enough. */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1.4rem;
+  padding: 0.42rem 0.9rem 0.42rem 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.83rem;
+  font-weight: 650;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.back-link:hover { color: var(--text); border-color: var(--line-strong); }
+.back-link svg { width: 14px; height: 14px; flex: none; }
+
+.eyebrow {
+  margin: 0 0 0.85rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 650;
+}
+.eyebrow strong { color: var(--text); font-weight: 700; }
+
+h1 {
+  margin: 0 0 0.7rem;
+  font-size: clamp(1.9rem, 5vw, 2.9rem);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+}
+
+.lede {
+  margin: 0 0 1.1rem;
+  max-width: var(--prose);
+  font-size: 1.05rem;
+  color: var(--text-muted);
+}
+
+.case-note {
+  margin: 0;
+  max-width: var(--prose);
+  padding: 0.85rem 1rem;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.case-note a { color: var(--link); }
+
+/* -------------------------------------------------------------------- form */
+
+.calc-form {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.field { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.field-action { align-self: end; }
+
+label {
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 650;
+}
+
+.input-wrap { position: relative; display: flex; align-items: center; }
+
+input[type="text"], select {
+  width: 100%;
+  padding: 0.72rem 0.85rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.input-wrap input { padding-right: 3.4rem; font-size: 1.05rem; font-weight: 600; }
+
+input:focus-visible, select:focus-visible,
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+.unit {
+  position: absolute;
+  right: 0.85rem;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.hint { margin: 0; font-size: 0.74rem; color: var(--text-faint); }
+
+button[type="submit"] {
+  padding: 0.78rem 1.6rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 0;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+}
+button[type="submit"]:hover { opacity: 0.88; }
+
+.error {
+  margin: 1rem 0 0;
+  padding: 0.85rem 1rem;
+  background: color-mix(in srgb, var(--negative) 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--negative) 40%, var(--surface));
+  border-radius: var(--radius-sm);
+  color: var(--negative);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* ----------------------------------------------------------------- results */
+
+.results { margin-top: 1.25rem; display: grid; gap: 1.25rem; }
+
+/* Grid children default to min-width:auto, so a wide chart inside one of them
+   stretches the whole column and pushes the page sideways instead of scrolling
+   inside its own container. */
+.results > *,
+.summary > *,
+.detail-grid > *,
+.inverse-row > *,
+.reading-grid > * { min-width: 0; }
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.summary-figure { background: var(--surface); padding: 1.2rem 1.3rem; }
+.summary-secondary { background: var(--surface-sunken); }
+
+.summary-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 650;
+}
+
+.summary-value {
+  margin: 0;
+  font-size: clamp(1.6rem, 3.8vw, 2.05rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+.summary-secondary .summary-value { font-size: 1.35rem; }
+
+.summary-note {
+  margin: 0.45rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.block {
+  background: var(--surface);
+  padding: 1.3rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.block h3 {
+  margin: 0 0 1rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 650;
+}
+
+/* Splits the page into what the brief asked for and what came after. */
+.section-lead { margin: 2.5rem 0 1.1rem; }
+.section-lead > * { max-width: var(--prose); }
+main > .section-lead:first-child { margin-top: 0.25rem; }
+
+.section-title {
+  margin: 0 0 0.4rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.022em;
+}
+.section-lead p { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--text-muted); }
+
+.section-lead-extra {
+  border-top: 1px solid var(--line-strong);
+  padding-top: 2.25rem;
+  margin-top: 3rem;
+}
+
+/* Same card language as every other block: it is a note that leads somewhere,
+   not a banner. */
+.learned-card {
+  display: block;
+  margin-top: 1.25rem;
+  padding: 1.3rem;
+  background: var(--surface-sunken);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-decoration: none;
+}
+.learned-card:hover { border-color: var(--line-strong); }
+
+.learned-label {
+  margin: 0 0 0.6rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 650;
+  color: var(--text-muted);
+}
+.learned-headline {
+  margin: 0 0 0.5rem;
+  max-width: var(--prose);
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: -0.012em;
+}
+.learned-body {
+  margin: 0 0 0.9rem;
+  max-width: var(--prose);
+  font-size: 0.87rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+.learned-cta {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--link) 35%, transparent);
+  text-underline-offset: 3px;
+}
+.learned-card:hover .learned-cta { text-decoration-color: currentColor; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1.25rem;
+}
+
+/* ------------------------------------------------------------------ tables */
+
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+
+th, td { text-align: left; padding: 0.6rem; vertical-align: baseline; }
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+.num, th.num, td.num { text-align: right; }
+
+thead th {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border-bottom: 1px solid var(--line);
+  font-weight: 650;
+}
+
+tbody tr { border-bottom: 1px solid var(--line); }
+tbody tr:last-child { border-bottom: 0; }
+
+/* An amount must never break across two lines: "30.000,00 €" split in half is
+   unreadable in a column of figures. */
+td.amount { font-weight: 650; white-space: nowrap; }
+
+.ledger .voice { font-weight: 600; }
+.ledger .formula { color: var(--text-muted); font-size: 0.83rem; }
+.ledger .amount.is-negative { color: var(--negative); }
+.ledger .amount.is-positive { color: var(--positive); }
+.ledger .amount.is-zero { color: var(--text-faint); font-weight: 400; }
+
+.ref a {
+  color: var(--link);
+  font-size: 0.79rem;
+  text-decoration-color: color-mix(in srgb, var(--link) 35%, transparent);
+  text-underline-offset: 2px;
+}
+
+tfoot td {
+  border-top: 2px solid var(--text);
+  font-weight: 700;
+  padding-top: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.detail td:first-child { color: var(--text-muted); }
+.detail td:last-child { text-align: right; font-weight: 650; }
+.detail tr.is-subtle td { color: var(--text-faint); font-weight: 400; }
+.detail tr.is-total td { border-top: 1px solid var(--text); font-weight: 700; }
+.detail tr.is-total td:first-child { color: var(--text); }
+
+/* --------------------------------------------- inverse mode and curve blocks */
+
+.block.standalone { margin-top: 1.25rem; }
+
+.block-note {
+  margin: -0.35rem 0 1.1rem;
+  max-width: var(--prose);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Already inside a card, so it drops the card of its own. */
+.inline-form {
+  background: var(--surface-sunken);
+  box-shadow: none;
+  padding: 1rem;
+}
+
+.inverse-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1px;
+  margin-top: 1.1rem;
+  /* The container shows through the 1px gaps and behind an empty slot when three
+     figures wrap onto two columns, so it carries the surface colour too. */
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.inverse-figure {
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+  outline: 1px solid var(--line);
+}
+.inverse-figure .summary-value { font-size: 1.5rem; }
+
+.inverse-gap-head {
+  margin: 1.1rem 0 0;
+  padding: 0.8rem 1rem;
+  background: color-mix(in srgb, var(--negative) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--negative) 30%, var(--surface));
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.inverse-note {
+  margin: 0.8rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+#curve svg { display: block; min-width: 44rem; width: 100%; height: auto; }
+
+.cv-line { fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-linejoin: round; }
+.cv-grid { stroke: var(--line); stroke-width: 1; }
+.cv-mark { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+.cv-mark-dot { fill: var(--surface-strong); stroke: var(--line-strong); stroke-width: 1; }
+.cv-mark-index { font-size: 9px; font-weight: 700; fill: var(--text-muted); }
+.cv-axis-label { font-size: 10px; fill: var(--text-faint); }
+
+.cv-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.35rem;
+  background: var(--surface-strong);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.breakpoints { margin-top: 1.25rem; }
+.breakpoints td:first-child { color: var(--text); font-weight: 600; white-space: nowrap; }
+.breakpoints td:nth-child(2) { color: var(--text); font-weight: 400; }
+.breakpoints td:nth-child(3) { color: var(--text-muted); font-weight: 400; white-space: nowrap; }
+.breakpoints td:last-child { white-space: nowrap; }
+.breakpoints .is-positive { color: var(--positive); }
+.breakpoints .is-negative { color: var(--negative); }
+.breakpoints .is-flat { color: var(--text-faint); font-weight: 400; }
+.breakpoints td.effect { color: var(--text-muted); font-weight: 400; font-size: 0.82rem; }
+
+/* The estimate block is deliberately set apart from the statutory calculation. */
+.block.estimate { background: var(--surface-sunken); border-style: dashed; }
+
+.badge-estimate {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.14rem 0.5rem;
+  background: color-mix(in srgb, var(--negative) 12%, var(--surface));
+  color: var(--negative);
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  vertical-align: 0.1em;
+}
+
+.block.estimate .inverse-row { margin-top: 0; margin-bottom: 1.25rem; }
+
+/* On the sunken block a bare table reads as a slab bleeding to the edges, so it
+   gets the same card as the figures above it. */
+/* A table cannot shrink below its min-content width, so a wide one needs a
+   container that scrolls rather than pushing the page sideways. */
+.table-scroll { overflow-x: auto; }
+
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 1.1rem;
+  overflow-x: auto;
+}
+.table-card td:first-child, .table-card th:first-child { padding-left: 0; }
+.table-card td:last-child, .table-card th:last-child { padding-right: 0; }
+.table-card tbody tr:last-child td { border-bottom: 0; }
+
+.employer-caveat {
+  margin: 1rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.bands td:first-child { color: var(--text); font-weight: 600; white-space: nowrap; }
+.bands td:nth-child(2) { color: var(--text-muted); font-weight: 400; }
+.bands tr.is-worst td { background: color-mix(in srgb, var(--negative) 9%, var(--surface)); }
+.bands tr.is-worst td:last-child { color: var(--negative); }
+
+.finding {
+  margin-top: 1.25rem;
+  padding: 1rem 1.15rem;
+  background: var(--surface-sunken);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.finding p { margin: 0 0 0.5rem; font-size: 0.87rem; line-height: 1.55; color: var(--text-muted); }
+.finding p:last-child { margin-bottom: 0; }
+.finding-title { color: var(--text) !important; font-weight: 650; font-size: 0.95rem !important; }
+
+.reading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.4rem;
+}
+
+.reading-item p { margin: 0; font-size: 0.86rem; line-height: 1.55; color: var(--text-muted); }
+.reading-title {
+  margin: 0 0 0.35rem !important;
+  color: var(--text) !important;
+  font-weight: 650;
+  font-size: 0.9rem !important;
+}
+
+/* --------------------------------------------------------------- waterfall */
+
+.chart-scroll { overflow-x: auto; margin: 0 -0.25rem; padding: 0 0.25rem; }
+#waterfall svg { display: block; min-width: 34rem; width: 100%; height: auto; }
+
+.wf-total { fill: var(--bar-total); }
+.wf-down { fill: var(--bar-down); }
+.wf-up { fill: var(--bar-up); }
+.wf-label { font-size: 10px; fill: var(--text-faint); }
+.wf-value { font-size: 10.5px; font-weight: 650; fill: var(--text); }
+.wf-connector { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 2 2; }
+.wf-axis { stroke: var(--line); stroke-width: 1; }
+
+/* ------------------------------------------------------------------ footer */
+
+.page-footer { padding-top: 2rem; padding-bottom: 3rem; font-size: 0.8rem; color: var(--text-faint); }
+.page-footer p { margin: 0 0 0.4rem; max-width: var(--prose); }
+.page-footer p:last-child { margin-bottom: 0; }
+
+/* ------------------------------------------------------------------ mobile */
+
+@media (max-width: 46rem) {
+  .calc-form { grid-template-columns: 1fr; }
+  .field-action { align-self: stretch; }
+  button[type="submit"] { width: 100%; }
+
+  /* Four columns do not fit: each ledger row becomes a labelled block. */
+  .ledger thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .ledger tbody tr, .ledger tfoot tr { display: grid; grid-template-columns: 1fr auto; padding: 0.75rem 0; }
+  .ledger td { padding: 0; }
+  .ledger td.voice { grid-column: 1; font-size: 0.95rem; }
+  .ledger td.amount { grid-column: 2; grid-row: 1; }
+  .ledger td.formula { grid-column: 1 / -1; margin-top: 0.2rem; }
+  .ledger td.ref { grid-column: 1 / -1; margin-top: 0.2rem; }
+  .ledger tfoot td { border-top: 0; padding-top: 0; }
+  .ledger tfoot tr { border-top: 2px solid var(--text); margin-top: 0.3rem; }
+}

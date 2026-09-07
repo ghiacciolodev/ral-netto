@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calcolo da lordo a netto, anno d'imposta 2026</title>
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+
+<header class="page-header">
+  <p class="eyebrow">Anno d'imposta <strong>2026</strong></p>
+  <h1>Calcolo da lordo a netto</h1>
+  <p class="lede">
+    Data una RAL, quanto resta in busta e cosa viene trattenuto. Ogni voce riporta
+    accanto la norma che la produce, così ogni numero si può risalire alla fonte.
+  </p>
+  <p class="case-note">
+    Caso modellato: impiegato, tempo indeterminato, full time, 365 giorni lavorati,
+    residente a Milano (Lombardia). Nessun familiare a carico, nessuna agevolazione,
+    nessun onere deducibile o detraibile. L'elenco completo delle semplificazioni
+    e la fonte primaria di ogni parametro sono nel README del repository.
+  </p>
+</header>
+
+<main>
+
+  <form class="calc-form" id="calc-form" novalidate>
+    <div class="field">
+      <label for="input-ral">RAL, retribuzione annua lorda</label>
+      <div class="input-wrap">
+        <input id="input-ral" name="ral" type="text" inputmode="decimal"
+               autocomplete="off" value="30.000,00"
+               aria-describedby="hint-ral">
+        <span class="unit" aria-hidden="true">euro</span>
+      </div>
+      <p class="hint" id="hint-ral">Punto per le migliaia, virgola per i decimali.</p>
+    </div>
+
+    <div class="field">
+      <label for="input-months">Mensilità</label>
+      <select id="input-months" name="months" aria-describedby="hint-months">
+        <option value="12">12</option>
+        <option value="13" selected>13</option>
+        <option value="14">14</option>
+      </select>
+      <p class="hint" id="hint-months">La RAL le include già.</p>
+    </div>
+
+    <div class="field field-action">
+      <button type="submit">Calcola</button>
+    </div>
+  </form>
+
+  <p class="error" id="error-box" role="alert" hidden></p>
+
+  <section class="results" id="results" aria-live="polite" hidden>
+
+    <div class="summary">
+      <div class="summary-figure">
+        <p class="summary-label">Netto annuo</p>
+        <p class="summary-value" id="net-annual"></p>
+      </div>
+      <div class="summary-figure">
+        <p class="summary-label">Netto mensile</p>
+        <p class="summary-value" id="net-monthly"></p>
+        <p class="summary-note" id="net-monthly-note"></p>
+      </div>
+      <div class="summary-figure summary-secondary">
+        <p class="summary-label">Trattenute totali</p>
+        <p class="summary-value" id="total-withheld"></p>
+        <p class="summary-note" id="effective-rate"></p>
+      </div>
+    </div>
+
+    <section class="block">
+      <h3>Dal lordo al netto</h3>
+      <div class="chart-scroll">
+        <div id="waterfall"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h3>Voce per voce</h3>
+      <table class="ledger" id="ledger-table">
+        <thead>
+          <tr>
+            <th scope="col">Voce</th>
+            <th scope="col">Come si calcola</th>
+            <th scope="col" class="num">Importo</th>
+            <th scope="col">Riferimento</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot></tfoot>
+      </table>
+    </section>
+
+    <div class="detail-grid">
+      <section class="block">
+        <h3>IRPEF per scaglione</h3>
+        <table class="detail" id="bracket-table">
+          <thead>
+            <tr>
+              <th scope="col">Scaglione</th>
+              <th scope="col" class="num">Aliquota</th>
+              <th scope="col" class="num">Imponibile</th>
+              <th scope="col" class="num">Imposta</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="block">
+        <h3>Detrazioni</h3>
+        <table class="detail" id="deduction-table">
+          <tbody></tbody>
+        </table>
+      </section>
+    </div>
+
+  </section>
+
+  <div class="section-lead section-lead-extra">
+    <h2 class="section-title">Altri strumenti</h2>
+    <p>
+      Da qui in giù è tutto fuori dalla richiesta. Li ho costruiti perché a quel
+      punto mi stavo divertendo, e perché ognuno risponde a una domanda che mi sono
+      trovato a farmi mentre lavoravo sul calcolo qui sopra.
+    </p>
+  </div>
+
+  <section class="block standalone" id="inverse-block">
+    <h3>Da netto a RAL</h3>
+    <p class="block-note">
+      Quanto lordo serve per arrivare a un netto obiettivo. Il modello non è
+      monotono e questo ha due conseguenze opposte. Dove il netto salta in su,
+      una fascia di netti non è raggiungibile da nessuna RAL: la più ampia vale
+      oltre mille euro l'anno. Dove salta in giù, lo stesso netto si ottiene da
+      due RAL diverse e qui viene indicata la più bassa. In entrambi i casi te lo
+      dice, invece di restituire un numero qualsiasi.
+      <a href="curva.html">Vedi dove cadono le soglie</a>
+    </p>
+
+    <form class="calc-form inline-form" id="inverse-form" novalidate>
+      <div class="field">
+        <label for="input-net">Netto desiderato</label>
+        <div class="input-wrap">
+          <input id="input-net" type="text" inputmode="decimal" autocomplete="off" value="2.000,00">
+          <span class="unit" aria-hidden="true">euro</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="input-net-basis">Riferito a</label>
+        <select id="input-net-basis">
+          <option value="monthly" selected>netto mensile</option>
+          <option value="annual">netto annuo</option>
+        </select>
+      </div>
+
+      <div class="field field-action">
+        <button type="submit">Trova la RAL</button>
+      </div>
+    </form>
+
+    <p class="error" id="inverse-error" role="alert" hidden></p>
+    <div id="inverse-result" aria-live="polite"></div>
+  </section>
+
+  <section class="block standalone estimate" id="employer-block" hidden>
+    <h3>Costo azienda <span class="badge-estimate">stima, non calcolo di legge</span></h3>
+    <p class="block-note">
+      La stessa RAL vista dal datore di lavoro. È l'unico blocco di questa pagina
+      costruito su medie di categoria invece che su norme: le tre percentuali qui
+      sotto variano per CCNL, dimensione aziendale e mansione, e vanno prese come
+      ordine di grandezza. Il calcolo del netto, sopra, non dipende da questi numeri.
+    </p>
+
+    <div class="inverse-row" id="employer-figures"></div>
+
+    <div class="table-card">
+      <table class="detail" id="employer-table">
+        <thead>
+          <tr>
+            <th scope="col">Voce</th>
+            <th scope="col">Come si calcola</th>
+            <th scope="col" class="num">Importo</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <p class="employer-caveat" id="employer-caveat"></p>
+  </section>
+
+  <a class="learned-card" href="curva.html" id="learned-card">
+    <p class="learned-label">Una cosa interessante che ho imparato</p>
+    <p class="learned-headline" id="learned-headline"></p>
+    <p class="learned-body" id="learned-body"></p>
+    <span class="learned-cta">Guarda l'aliquota marginale effettiva</span>
+  </a>
+
+</main>
+
+<footer class="page-footer">
+  <p>
+    Prototipo a scopo dimostrativo. Non sostituisce un cedolino ed è valido solo
+    per il caso modellato sopra.
+  </p>
+  <p>
+    Il calcolo avviene interamente nel tuo browser. La pagina non salva nulla,
+    non usa cookie, non carica risorse esterne e non invia da nessuna parte
+    quello che scrivi.
+  </p>
+</footer>
+
+<script src="src/parameters-2026.js"></script>
+<script src="src/engine.js"></script>
+<script src="src/ui-common.js"></script>
+<script src="src/ui-calculator.js"></script>
+
+</body>
+</html>
