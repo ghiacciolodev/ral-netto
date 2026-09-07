@@ -7,10 +7,10 @@
   var engine = createEngine(PARAMETERS_2026);
   var ui = createUiHelpers(engine);
 
-  // Starts below 10.000 on purpose: the no-tax-area threshold sits at 9.360 and
-  // is one of the three points where net pay falls as gross pay rises. Leaving
-  // it out would hide part of the story the chart exists to tell.
-  var CURVE_FROM = 9000;
+  // Starts well below 10.000 on purpose: the two lowest thresholds sit at 9.001
+  // and 9.360, and one of them is the largest jump in the whole model. Leaving
+  // them out would hide the part the chart exists to show.
+  var CURVE_FROM = 8500;
   var CURVE_TO = 80000;
   var CURVE_SAMPLES = 250;
 
@@ -102,11 +102,24 @@
         ui.escapeText(engine.formatAmount(tick).replace(',00', '')) + '</text>');
     }
 
+    // Thresholds only a few hundred euro apart land on top of each other, so a
+    // badge that would collide with the previous one drops to a second row.
+    var lastBadgeX = -Infinity;
+    var lastBadgeRow = 1;
+
     marks.forEach(function (bp, index) {
-      parts.push('<line class="cv-mark" x1="' + x(bp.ral) + '" y1="' + padTop +
-        '" x2="' + x(bp.ral) + '" y2="' + (padTop + plotH) + '"/>');
-      parts.push('<circle class="cv-mark-dot" cx="' + x(bp.ral) + '" cy="' + (padTop + 7) + '" r="7.5"/>');
-      parts.push('<text class="cv-mark-index" x="' + x(bp.ral) + '" y="' + (padTop + 10.5) +
+      var at = x(bp.ral);
+      var row = (at - lastBadgeX < 17 && lastBadgeRow === 0) ? 1 : 0;
+      if (at - lastBadgeX >= 17) row = 0;
+      lastBadgeX = at;
+      lastBadgeRow = row;
+
+      var cy = padTop + 7 + row * 17;
+
+      parts.push('<line class="cv-mark" x1="' + at + '" y1="' + padTop +
+        '" x2="' + at + '" y2="' + (padTop + plotH) + '"/>');
+      parts.push('<circle class="cv-mark-dot" cx="' + at + '" cy="' + cy + '" r="7.5"/>');
+      parts.push('<text class="cv-mark-index" x="' + at + '" y="' + (cy + 3.5) +
         '" text-anchor="middle">' + (index + 1) + '</text>');
     });
 

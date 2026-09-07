@@ -21,7 +21,7 @@
   <p class="lede">
     Quanto resta in tasca di ogni euro lordo aggiuntivo. È la cosa che mi ha
     sorpreso di più costruendo il calcolatore: la risposta non è l'aliquota IRPEF
-    del proprio scaglione, e in tre punti scende invece di salire.
+    del proprio scaglione, e in più di un punto scende invece di salire.
   </p>
   <p class="case-note">
     Stesso caso modellato del calcolatore, su 13 mensilità. Ogni numero di questa
@@ -61,16 +61,18 @@
       sola riga.
     </p>
 
-    <table class="detail bands" id="band-table">
-      <thead>
-        <tr>
-          <th scope="col">Fascia di RAL</th>
-          <th scope="col" class="num">Marginale</th>
-          <th scope="col" class="num">Di 100 € restano</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div class="table-scroll">
+      <table class="detail bands" id="band-table">
+        <thead>
+          <tr>
+            <th scope="col">Fascia di RAL</th>
+            <th scope="col" class="num">Marginale</th>
+            <th scope="col" class="num">Di 100 € restano</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
     <div class="finding" id="finding"></div>
   </section>
@@ -78,14 +80,14 @@
   <div class="section-lead section-lead-extra">
     <h2 class="section-title">Dove sono le soglie</h2>
     <p>
-      Sono undici nell'intervallo del grafico e non si comportano tutte allo stesso
-      modo: sei non fanno saltare niente, le altre cinque sì, in due direzioni
-      opposte.
+      Non si comportano tutte allo stesso modo. Alcune cambiano solo la pendenza e
+      il netto prosegue senza scossoni; altre lo fanno saltare, e in due direzioni
+      opposte. La colonna a destra della tabella dice quale è quale.
     </p>
   </div>
 
   <section class="block">
-    <h3>Le undici soglie</h3>
+    <h3>Le soglie, una per una</h3>
     <p class="block-note">
       I numeri corrispondono ai marcatori sul grafico. Le soglie di legge sono
       espresse sull'imponibile, non sulla RAL: la posizione sull'asse è ricavata
@@ -123,19 +125,19 @@
       <div class="reading-item">
         <p class="reading-title">Salti in su: lasciano netti irraggiungibili</p>
         <p>
-          Il netto scavalca una fascia di valori che nessuna RAL produce. Il gradino
-          della detrazione art. 13 ne lascia uno da oltre mille euro l'anno: in
-          questo modello nessuno può avere un netto dentro quella fascia. È il motivo
-          per cui la modalità inversa a volte risponde che la RAL non esiste.
+          Il netto scavalca una fascia di valori che nessuna RAL produce. L'ingresso
+          del trattamento integrativo ne lascia uno da 1.200 euro l'anno: in questo
+          modello nessuno può avere un netto dentro quella fascia. È il motivo per cui
+          la modalità inversa a volte risponde che la RAL non esiste.
         </p>
       </div>
       <div class="reading-item">
         <p class="reading-title">Salti in giù: stesso netto da due RAL</p>
         <p>
           Il netto scende mentre il lordo sale, quindi lo stesso netto si ottiene da
-          due retribuzioni diverse. Alla soglia dell'addizionale comunale di Milano
-          il netto cala di circa 184 euro: due euro di RAL in più fanno guadagnare
-          meno di prima.
+          due retribuzioni diverse. Succede alla soglia dell'addizionale comunale di
+          Milano, e anche a 15.000 di imponibile, dove il gradino della detrazione
+          art. 13 non basta a compensare la perdita del trattamento integrativo.
         </p>
       </div>
     </div>

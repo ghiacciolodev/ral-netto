@@ -185,6 +185,39 @@ var createEngine = function createEngine(parameters) {
     return { type: 'none', amount: 0, rate: null };
   }
 
+  /**
+   * Trattamento integrativo. Paid in the payslip rather than deducted from tax,
+   * so like the exempt wedge sum it never passes through IRPEF: it is added to
+   * the net at the end.
+   *
+   * The capacity test compares gross tax against the art. 13 comma 1 deduction
+   * alone. The comma 1.1 increase is a different comma and in any case only
+   * applies well above this income band.
+   *
+   * @param {number} totalIncome
+   * @param {number} grossTax
+   * @param {number} employmentDeduction art. 13 comma 1, without the bonus
+   */
+  function computeSupplementaryAllowance(totalIncome, grossTax, employmentDeduction) {
+    var s = parameters.supplementaryAllowance;
+
+    if (totalIncome <= s.incomeUpTo) {
+      var floor = employmentDeduction - s.capacityAllowance;
+      return grossTax > floor
+        ? { amount: s.amount, band: 'flat' }
+        : { amount: 0, band: 'incapiente' };
+    }
+
+    if (totalIncome <= s.secondBandUpTo) {
+      // Art. 12 and art. 15 deductions are out of scope, so the only term left
+      // is art. 13, which never exceeds gross tax in this band: zero in practice.
+      var excess = employmentDeduction - grossTax;
+      return { amount: Math.min(s.amount, Math.max(0, excess)), band: 'differenziale' };
+    }
+
+    return { amount: 0, band: 'nessuno' };
+  }
+
   /** Step 7. Charged on taxable income, never reduced by tax credits. */
   function computeSurtaxes(taxable) {
     var regional = applyBrackets(taxable, parameters.regionalSurtax.brackets);
@@ -209,7 +242,8 @@ var createEngine = function createEngine(parameters) {
     return {
       contributions: contributions,
       tfr: tfr,
-      tfrAccruedToEmployee: tfr - ral * e.tfrGuaranteeFundRate,
+      ivsSurcharge: ral * e.ivsSurchargeRate,
+      tfrAccruedToEmployee: tfr - ral * e.ivsSurchargeRate,
       inail: inail,
       total: ral + contributions + tfr + inail
     };
@@ -246,7 +280,11 @@ var createEngine = function createEngine(parameters) {
     var surtaxes = computeSurtaxes(taxable);
     var exemptSum = wedge.type === 'exempt' ? wedge.amount : 0;
 
-    var netAnnual = ral - contributions.total - irpefNet - surtaxes.total + exemptSum;
+    var supplementary = computeSupplementaryAllowance(
+      totalIncome, irpefGross.total, deduction.employment);
+
+    var netAnnual = ral - contributions.total - irpefNet - surtaxes.total +
+      exemptSum + supplementary.amount;
 
     var ledger = buildLedger({
       ral: ral,
@@ -257,7 +295,8 @@ var createEngine = function createEngine(parameters) {
       irpefNet: irpefNet,
       surtaxes: surtaxes,
       wedge: wedge,
-      exemptSum: exemptSum
+      exemptSum: exemptSum,
+      supplementary: supplementary
     });
 
     return {
@@ -284,6 +323,7 @@ var createEngine = function createEngine(parameters) {
         net: irpefNet
       },
       wedge: { type: wedge.type, amount: wedge.amount, rate: wedge.rate },
+      supplementaryAllowance: { amount: supplementary.amount, band: supplementary.band },
       surtaxes: {
         regional: surtaxes.regional,
         regionalDetail: surtaxes.regionalDetail,
@@ -362,6 +402,20 @@ var createEngine = function createEngine(parameters) {
       sourceId: parameters.municipalSurtax.sourceId
     });
 
+    if (s.supplementary.amount > 0) {
+      entries.push({
+        id: 'supplementary.allowance',
+        label: 'Trattamento integrativo',
+        sign: 1,
+        base: s.taxable,
+        formula: 'spetta fino a ' +
+          formatAmount(parameters.supplementaryAllowance.incomeUpTo) +
+          ' di reddito, non concorre al reddito',
+        amount: s.supplementary.amount,
+        sourceId: parameters.supplementaryAllowance.sourceId
+      });
+    }
+
     if (s.exemptSum > 0) {
       entries.push({
         id: 'wedge.exempt',
@@ -418,6 +472,17 @@ var createEngine = function createEngine(parameters) {
     // because the minimum deduction exactly offsets tax at the first rate.
     add('taxable', d.flatAmount / parameters.irpef.brackets[0].rate,
       'no-tax-area', 'Uscita dall incapienza (no tax area)');
+
+    // Capacity test of the trattamento integrativo: gross tax has to clear the
+    // art. 13 deduction less the allowance. Below the flat band both sides are
+    // straight lines, so the crossing solves directly.
+    add('taxable',
+      (d.flatAmount - parameters.supplementaryAllowance.capacityAllowance) /
+        parameters.irpef.brackets[0].rate,
+      'supplementary-allowance-start', 'Inizio trattamento integrativo');
+
+    add('taxable', parameters.supplementaryAllowance.incomeUpTo,
+      'supplementary-allowance-end', 'Fine trattamento integrativo');
 
     add('taxable', d.flatUpTo, 'employment-deduction-step', 'Gradino detrazione art. 13');
     d.bands.forEach(function (band, i) {

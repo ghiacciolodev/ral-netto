@@ -273,11 +273,12 @@
 
     document.getElementById('employer-caveat').textContent =
       'Il TFR mostrato è il costo per il datore. Al dipendente se ne accantona meno, ' +
-      ui.euro(cost.tfrAccruedToEmployee) + ', perché lo ' +
-      engine.formatRate(e.tfrGuaranteeFundRate) +
-      ' della retribuzione va al Fondo di garanzia INPS. Il TFR non entra nel netto ' +
-      'perché è accantonato e non erogato. Il premio INAIL varia molto per mansione, ' +
-      'dallo 0,5% al 12%: qui è fissato al valore più basso.';
+      ui.euro(cost.tfrAccruedToEmployee) + ', perché dalla quota si detrae lo ' +
+      engine.formatRate(e.ivsSurchargeRate) +
+      ' della retribuzione come contributo aggiuntivo IVS (art. 3 L. 297/1982). ' +
+      'Non è il Fondo di garanzia TFR, che è una voce diversa. Il TFR non entra nel ' +
+      'netto perché è accantonato e non erogato. Il premio INAIL varia molto per ' +
+      'mansione, dallo 0,5% al 12%: qui è fissato al valore più basso.';
 
     employerBlock.hidden = false;
   }

@@ -73,6 +73,25 @@ var PARAMETERS_2026 = (function () {
       guidanceSourceId: 'ade-circ-4e-2025'
     },
 
+    /**
+     * Trattamento integrativo, the former "bonus Renzi". A separate measure from
+     * the wedge relief above, with its own legal basis, and the two are
+     * cumulative: a low earner receives both.
+     *
+     * Below `incomeUpTo` it is a flat amount, subject to a capacity test on the
+     * art. 13 comma 1 deduction. Between there and `secondBandUpTo` it equals
+     * the excess of certain deductions over gross tax; in the modelled case only
+     * the art. 13 deduction is in play and it never exceeds gross tax there, so
+     * that band always resolves to zero.
+     */
+    supplementaryAllowance: {
+      amount: 1200,
+      incomeUpTo: 15000,
+      capacityAllowance: 75,
+      secondBandUpTo: 28000,
+      sourceId: 'dl-3-2020'
+    },
+
     regionalSurtax: {
       brackets: [
         { upTo: 15000, rate: 0.0123 },
@@ -95,10 +114,14 @@ var PARAMETERS_2026 = (function () {
     employerCost: {
       contributionRate: 0.294,
       tfrDivisor: 13.5,
-      tfrGuaranteeFundRate: 0.005,
+      // Deducted from the annual TFR quota and paid to INPS as a pension
+      // contribution. Not the TFR guarantee fund, which is a separate 0,20%
+      // under art. 2 of the same law.
+      ivsSurchargeRate: 0.005,
       inailRate: 0.005,
       sourceId: 'employer-cost-estimate',
-      tfrSourceId: 'cc-art-2120'
+      tfrSourceId: 'cc-art-2120',
+      ivsSurchargeSourceId: 'l-297-1982-art-3'
     },
 
     /**
@@ -163,12 +186,26 @@ var PARAMETERS_2026 = (function () {
         inForceFrom: '2026-01-01',
         note: 'Paragrafo 5 per la quota soggetta all aliquota aggiuntiva dell 1%, paragrafo 6 per il massimale.'
       },
+      'dl-3-2020': {
+        label: 'DL 3/2020 art. 1',
+        title: 'Decreto legge 5 febbraio 2020 n. 3, trattamento integrativo, reso strutturale da L. 207/2024',
+        url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legge:2020-02-05;3',
+        inForceFrom: '2020-07-01',
+        note: 'Misura distinta dalla riduzione del cuneo e cumulabile con essa. Non modificata dalla L. 199/2025.'
+      },
+      'l-297-1982-art-3': {
+        label: 'art. 3 L. 297/1982',
+        title: 'Contributo aggiuntivo IVS dello 0,50%, che si detrae dalla quota annua di TFR',
+        url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:1982-05-29;297',
+        inForceFrom: '1982-06-01',
+        note: 'Da non confondere con il Fondo di garanzia TFR, che e l art. 2 della stessa legge ed e lo 0,20%.'
+      },
       'inps-fpld-rates': {
         label: 'aliquote FPLD settore privato',
         title: 'Aliquota IVS complessiva 33%, di cui 9,19% a carico del lavoratore',
         url: 'https://www.inps.it/it/it/inps-comunica/atti/circolari-messaggi-e-normativa/dettaglio.circolari-e-messaggi.2026.01.circolare-numero-6-del-30-01-2026_15151.html',
         inForceFrom: '2026-01-01',
-        note: 'Ripartizione standard del FPLD. La norma che fissa il riparto 23,81 / 9,19 non e stata verificata su fonte primaria, vedi ASSUNZIONI.md.'
+        note: 'Assunzione del modello: lavoratore iscritto al FPLD con aliquota ordinaria. Non sono modellate contribuzioni minori legate all inquadramento aziendale.'
       },
       'lombardia-lr-10-2003': {
         label: 'art. 72 co. 1 L.R. Lombardia 10/2003',
@@ -189,7 +226,7 @@ var PARAMETERS_2026 = (function () {
         title: 'Regio decreto 16 marzo 1942 n. 262, trattamento di fine rapporto',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:regio.decreto:1942-03-16;262',
         inForceFrom: '1982-06-01',
-        note: 'Quota annua pari alla retribuzione divisa per 13,5, meno lo 0,50% al Fondo di garanzia INPS.'
+        note: 'Quota annua pari alla retribuzione divisa per 13,5, meno il contributo aggiuntivo IVS dello 0,50%.'
       },
       'employer-cost-estimate': {
         label: 'stima su CCNL Commercio',
