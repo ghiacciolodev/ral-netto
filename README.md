@@ -169,7 +169,7 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-242 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
+288 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
 
