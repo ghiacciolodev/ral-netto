@@ -3,7 +3,7 @@
 Calcolatore che, data una retribuzione annua lorda, mostra il netto annuo e mensile
 di un dipendente e ogni voce trattenuta, con accanto la norma che la produce.
 
-> **Sito live:** .
+> **Sito live:** https://ghiacciolodev.github.io/ral-netto/
 
 ## Perché esiste
 
