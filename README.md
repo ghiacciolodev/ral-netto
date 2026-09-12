@@ -267,6 +267,39 @@ Il motore non si tocca, perché non contiene nessun numero: aliquote, soglie, fo
 e perfino la posizione delle soglie sul grafico sono derivate dai parametri. Se un
 aggiornamento richiedesse di modificare il motore, sarebbe un difetto del motore.
 
+## Architettura
+
+Il motore e diviso in moduli e `src/engine.js` non contiene logica: monta i pezzi e
+dichiara cosa espone. Ogni modulo e una funzione che riceve quello che gli serve e
+restituisce quello che offre, quindi il grafo delle dipendenze e scritto una volta
+sola invece di essere implicito in uno scope condiviso.
+
+Il pezzo che regge tutto sono le **regole**. Ogni provvedimento e un oggetto con fino
+a tre facce, e stanno insieme apposta:
+
+```js
+{
+  id: 'family-deduction',
+  apply:      function (ctx) { ... },      // cosa calcola
+  ledger:     function (ctx) { ... },      // cosa scrive nella traccia
+  thresholds: function (position) { ... }  // quali soglie introduce
+}
+```
+
+Prima quelle tre cose vivevano in tre funzioni diverse, e aggiungere un provvedimento
+dimenticandone due falliva in silenzio: il numero usciva giusto mentre la traccia e
+l'elenco delle soglie mentivano. Adesso l'array delle regole e anche l'ordine dei
+passi, che e quello della norma.
+
+Una duplicazione e rimasta di proposito: il netto annuo e scritto a mano invece di
+essere sommato dalla traccia. Se lo derivassi, il test che verifica che la traccia
+ricostruisce il netto diventerebbe una tautologia. Sono due strade indipendenti che
+devono arrivare allo stesso numero.
+
+Niente moduli ES: su `file://` sono bloccati come `fetch`, e il sito deve funzionare
+col doppio clic. Quindi classic script caricati in ordine, con lo stesso meccanismo
+che i parametri usavano gia: globale in pagina, `require` sotto Node.
+
 ## Struttura
 
 ```
@@ -275,7 +308,14 @@ curva.html                 aliquota marginale e soglie
 src/parameters.js          registro degli anni d imposta disponibili
 src/parameters-2025.js     valori normativi e fonti dell anno 2025
 src/parameters-2026.js     valori normativi e fonti, unico posto con dei numeri
-src/engine.js              logica di calcolo, funzioni pure
+src/engine.js              il cablaggio: monta i moduli e ne espone l interfaccia
+src/engine/numbers.js      troncamento, arrotondamento, scaglioni, formattazione
+src/engine/position.js     chi viene pagato, e la validazione di quel che si chiede
+src/engine/steps.js        una funzione per provvedimento, pure e senza ordine
+src/engine/rules.js        i provvedimenti come oggetti: calcolo, traccia, soglie
+src/engine/calculation.js  esegue le regole una volta e raccoglie il risultato
+src/engine/breakpoints.js  le soglie dichiarate e quelle che emergono
+src/engine/inverse.js      dal netto alla RAL, piu l oracolo binario dei test
 src/ui-common.js           helper di rendering condivisi
 src/ui-calculator.js       pagina calcolatore
 src/ui-curve.js            pagina curva
