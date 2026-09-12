@@ -19,6 +19,22 @@ var PARAMETERS_2026 = (function () {
     payrollMonths: { allowed: [12, 13, 14], defaultValue: 13 },
     employmentYear: { days: 365 },
 
+    /**
+     * How money is rounded when it is finally shown.
+     *
+     * `appliedAt` says where: only at presentation. Real payroll also rounds at
+     * points inside the calculation, and those points are deliberately not
+     * modelled because I have not pinned them down on a primary source. Saying so
+     * here is the point: an unmodelled rule stays visible instead of turning into
+     * an accidental one.
+     */
+    rounding: {
+      decimals: 2,
+      mode: 'half-up',
+      appliedAt: 'presentation',
+      sourceId: 'inps-uniemens-rounding'
+    },
+
     // Employee social security. The cap truncates both the IVS rate and the
     // additional 1%, so a single capped base feeds both.
     contributions: {
@@ -201,6 +217,13 @@ var PARAMETERS_2026 = (function () {
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:1982-05-29;297',
         inForceFrom: '1982-06-01',
         note: 'Da non confondere con il Fondo di garanzia TFR, che e l art. 2 della stessa legge ed e lo 0,20%.'
+      },
+      'inps-uniemens-rounding': {
+        label: 'arrotondamento al centesimo',
+        title: 'Se la terza cifra decimale e pari o superiore a 5 si arrotonda per eccesso, altrimenti per difetto',
+        url: null,
+        inForceFrom: '2026-01-01',
+        note: 'Regola confermata dalle istruzioni INPS per la compilazione dei flussi. Non ho individuato il documento primario: vedi il README.'
       },
       'inps-fpld-rates': {
         label: 'aliquote FPLD settore privato',

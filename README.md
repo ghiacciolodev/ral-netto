@@ -94,7 +94,8 @@ Ogni riga è una cosa che il modello **non** fa, con il motivo.
 | Netto mensile come media annua | Non è un cedolino: la ritenuta reale varia di mese in mese. |
 | Costo azienda su medie CCNL Commercio | Unico blocco non normativo. Contributi datore e INAIL variano per CCNL, dimensione e mansione. |
 | Seconda fascia del trattamento integrativo non rilevante | Fra 15.000 e 28.000 spetta per la differenza fra alcune detrazioni e l'imposta lorda. Senza familiari a carico né oneri detraibili resta solo l'art. 13, che in quella fascia non supera mai l'imposta lorda: il risultato è sempre zero, ed è verificato da un test. |
-| Aritmetica in virgola mobile | Un sistema di produzione userebbe decimali su centesimi. A questa scala la differenza resta sotto la tolleranza di un centesimo usata nei test. |
+| Arrotondamenti interni al calcolo non modellati | Il risultato mostrato è arrotondato al centesimo con la regola del terzo decimale. Il payroll reale arrotonda anche in punti interni al calcolo: quei punti non sono modellati perché non li ho chiusi su fonte primaria, ed è dichiarato nel parametro invece di essere deciso per caso. |
+| Aritmetica in virgola mobile | Senza arrotondamenti intermedi la deriva resta sotto 1e-12, molto sotto il centesimo. Diventerà rappresentazione esatta in centesimi quando i punti di arrotondamento interni saranno modellati: prima non servirebbe a niente. |
 | Minimo garantito della detrazione (690 € a tempo indeterminato, 1.380 € a determinato) non implementato | Con il rapporto sull'intero anno non si attiva mai, perché la detrazione piena vale 1.955 €. |
 | Sterilizzazione del beneficio sopra 200.000 € di reddito non implementata | Il modello **non è valido** sopra quella soglia. |
 | Décalage del cuneo senza troncamento a quattro decimali | Il troncamento è previsto dall'art. 13 TUIR, non dalla L. 207/2024 che disciplina il cuneo. Incide di circa 5 centesimi. Da verificare. |
@@ -169,7 +170,7 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-288 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
+303 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
 

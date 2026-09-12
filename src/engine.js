@@ -60,10 +60,29 @@ var createEngine = function createEngine(parameters) {
     return { total: total, detail: detail };
   }
 
+  /**
+   * Half-up rounding: the third decimal decides, five goes up.
+   *
+   * `toFixed` cannot be used for this. It rounds the binary double, not the
+   * decimal value, so 2.675 comes out 2.67 because the stored number is really
+   * 2.67499999999999982. Settling the scaled value first, the same trick used by
+   * truncate(), makes the comparison happen on the decimal the user sees.
+   *
+   * @param {number} value
+   * @param {number} decimals
+   */
+  function roundTo(value, decimals) {
+    var factor = Math.pow(10, decimals);
+    var scaled = Number((Math.abs(value) * factor).toFixed(6));
+    var rounded = Math.round(scaled) / factor;
+    return value < 0 ? -rounded : rounded;
+  }
+
   /** Italian thousands separator and decimal comma, for on-screen formulas. */
   function formatAmount(value) {
     var sign = value < 0 ? '-' : '';
-    var parts = Math.abs(value).toFixed(2).split('.');
+    var parts = roundTo(Math.abs(value), parameters.rounding.decimals)
+      .toFixed(parameters.rounding.decimals).split('.');
     return sign + parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + parts[1];
   }
 
@@ -746,6 +765,7 @@ var createEngine = function createEngine(parameters) {
     parameters: parameters,
     maxRal: MAX_RAL,
     truncate: truncate,
+    roundTo: roundTo,
     applyBrackets: applyBrackets,
     normalizePosition: normalizePosition,
     withGross: withGross,

@@ -154,6 +154,29 @@ var runTests = function runTests(engine, t) {
   t.close('rapporto del caso 30.000', engine.truncate(757 / 13000, 4), 0.0582, 1e-12);
   t.close('rapporto del caso 35.000', engine.truncate(18216.5 / 22000, 4), 0.8280, 1e-12);
 
+  t.group('Arrotondamento al centesimo');
+  /**
+   * Half-up on the decimal, not on the binary double. toFixed gets these wrong
+   * because it rounds the stored value: 2.675 is really 2.67499999999999982.
+   */
+  [[2.675, '2,68'], [1.115, '1,12'], [8.365, '8,37'], [1.005, '1,01'],
+   [0.125, '0,13'], [-2.675, '-2,68']].forEach(function (c) {
+    t.equal('half-up su ' + c[0], engine.formatAmount(c[0]), c[1]);
+  });
+  t.close('roundTo non sposta un valore gia netto', engine.roundTo(1234.56, 2), 1234.56, 1e-12);
+  t.close('roundTo sotto la meta arrotonda per difetto', engine.roundTo(2.674, 2), 2.67, 1e-12);
+
+  /**
+   * The two gross figures where the old toFixed path produced the wrong cent.
+   * Kept as a regression guard: they are not special, just the ones that caught it.
+   */
+  t.equal('RAL 47.000: IRPEF netta al centesimo giusto',
+    engine.formatAmount(engine.calculateNet({ grossAnnual: 47000, months: 13 }).irpef.net),
+    '10.649,37');
+  t.equal('RAL 74.600: IRPEF netta al centesimo giusto',
+    engine.formatAmount(engine.calculateNet({ grossAnnual: 74600, months: 13 }).irpef.net),
+    '21.251,02');
+
   t.group('Validazione input');
   t.throws('RAL negativa', function () { engine.calculateNet({ grossAnnual: -1 }); });
   t.throws('RAL non numerica', function () { engine.calculateNet({ grossAnnual: '30000' }); });
