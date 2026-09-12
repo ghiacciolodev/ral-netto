@@ -12,6 +12,11 @@
   var inputMonths = /** @type {HTMLSelectElement} */ (document.getElementById('input-months'));
   var inputDays = /** @type {HTMLInputElement} */ (document.getElementById('input-days'));
   var inputContract = /** @type {HTMLSelectElement} */ (document.getElementById('input-contract'));
+  var inputSpouse = /** @type {HTMLInputElement} */ (document.getElementById('input-spouse'));
+  var inputChildren = /** @type {HTMLInputElement} */ (document.getElementById('input-children'));
+  var inputChildrenShare = /** @type {HTMLSelectElement} */ (document.getElementById('input-children-share'));
+  var inputAscendants = /** @type {HTMLInputElement} */ (document.getElementById('input-ascendants'));
+  var inputFamilyMonths = /** @type {HTMLInputElement} */ (document.getElementById('input-family-months'));
   var errorBox = document.getElementById('error-box');
   var results = document.getElementById('results');
 
@@ -27,7 +32,14 @@
       grossAnnual: grossAnnual,
       months: parseInt(inputMonths.value, 10),
       daysWorked: parseInt(inputDays.value, 10),
-      contractType: inputContract.value
+      contractType: inputContract.value,
+      family: {
+        spouse: inputSpouse.checked,
+        children: parseInt(inputChildren.value, 10) || 0,
+        childrenSharePercent: parseInt(inputChildrenShare.value, 10),
+        ascendants: parseInt(inputAscendants.value, 10) || 0,
+        months: parseInt(inputFamilyMonths.value, 10)
+      }
     };
   }
 
@@ -135,6 +147,15 @@
     }
     if (d.bonus65 > 0) {
       ui.detailRow(tbody, 'Maggiorazione art. 13 co. 1.1', ui.euro(d.bonus65));
+    }
+    if (d.family.spouse > 0) {
+      ui.detailRow(tbody, 'Coniuge a carico, art. 12 TUIR', ui.euro(d.family.spouse));
+    }
+    if (d.family.children > 0) {
+      ui.detailRow(tbody, 'Figli a carico, art. 12 TUIR', ui.euro(d.family.children));
+    }
+    if (d.family.ascendants > 0) {
+      ui.detailRow(tbody, 'Ascendenti a carico, art. 12 TUIR', ui.euro(d.family.ascendants));
     }
     if (result.wedge.type === 'deduction') {
       ui.detailRow(tbody, 'Ulteriore detrazione cuneo fiscale', ui.euro(d.wedge));
@@ -485,7 +506,8 @@
     solveInverse();
   });
 
-  [inputMonths, inputDays, inputContract].forEach(function (field) {
+  [inputMonths, inputDays, inputContract, inputSpouse, inputChildren,
+    inputChildrenShare, inputAscendants, inputFamilyMonths].forEach(function (field) {
     field.addEventListener('change', function () {
       if (!results.hidden) calculate();
       solveInverse();
@@ -493,6 +515,15 @@
   });
 
   inputNetBasis.addEventListener('change', solveInverse);
+
+  // The condition for being a carico is a parameter, not prose: reading it from
+  // the year in force keeps the form honest when the limits move.
+  document.getElementById('hint-family-limit').textContent =
+    'A carico significa reddito proprio non superiore a ' +
+    engine.formatAmount(engine.parameters.familyDeduction.incomeLimit) +
+    ' euro, che salgono a ' +
+    engine.formatAmount(engine.parameters.familyDeduction.incomeLimitUpToAge24) +
+    ' per i figli fino a 24 anni.';
 
   calculate();
   solveInverse();

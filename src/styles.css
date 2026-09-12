@@ -142,6 +142,57 @@ h1 {
 .field { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
 .field-action { align-self: end; }
 
+/* Collapsed by default: most people have no dependants and should not have to
+   scroll past five fields that do not apply to them. */
+.field-group {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+  min-width: 0;
+}
+
+.field-group > summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 650;
+}
+
+.field-group > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.field-group[open] > summary { margin-bottom: 1rem; }
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.field-check { justify-content: start; padding-top: 1.35rem; }
+
+.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.check input { width: auto; margin: 0; accent-color: var(--accent); }
+
+.hint-block { margin-top: 1rem; }
+
 label {
   font-size: 0.75rem;
   letter-spacing: 0.05em;

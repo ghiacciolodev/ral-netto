@@ -108,8 +108,8 @@ var createEngine = function createEngine(source, taxYear) {
    * for Lazio returns an error instead of a Lombardy figure with the wrong label.
    *
    * @param {{grossAnnual: number, months?: number, daysWorked?: number,
-   *          contractType?: string, region?: string, municipality?: string,
-   *          taxYear?: number}} input
+   *          contractType?: string, family?: object, region?: string,
+   *          municipality?: string, taxYear?: number}} input
    */
   function normalizePosition(input) {
     if (input === null || typeof input !== 'object') {
@@ -127,6 +127,7 @@ var createEngine = function createEngine(source, taxYear) {
       months: fallback(input.months, parameters.payrollMonths.defaultValue),
       daysWorked: fallback(input.daysWorked, parameters.employmentYear.days),
       contractType: String(fallback(input.contractType, 'permanent')).toLowerCase(),
+      family: normalizeFamily(input.family),
       region: String(fallback(input.region, parameters.region.key)).toLowerCase(),
       municipality: String(fallback(input.municipality, parameters.municipality.key)).toLowerCase()
     };
@@ -179,6 +180,61 @@ var createEngine = function createEngine(source, taxYear) {
     }
 
     return position;
+  }
+
+  /**
+   * Who is on the tax card. Its own object because these fields answer a
+   * different question from the rest of the position, and because art. 12
+   * counts months of family, which have nothing to do with days of work.
+   *
+   * Ages and income limits are not arguments: the caller asserts that these
+   * people are a carico, and the interface states the condition instead.
+   */
+  function normalizeFamily(input) {
+    var f = parameters.familyDeduction;
+
+    if (input !== undefined && input !== null &&
+        (typeof input !== 'object' || Array.isArray(input))) {
+      throw new TypeError(
+        'I familiari a carico devono essere un oggetto, per esempio { spouse: true, children: 2 }.');
+    }
+    var raw = input || {};
+
+    function count(value, label, max) {
+      var n = value === undefined ? 0 : value;
+      if (typeof n !== 'number' || !isFinite(n) || n < 0 || n > max || Math.floor(n) !== n) {
+        throw new RangeError(
+          label + ': serve un intero fra 0 e ' + max + '. Ricevuto: ' + value + '.');
+      }
+      return n;
+    }
+
+    var family = {
+      spouse: raw.spouse === true,
+      children: count(raw.children, 'Figli a carico', 10),
+      childrenSharePercent: raw.childrenSharePercent === undefined
+        ? f.children.defaultSharePercent
+        : raw.childrenSharePercent,
+      ascendants: count(raw.ascendants, 'Ascendenti conviventi a carico', 6),
+      months: raw.months === undefined ? f.monthsInYear : raw.months
+    };
+
+    if (typeof family.childrenSharePercent !== 'number' ||
+        !isFinite(family.childrenSharePercent) ||
+        family.childrenSharePercent < 0 || family.childrenSharePercent > 100) {
+      throw new RangeError(
+        'La quota di detrazione per i figli va da 0 a 100. Ricevuto: ' +
+        family.childrenSharePercent + '.');
+    }
+
+    if (typeof family.months !== 'number' || !isFinite(family.months) ||
+        family.months < 1 || family.months > f.monthsInYear ||
+        Math.floor(family.months) !== family.months) {
+      throw new RangeError(
+        'I mesi a carico vanno da 1 a ' + f.monthsInYear + '. Ricevuto: ' + family.months + '.');
+    }
+
+    return family;
   }
 
   /**
@@ -277,6 +333,84 @@ var createEngine = function createEngine(source, taxYear) {
   }
 
   /**
+   * Step 4b. Detrazioni per carichi di famiglia, art. 12 TUIR.
+   *
+   * Three rules with one shape: a base amount scaled by the ratio between an
+   * income ceiling and the income itself. Comma 4 truncates every ratio to four
+   * decimals, exactly like art. 13 co. 6, and cancels the deduction when the
+   * ratio comes out at zero, or at one for children and ascendants.
+   *
+   * The months counted here are months of family, not of work. A six month
+   * contract with a spouse dependent all year takes the whole spouse deduction.
+   */
+  function computeFamilyDeduction(income, exactRatios, position) {
+    var f = parameters.familyDeduction;
+    var family = position.family;
+    var monthShare = family.months / f.monthsInYear;
+
+    function ratio(value) {
+      return exactRatios ? value : truncate(value, f.truncationDigits);
+    }
+
+    var spouse = 0;
+    if (family.spouse) {
+      var a = f.spouse;
+
+      if (income <= a.firstBand.upTo) {
+        /**
+         * The only ratio in the model that rises with income. At the top of the
+         * band it reaches one and the formula already returns 690, so comma 4
+         * is restating continuity, not correcting it. At the bottom it reaches
+         * zero and the deduction vanishes, a cliff sitting at a euro and a half
+         * of income: exact, and far below anything an employee earns.
+         */
+        var first = ratio(income / a.firstBand.divisor);
+        if (first >= 1) spouse = a.firstBand.whenRatioIsOne;
+        else if (first > 0) spouse = a.firstBand.base - a.firstBand.coefficient * first;
+      } else if (income <= a.middleBand.upTo) {
+        spouse = a.middleBand.amount;
+      } else if (income <= a.lastBand.upTo) {
+        var last = ratio((a.lastBand.ceiling - income) / a.lastBand.span);
+        if (last > 0) spouse = a.lastBand.amount * last;
+      }
+
+      if (spouse > 0) {
+        a.increases.forEach(function (step) {
+          if (income > step.over && income <= step.upTo) spouse += step.amount;
+        });
+      }
+    }
+
+    var children = 0;
+    if (family.children > 0) {
+      var c = f.children;
+      var ceiling = c.ceiling + c.ceilingIncrement * (family.children - 1);
+      var childRatio = ratio((ceiling - income) / ceiling);
+
+      if (childRatio > 0 && childRatio < 1) {
+        children = c.amount * family.children * childRatio *
+          (family.childrenSharePercent / 100);
+      }
+    }
+
+    var ascendants = 0;
+    if (family.ascendants > 0) {
+      var d = f.ascendants;
+      var ascendantRatio = ratio((d.ceiling - income) / d.ceiling);
+      if (ascendantRatio > 0 && ascendantRatio < 1) {
+        ascendants = d.amount * family.ascendants * ascendantRatio;
+      }
+    }
+
+    return {
+      spouse: spouse * monthShare,
+      children: children * monthShare,
+      ascendants: ascendants * monthShare,
+      total: (spouse + children + ascendants) * monthShare
+    };
+  }
+
+  /**
    * Step 5. The two reliefs are alternative. The exempt sum is a percentage of
    * employment income applied to the whole amount, not by bracket, and it never
    * passes through IRPEF.
@@ -341,8 +475,10 @@ var createEngine = function createEngine(source, taxYear) {
    * @param {number} totalIncome
    * @param {number} grossTax
    * @param {number} employmentDeduction art. 13 comma 1, without the bonus
+   * @param {number} familyDeduction art. 12, all of it
    */
-  function computeSupplementaryAllowance(totalIncome, grossTax, employmentDeduction, position) {
+  function computeSupplementaryAllowance(
+      totalIncome, grossTax, employmentDeduction, familyDeduction, position) {
     var s = parameters.supplementaryAllowance;
     var share = position.daysWorked / parameters.employmentYear.days;
 
@@ -356,9 +492,14 @@ var createEngine = function createEngine(source, taxYear) {
     }
 
     if (totalIncome <= s.secondBandUpTo) {
-      // Art. 12 and art. 15 deductions are out of scope, so the only term left
-      // is art. 13, which never exceeds gross tax in this band: zero in practice.
-      var excess = employmentDeduction - grossTax;
+      /**
+       * The statute adds up the art. 12 and art. 13 comma 1 deductions, plus
+       * art. 15 items this model does not carry, and pays the excess over gross
+       * tax up to the cap. Without dependants the sum is art. 13 alone, which
+       * never overtakes gross tax in this band, so the branch collapses to zero.
+       * Dependants are what make it pay anything at all.
+       */
+      var excess = employmentDeduction + familyDeduction - grossTax;
       return { amount: Math.min(s.amount * share, Math.max(0, excess)), band: 'differenziale' };
     }
 
@@ -418,10 +559,11 @@ var createEngine = function createEngine(source, taxYear) {
 
     var irpefGross = applyBrackets(taxable, parameters.irpef.brackets);
     var deduction = computeEmploymentDeduction(totalIncome, opts.exactRatios, position);
+    var familyDeduction = computeFamilyDeduction(totalIncome, opts.exactRatios, position);
     var wedge = computeWedgeRelief(totalIncome, employmentIncome, position);
 
     var wedgeDeduction = wedge.type === 'deduction' ? wedge.amount : 0;
-    var deductionsTotal = deduction.total + wedgeDeduction;
+    var deductionsTotal = deduction.total + familyDeduction.total + wedgeDeduction;
     var irpefNet = Math.max(0, irpefGross.total - deductionsTotal);
     var lostToInsufficientTax = Math.max(0, deductionsTotal - irpefGross.total);
 
@@ -429,7 +571,7 @@ var createEngine = function createEngine(source, taxYear) {
     var exemptSum = wedge.type === 'exempt' ? wedge.amount : 0;
 
     var supplementary = computeSupplementaryAllowance(
-      totalIncome, irpefGross.total, deduction.employment, position);
+      totalIncome, irpefGross.total, deduction.employment, familyDeduction.total, position);
 
     var netAnnual = ral - contributions.total - irpefNet - surtaxes.total +
       exemptSum + supplementary.amount;
@@ -466,6 +608,12 @@ var createEngine = function createEngine(source, taxYear) {
           bonus65: deduction.bonus,
           ratio: deduction.ratio,
           minimumApplied: deduction.minimumApplied,
+          family: {
+            spouse: familyDeduction.spouse,
+            children: familyDeduction.children,
+            ascendants: familyDeduction.ascendants,
+            total: familyDeduction.total
+          },
           wedge: wedgeDeduction,
           total: deductionsTotal,
           lostToInsufficientTax: lostToInsufficientTax
@@ -563,9 +711,11 @@ var createEngine = function createEngine(source, taxYear) {
         label: 'Trattamento integrativo',
         sign: 1,
         base: s.taxable,
-        formula: 'spetta fino a ' +
-          formatAmount(parameters.supplementaryAllowance.incomeUpTo) +
-          ' di reddito, non concorre al reddito',
+        formula: s.supplementary.band === 'differenziale'
+          ? 'eccedenza delle detrazioni art. 12 e 13 co. 1 sull imposta lorda, non concorre al reddito'
+          : 'spetta fino a ' +
+            formatAmount(parameters.supplementaryAllowance.incomeUpTo) +
+            ' di reddito, non concorre al reddito',
         amount: s.supplementary.amount,
         sourceId: parameters.supplementaryAllowance.sourceId
       });
@@ -619,24 +769,12 @@ var createEngine = function createEngine(source, taxYear) {
     var share = position.daysWorked / parameters.employmentYear.days;
     var d = parameters.employmentDeduction;
     var w = parameters.wedgeRelief;
+    var f = parameters.familyDeduction;
     var candidates = [];
 
     function add(space, threshold, id, label) {
       candidates.push({ space: space, threshold: threshold, id: id, label: label });
     }
-
-    // The no-tax area is not a parameter: it falls out of the capacity limit,
-    // because the minimum deduction exactly offsets tax at the first rate.
-    add('taxable', d.flatAmount / parameters.irpef.brackets[0].rate,
-      'no-tax-area', 'Uscita dall incapienza (no tax area)');
-
-    // Capacity test of the trattamento integrativo: gross tax has to clear the
-    // art. 13 deduction less the allowance. Below the flat band both sides are
-    // straight lines, so the crossing solves directly.
-    add('taxable',
-      (d.flatAmount - parameters.supplementaryAllowance.capacityAllowance) /
-        parameters.irpef.brackets[0].rate,
-      'supplementary-allowance-start', 'Inizio trattamento integrativo');
 
     add('taxable', parameters.supplementaryAllowance.incomeUpTo,
       'supplementary-allowance-end', 'Fine trattamento integrativo');
@@ -678,6 +816,133 @@ var createEngine = function createEngine(source, taxYear) {
       'additional-contribution', 'Contributo aggiuntivo IVS 1%');
     add('gross', parameters.contributions.cap,
       'contribution-cap', 'Massimale contributivo');
+
+    // Art. 12 thresholds exist only for the dependants actually declared.
+    if (position.family.spouse) {
+      add('taxable', f.spouse.firstBand.upTo, 'spouse-band-1',
+        'Cambio formula detrazione coniuge');
+      add('taxable', f.spouse.middleBand.upTo, 'spouse-band-2',
+        'Cambio formula detrazione coniuge');
+      add('taxable', f.spouse.lastBand.upTo, 'spouse-band-3',
+        'Azzeramento detrazione coniuge');
+      f.spouse.increases.forEach(function (step, i) {
+        add('taxable', step.over, 'spouse-increase-' + (i + 1) + '-start',
+          'Gradino maggiorazione coniuge');
+        add('taxable', step.upTo, 'spouse-increase-' + (i + 1) + '-end',
+          'Gradino maggiorazione coniuge');
+      });
+    }
+
+    if (position.family.children > 0) {
+      add('taxable',
+        f.children.ceiling + f.children.ceilingIncrement * (position.family.children - 1),
+        'children-deduction-end', 'Azzeramento detrazione figli');
+    }
+
+    if (position.family.ascendants > 0) {
+      add('taxable', f.ascendants.ceiling,
+        'ascendants-deduction-end', 'Azzeramento detrazione ascendenti');
+    }
+
+    /**
+     * Two thresholds are written in no statute: they are where two straight
+     * lines cross, and both move with the position. The no-tax area used to be
+     * the flat deduction over the first rate, which stopped being true the
+     * moment the deduction could be cut down to days or joined by art. 12. So
+     * they are solved instead of written. Between the thresholds collected
+     * above every term is affine, so fitting a line on the one segment where
+     * the sign changes gives the crossing exactly.
+     */
+    var scanBounds = [0];
+    candidates.forEach(function (candidate) {
+      if (candidate.space === 'taxable' && candidate.threshold > 0) {
+        scanBounds.push(candidate.threshold);
+      }
+    });
+    scanBounds.push(MAX_RAL - computeContributions(MAX_RAL).total);
+    scanBounds.sort(function (a, b) { return a - b; });
+
+    function crossings(gap) {
+      var roots = [];
+
+      for (var i = 0; i < scanBounds.length - 1; i++) {
+        var lo = scanBounds[i];
+        var hi = scanBounds[i + 1];
+        if (hi - lo < 1e-6) continue;
+
+        var x1 = lo + (hi - lo) / 3;
+        var x2 = lo + (2 * (hi - lo)) / 3;
+        var y1 = gap(x1);
+        var y2 = gap(x2);
+        if (y1 === y2) continue;
+
+        // The two samples only fix the line. Where the root actually falls
+        // inside the segment is what decides, so a crossing in the first few
+        // per cent of a segment is found just like one in the middle.
+        var root = x1 - (y1 * (x2 - x1)) / (y2 - y1);
+        if (root >= lo - 1e-6 && root <= hi + 1e-6) roots.push(root);
+      }
+
+      return roots;
+    }
+
+    function grossTaxAt(taxable) {
+      return applyBrackets(taxable, parameters.irpef.brackets).total;
+    }
+
+    /**
+     * Every one of these is a crossing, not just the first. Income can leave
+     * the incapienza and fall back into it: the art. 13 deduction steps up at
+     * 15.000, and with dependants on top of it the step is enough to swallow
+     * gross tax again for another thousand euro or so.
+     */
+    crossings(function (taxable) {
+      var relief = computeWedgeRelief(taxable, taxable, position);
+      return grossTaxAt(taxable) -
+        computeEmploymentDeduction(taxable, true, position).total -
+        computeFamilyDeduction(taxable, true, position).total -
+        (relief.type === 'deduction' ? relief.amount : 0);
+    }).forEach(function (root, i) {
+      add('taxable', root, i === 0 ? 'no-tax-area' : 'no-tax-area-' + (i + 1),
+        'Uscita dall incapienza (no tax area)');
+    });
+
+    // Same idea for the capacity test of the trattamento integrativo, except
+    // that a crossing above the income ceiling means it never starts at all.
+    var s = parameters.supplementaryAllowance;
+
+    crossings(function (taxable) {
+      return grossTaxAt(taxable) -
+        computeEmploymentDeduction(taxable, true, position).employment +
+        s.capacityAllowance * share;
+    }).filter(function (root) {
+      return root <= s.incomeUpTo;
+    }).forEach(function (root) {
+      add('taxable', root, 'supplementary-allowance-start', 'Inizio trattamento integrativo');
+    });
+
+    /**
+     * The second band pays the excess of the art. 12 and art. 13 comma 1
+     * deductions over gross tax, capped. Both the point where that excess
+     * reaches the cap and the point where it runs out are kinks in the net, and
+     * neither exists until there are dependants big enough to create an excess.
+     */
+    [
+      { target: s.amount * share, id: 'supplementary-second-band-cap',
+        label: 'Il trattamento integrativo scende sotto il massimo' },
+      { target: 0, id: 'supplementary-second-band-end',
+        label: 'Fine del trattamento integrativo differenziale' }
+    ].forEach(function (kink) {
+      crossings(function (taxable) {
+        return grossTaxAt(taxable) + kink.target -
+          computeEmploymentDeduction(taxable, true, position).employment -
+          computeFamilyDeduction(taxable, true, position).total;
+      }).filter(function (root) {
+        return root > s.incomeUpTo && root <= s.secondBandUpTo;
+      }).forEach(function (root) {
+        add('taxable', root, kink.id, kink.label);
+      });
+    });
 
     // Several rules share a threshold, so merge by position and keep every label.
     var byKey = {};

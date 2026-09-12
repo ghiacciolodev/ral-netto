@@ -76,6 +76,84 @@ var PARAMETERS_2026 = (function () {
       sourceId: 'tuir-art-13-c1'
     },
 
+    /**
+     * Detrazioni per carichi di famiglia, art. 12 TUIR. Stesso impianto
+     * dell art. 13, importo base per un rapporto troncato a quattro decimali,
+     * ma con due differenze che contano.
+     *
+     * La prima e l orologio: il comma 3 le rapporta ai mesi in cui la
+     * condizione di famiglia e durata, non ai giorni di lavoro. Un rapporto di
+     * sei mesi con il coniuge a carico tutto l anno prende dodici dodicesimi
+     * della detrazione per il coniuge.
+     *
+     * La seconda e che sono queste detrazioni ad accendere la seconda fascia
+     * del trattamento integrativo, che senza di loro resta sempre a zero.
+     *
+     * I figli sotto i 21 anni non stanno qui: dal marzo 2022 l assegno unico
+     * ha sostituito la loro detrazione.
+     */
+    familyDeduction: {
+      /**
+       * Comma 1 lett. a). Tre fasce di reddito, solo la prima e la terza
+       * portano un rapporto. Il comma 4 fissa a 690 il caso in cui il primo
+       * rapporto valga esattamente uno, che e poi il punto in cui la formula
+       * della prima fascia e l importo della seconda gia coincidono.
+       */
+      spouse: {
+        firstBand: { upTo: 15000, base: 800, coefficient: 110, divisor: 15000, whenRatioIsOne: 690 },
+        middleBand: { upTo: 40000, amount: 690 },
+        lastBand: { upTo: 80000, amount: 690, ceiling: 80000, span: 40000 },
+        /**
+         * Comma 1 lett. b). Gradini, non un decalage: la detrazione sale di
+         * questi importi e poi torna giu. E il punto in cui la curva del netto
+         * smette di essere monotona per una ragione diversa dal cuneo.
+         */
+        increases: [
+          { over: 29000, upTo: 29200, amount: 10 },
+          { over: 29200, upTo: 34700, amount: 20 },
+          { over: 34700, upTo: 35000, amount: 30 },
+          { over: 35000, upTo: 35100, amount: 20 },
+          { over: 35100, upTo: 35200, amount: 10 }
+        ]
+      },
+
+      /**
+       * Comma 1 lett. c). Il tetto cresce con il numero dei figli, quindi la
+       * detrazione per figlio e piu alta quanti piu figli ci sono. Ripartita
+       * al 50% tra i genitori salvo accordo diverso.
+       */
+      children: {
+        amount: 950,
+        ceiling: 95000,
+        ceilingIncrement: 15000,
+        minAge: 21,
+        maxAgeExclusive: 30,
+        defaultSharePercent: 50
+      },
+
+      /**
+       * Comma 1 lett. d). Dal 2025 solo ascendenti, e solo se conviventi:
+       * l assegno alimentare non e piu un alternativa alla convivenza.
+       */
+      ascendants: {
+        amount: 750,
+        ceiling: 80000
+      },
+
+      /**
+       * Comma 2. Non entra nel calcolo, che prende i familiari come dati, ma
+       * l interfaccia lo mostra perche la condizione non resti implicita.
+       */
+      incomeLimit: 2840.51,
+      incomeLimitUpToAge24: 4000,
+
+      monthsInYear: 12,
+      truncationDigits: 4,
+      truncationSourceId: 'tuir-art-12-c4',
+      restrictionSourceId: 'l-207-2024-c11',
+      sourceId: 'tuir-art-12'
+    },
+
     // Two alternative reliefs, never cumulative. The exempt sum bypasses IRPEF
     // entirely; the deduction competes with the others for available tax.
     wedgeRelief: {
@@ -104,9 +182,13 @@ var PARAMETERS_2026 = (function () {
      *
      * Below `incomeUpTo` it is a flat amount, subject to a capacity test on the
      * art. 13 comma 1 deduction. Between there and `secondBandUpTo` it equals
-     * the excess of certain deductions over gross tax; in the modelled case only
-     * the art. 13 deduction is in play and it never exceeds gross tax there, so
-     * that band always resolves to zero.
+     * the excess of the art. 12 and art. 13 comma 1 deductions over gross tax,
+     * capped at the flat amount. Without dependants that excess never appears,
+     * so the band resolves to zero: carichi di famiglia are what switch it on.
+     *
+     * The list in the decree is closed, and the wedge relief is not in it. A
+     * taxpayer can lose part of the wedge deduction to insufficient tax and
+     * still receive nothing here.
      */
     supplementaryAllowance: {
       amount: 1200,
@@ -160,6 +242,27 @@ var PARAMETERS_2026 = (function () {
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917',
         inForceFrom: '2026-01-01',
         note: 'La seconda aliquota e passata dal 35% al 33% dal periodo d imposta 2026.'
+      },
+      'tuir-art-12': {
+        label: 'art. 12 TUIR',
+        title: 'DPR 917/1986 art. 12, detrazioni per carichi di famiglia',
+        url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917',
+        inForceFrom: '2025-01-01',
+        note: 'Testo identico nel 2025 e nel 2026. Comma 3, le detrazioni si rapportano ai mesi in cui la condizione e durata, non ai giorni lavorati.'
+      },
+      'tuir-art-12-c4': {
+        label: 'art. 12 co. 4 TUIR',
+        title: 'DPR 917/1986 art. 12 co. 4, i rapporti si assumono nelle prime quattro cifre decimali',
+        url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917',
+        inForceFrom: '2007-01-01',
+        note: 'Stesso troncamento dell art. 13 co. 6, con in piu la regola che azzera la detrazione quando il rapporto vale zero o uno.'
+      },
+      'l-207-2024-c11': {
+        label: 'L. 207/2024 art. 1 co. 11',
+        title: 'Legge 30 dicembre 2024 n. 207, restrizione delle detrazioni per carichi di famiglia',
+        url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2024-12-30;207',
+        inForceFrom: '2025-01-01',
+        note: 'Dal 2025 i figli valgono fino ai 30 anni non compiuti, salvo disabilita, e degli altri familiari restano solo gli ascendenti conviventi.'
       },
       'tuir-art-13-c1': {
         label: 'art. 13 co. 1 TUIR',

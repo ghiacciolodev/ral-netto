@@ -17,10 +17,9 @@
   </p>
   <p class="case-note">
     Caso modellato: impiegato residente a Milano (Lombardia), con la retribuzione
-    effettivamente percepita nell'anno. Nessun familiare a carico,
-    nessuna agevolazione, nessun onere deducibile o detraibile. L'elenco completo
-    delle semplificazioni e la fonte primaria di ogni parametro sono nel README
-    del repository.
+    effettivamente percepita nell'anno. Nessuna agevolazione, nessun onere
+    deducibile o detraibile. L'elenco completo delle semplificazioni e la fonte
+    primaria di ogni parametro sono nel README del repository.
   </p>
 </header>
 
@@ -67,6 +66,61 @@
     <div class="field field-action">
       <button type="submit">Calcola</button>
     </div>
+
+    <details class="field-group">
+      <summary>Familiari a carico</summary>
+
+      <div class="field-grid">
+        <div class="field field-check">
+          <label class="check" for="input-spouse">
+            <input id="input-spouse" type="checkbox">
+            <span>Coniuge a carico</span>
+          </label>
+          <p class="hint">Non legalmente ed effettivamente separato.</p>
+        </div>
+
+        <div class="field">
+          <label for="input-children">Figli a carico</label>
+          <input id="input-children" type="number" min="0" max="10" step="1" value="0"
+                 aria-describedby="hint-children">
+          <p class="hint" id="hint-children">
+            Dai 21 ai 29 anni, o dai 30 con disabilità accertata. Sotto i 21 c'è
+            l'assegno unico al posto della detrazione.
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="input-children-share">Quota per i figli</label>
+          <select id="input-children-share" aria-describedby="hint-children-share">
+            <option value="50" selected>50%, ripartita</option>
+            <option value="100">100%, per intero</option>
+          </select>
+          <p class="hint" id="hint-children-share">
+            La ripartizione a metà fra i genitori è la regola, il 100% va concordato.
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="input-ascendants">Ascendenti a carico</label>
+          <input id="input-ascendants" type="number" min="0" max="6" step="1" value="0"
+                 aria-describedby="hint-ascendants">
+          <p class="hint" id="hint-ascendants">
+            Genitori e nonni, dal 2025 solo se conviventi.
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="input-family-months">Mesi a carico</label>
+          <input id="input-family-months" type="number" min="1" max="12" step="1" value="12"
+                 aria-describedby="hint-family-months">
+          <p class="hint" id="hint-family-months">
+            Mesi in cui la condizione è durata, non giorni di lavoro.
+          </p>
+        </div>
+      </div>
+
+      <p class="hint hint-block" id="hint-family-limit"></p>
+    </details>
   </form>
 
   <p class="error" id="error-box" role="alert" hidden></p>
