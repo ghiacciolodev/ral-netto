@@ -93,6 +93,16 @@
         </div>
 
         <div class="field">
+          <label for="input-children-young">Figli a carico sotto i 21 anni</label>
+          <input id="input-children-young" type="number" min="0" max="10" step="1" value="0"
+                 aria-describedby="hint-children-young">
+          <p class="hint" id="hint-children-young">
+            Non danno detrazione, c'è l'assegno unico. Alzano però la soglia dei
+            fringe benefit.
+          </p>
+        </div>
+
+        <div class="field">
           <label for="input-children">Figli a carico</label>
           <input id="input-children" type="number" min="0" max="10" step="1" value="0"
                  aria-describedby="hint-children">
@@ -133,6 +143,27 @@
       </div>
 
       <p class="hint hint-block" id="hint-family-limit"></p>
+    </details>
+
+    <details class="field-group">
+      <summary>Fringe benefit</summary>
+
+      <div class="field-grid">
+        <div class="field">
+          <label for="input-fringe">Valore annuo</label>
+          <div class="input-wrap">
+            <input id="input-fringe" type="text" inputmode="decimal" autocomplete="off"
+                   value="0,00" aria-describedby="hint-fringe">
+            <span class="unit" aria-hidden="true">euro</span>
+          </div>
+          <p class="hint" id="hint-fringe">
+            Beni e servizi, buoni, rimborsi di utenze, affitto o interessi sul mutuo
+            dell'abitazione principale.
+          </p>
+        </div>
+      </div>
+
+      <p class="hint hint-block" id="fringe-note"></p>
     </details>
   </form>
 

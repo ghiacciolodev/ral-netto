@@ -274,13 +274,41 @@ posizione: nove casi lo verificano, dall'incapiente al reddito oltre il massimal
 familiari a carico, su rapporto parziale e in comuni diversi. Se il prospetto sbagliasse
 una regola, la somma smetterebbe di tornare.
 
+## I fringe benefit sono una scogliera
+
+L'art. 51 co. 3 TUIR lo scrive con parole sue: il valore dei beni ceduti e dei servizi
+prestati non concorre al reddito se non supera il limite, **"se il predetto valore è
+superiore al citato limite, lo stesso concorre interamente a formare il reddito"**.
+
+Non è una franchigia da scorporare. Per i periodi d'imposta 2025, 2026 e 2027 il limite
+è **1.000 €**, che diventano **2.000 € per chi ha figli a carico** (L. 207/2024 art. 1
+co. 390).
+
+Con RAL 30.000 su 13 mensilità, a Milano:
+
+| Fringe benefit | Netto in busta | Busta più benefit |
+|---|---|---|
+| 1.000,00 € | 23.425,48 € | 24.425,48 € |
+| 1.000,01 € | **23.005,35 €** | **24.005,36 €** |
+
+**Un centesimo in più costa 420 €.** Il benefit arriva in beni e servizi, le imposte in
+euro: superare la soglia fa pagare imposte e contributi sull'intero valore, senza che
+entri un euro in più in busta. Con due figli a carico, dove la soglia è 2.000 €, il
+centesimo di troppo costa **929 €**, perché il reddito più alto erode anche le
+detrazioni dell'art. 12.
+
+Una precisazione che fa la differenza: la soglia doppia guarda la condizione
+dell'art. 12 co. 2, che parla di **reddito e non di età**. Spetta anche per un figlio di
+cinque anni, che una detrazione non la prende perché dal marzo 2022 c'è l'assegno unico
+al suo posto. Nel modello i figli sotto i 21 anni sono un campo separato proprio per
+questo: non danno detrazione, ma alzano la soglia.
+
 ## Assunzioni e semplificazioni
 
 Ogni riga è una cosa che il modello **non** fa, con il motivo.
 
 | Semplificazione | Effetto e motivo |
 |---|---|
-| Nessun onere deducibile o detraibile | Ridurrebbero rispettivamente imponibile e imposta. |
 | Il part-time non è un input separato | Non cambia il calcolo fiscale: un part-time con 15.000 di RAL è tassato come un full time con 15.000, perché la RAL riflette già l'orario. Entra solo attraverso i giorni, che il part-time verticale riduce e quello orizzontale no. |
 | Iscrizione previdenziale successiva al 31/12/1995 | Senza questa, il massimale di 122.295 € non si applicherebbe. La circolare INPS 6/2026 distingue esplicitamente le due platee. |
 | Il dataset comunale non è verificato voce per voce | 7.894 comuni estratti in blocco dal portale MEF. Un campione di 120, riscaricato e ricontrollato, è risultato identico, ma non è la stessa cosa di aver letto ogni riga. |
@@ -289,7 +317,8 @@ Ogni riga è una cosa che il modello **non** fa, con il motivo.
 | Nessun regime agevolato (impatriati, forfettario) né agevolazione contributiva | Ognuno avrebbe una base imponibile propria. |
 | TFR escluso dal netto | È accantonato, non erogato. Compare solo nel costo azienda. |
 | Nessuna rivalutazione del TFR | Il TFR accantonato si rivaluta di 1,5% più il 75% dell'indice ISTAT. |
-| Nessun fringe benefit, welfare, premio di risultato o straordinario a tassazione agevolata | Ognuno avrebbe una base imponibile propria. |
+| Fringe benefit sì, welfare e premi di risultato no | I premi di produttività hanno un'imposta sostitutiva del 5% e il welfare aziendale una disciplina propria: nessuno dei due è modellato. |
+| Nessun onere deducibile o detraibile | Vedi sotto: sull'art. 15 la lettura della fonte non è chiusa. |
 | Il prospetto mensile applica l'art. 23 alla lettera | Molti software di paghe usano invece il metodo del reddito presunto annuo, che ridistribuisce lo stesso totale sui mesi e riduce il conguaglio. Il totale dell'anno è identico nei due metodi, la distribuzione no. |
 | Prospetto in regime stazionario | Le addizionali trattenute sono quelle di un anno uguale al precedente. Nel primo e nell'ultimo anno di un rapporto cassa e competenza divergono. |
 | Il mese delle mensilità aggiuntive è un'assunzione | Dicembre per la tredicesima, giugno per la quattordicesima: lo decide il CCNL, non la legge. |
@@ -304,6 +333,23 @@ Ogni riga è una cosa che il modello **non** fa, con il motivo.
 | Aritmetica in virgola mobile | Senza arrotondamenti intermedi la deriva resta sotto 1e-12, molto sotto il centesimo. Diventerà rappresentazione esatta in centesimi quando i punti di arrotondamento interni saranno modellati: prima non servirebbe a niente. |
 | Sterilizzazione del beneficio sopra 200.000 € di reddito non implementata | Il modello **non è valido** sopra quella soglia. |
 | Décalage del cuneo senza troncamento a quattro decimali | Il troncamento è previsto dall'art. 13 TUIR, non dalla L. 207/2024 che disciplina il cuneo. Incide di circa 5 centesimi. Da verificare. |
+
+### Una fonte che non ho chiuso
+
+Gli oneri detraibili dell'art. 15 TUIR erano il primo candidato di questa fase, e mi
+sono fermato. Il testo consolidato su Normattiva, in vigore dal 1° gennaio 2025, dice
+che dall'imposta lorda si detrae **il 22 per cento** degli oneri elencati. L'aliquota
+che tutti applicano, e che l'Agenzia delle Entrate indica nelle sue istruzioni, è il
+**19 per cento**.
+
+Dentro le note dello stesso articolo si legge un rinvio legislativo a *"gli oneri la cui
+detraibilità è fissata nella misura del 19 per cento dal citato testo unico"*. Quindi
+il 19% è la misura applicata, ma la norma che la fissa non è quella che ho sotto gli
+occhi, e finché non la trovo non scrivo nessuna delle due cifre in un parametro.
+
+Questa è esattamente la ragione per cui i parametri di questo progetto portano una
+fonte ciascuno: un numero che nessuno sa da dove viene è un numero che prima o poi
+sbaglia.
 
 ## Parametri e fonti
 
@@ -388,7 +434,7 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-622 asserzioni, divise in tredici suite per area. Se il codice e un valore atteso non
+645 asserzioni, divise in quattordici suite per area. Se il codice e un valore atteso non
 concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo

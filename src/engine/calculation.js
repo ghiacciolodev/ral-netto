@@ -58,6 +58,12 @@ var ENGINE_CALCULATION = function (RULES, position, steps) {
         capApplied: ctx.contributions.capApplied
       },
       taxableIncome: ctx.taxable,
+      fringeBenefits: {
+        value: ctx.fringe.value,
+        threshold: ctx.fringe.threshold,
+        overThreshold: ctx.fringe.overThreshold,
+        taxable: ctx.fringe.taxable
+      },
       irpef: {
         gross: ctx.irpefGross.total,
         byBracket: ctx.irpefGross.detail,

@@ -15,6 +15,8 @@
   var inputRegion = /** @type {HTMLSelectElement} */ (document.getElementById('input-region'));
   var inputMunicipality = /** @type {HTMLSelectElement} */ (document.getElementById('input-municipality'));
   var inputSpouse = /** @type {HTMLInputElement} */ (document.getElementById('input-spouse'));
+  var inputChildrenYoung = /** @type {HTMLInputElement} */ (document.getElementById('input-children-young'));
+  var inputFringe = /** @type {HTMLInputElement} */ (document.getElementById('input-fringe'));
   var inputChildren = /** @type {HTMLInputElement} */ (document.getElementById('input-children'));
   var inputChildrenShare = /** @type {HTMLSelectElement} */ (document.getElementById('input-children-share'));
   var inputAscendants = /** @type {HTMLInputElement} */ (document.getElementById('input-ascendants'));
@@ -113,9 +115,11 @@
       contractType: inputContract.value,
       region: inputRegion.value,
       municipality: inputMunicipality.value,
+      fringeBenefits: ui.parseAmount(inputFringe.value) || 0,
       family: {
         spouse: inputSpouse.checked,
         children: parseInt(inputChildren.value, 10) || 0,
+        childrenUnder21: parseInt(inputChildrenYoung.value, 10) || 0,
         childrenSharePercent: parseInt(inputChildrenShare.value, 10),
         ascendants: parseInt(inputAscendants.value, 10) || 0,
         months: parseInt(inputFamilyMonths.value, 10)
@@ -311,6 +315,37 @@
       'riga può non tornare di un centesimo: il modello arrotonda sul totale annuo.');
 
     document.getElementById('payroll-note').textContent = righe.join(' ');
+  }
+
+
+  /**
+   * La soglia dei fringe benefit non e una franchigia: l art. 51 co. 3 dice
+   * che oltre il limite il valore concorre interamente. Vale la pena mostrare
+   * quanto costa il centesimo di troppo, perche e piu di quanto chiunque si
+   * aspetti e non si vede da nessun altra parte del calcolo.
+   */
+  function renderFringe(result, position) {
+    var fringe = result.fringeBenefits;
+    var nota = document.getElementById('fringe-note');
+    var soglia = 'La soglia è ' + ui.euro(fringe.threshold) +
+      (fringe.threshold > engine.parameters.fringeBenefits.threshold
+        ? ', raddoppiata perché ci sono figli a carico. '
+        : ', e raddoppia con figli a carico. ');
+
+    if (!fringe.overThreshold) {
+      var appena = engine.calculateNet(ui.withFringe(position, fringe.threshold + 0.01));
+      nota.textContent = soglia + 'Sotto la soglia il benefit non tocca il calcolo. ' +
+        'Un centesimo sopra, però, il valore concorre per intero al reddito: il netto ' +
+        'scenderebbe di ' + ui.euro(result.netAnnual - appena.netAnnual) +
+        ', molto più del centesimo guadagnato.';
+      return;
+    }
+
+    var sotto = engine.calculateNet(ui.withFringe(position, fringe.threshold));
+    nota.textContent = soglia + 'Il valore supera la soglia, quindi concorre ' +
+      'interamente al reddito, art. 51 co. 3 TUIR: non è una franchigia. ' +
+      'Fermandosi a ' + ui.euro(fringe.threshold) + ' il netto sarebbe ' +
+      ui.euro(sotto.netAnnual) + ' invece di ' + ui.euro(result.netAnnual) + '.';
   }
 
   function renderDeductions(result) {
@@ -536,6 +571,7 @@
     renderWaterfall(result);
     renderLedger(result);
     renderPayroll(currentPosition(ral));
+    renderFringe(result, currentPosition(ral));
     renderBrackets(result);
     renderDeductions(result);
     renderEmployerCost(result);
@@ -698,7 +734,8 @@
   });
 
   [inputMonths, inputDays, inputContract, inputMunicipality, inputSpouse, inputChildren,
-    inputChildrenShare, inputAscendants, inputFamilyMonths].forEach(function (field) {
+    inputChildrenYoung, inputChildrenShare, inputAscendants, inputFamilyMonths,
+    inputFringe].forEach(function (field) {
     field.addEventListener('change', recalculate);
   });
 

@@ -15,6 +15,30 @@ var PARAMETERS_2026 = (function () {
     // `key` is what a position is matched against, `name` is what goes on screen.
     payrollMonths: { allowed: [12, 13, 14], defaultValue: 13 },
     /**
+     * Fringe benefit, art. 51 co. 3 TUIR e L. 207/2024 art. 1 co. 390.
+     *
+     * E una soglia, non una franchigia, e la norma lo dice con parole sue: se
+     * il valore supera il limite, "lo stesso concorre interamente a formare il
+     * reddito". Un euro sopra la soglia non costa l imposta su un euro, costa
+     * l imposta su tutto, e puo costare piu di quanto vale il benefit.
+     *
+     * Il limite ordinario e 258,23 euro. Per i periodi d imposta 2025, 2026 e
+     * 2027 e portato a 1.000 euro, che diventano 2.000 per chi ha figli a
+     * carico: la stessa condizione dell art. 12 co. 2, quindi il dato lo
+     * fornisce gia l oggetto familiari.
+     *
+     * Il valore che concorre al reddito entra anche nell imponibile
+     * previdenziale, che dal D.Lgs. 314/1997 segue quello fiscale.
+     */
+    fringeBenefits: {
+      ordinaryThreshold: 258.23,
+      threshold: 1000,
+      thresholdWithChildren: 2000,
+      ordinarySourceId: 'tuir-art-51-c3',
+      sourceId: 'l-207-2024-c390'
+    },
+
+    /**
      * Il prospetto dei periodi di paga, art. 23 DPR 600/1973.
      *
      * `extraMonths` dice in quale mese cadono le mensilita aggiuntive. Non e un
@@ -272,6 +296,20 @@ var PARAMETERS_2026 = (function () {
         url: null,
         inForceFrom: '2024-01-01',
         note: 'Non e una fonte normativa: il mese in cui cadono le mensilita aggiuntive lo decide il contratto collettivo, e questo e un assunzione dichiarata come il costo azienda.'
+      },
+      'tuir-art-51-c3': {
+        label: 'art. 51 co. 3 TUIR',
+        title: 'DPR 917/1986 art. 51 co. 3, valore dei beni ceduti e dei servizi prestati',
+        url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917',
+        inForceFrom: '1998-01-01',
+        note: 'Il limite ordinario e 258,23 euro. La norma scrive che se il valore lo supera lo stesso concorre interamente a formare il reddito: e una soglia, non una franchigia.'
+      },
+      'l-207-2024-c390': {
+        label: 'L. 207/2024 art. 1 co. 390',
+        title: 'Limite dei fringe benefit elevato a 1.000 euro, 2.000 con figli a carico',
+        url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2024-12-30;207',
+        inForceFrom: '2025-01-01',
+        note: 'Vale per i periodi d imposta 2025, 2026 e 2027, in deroga al terzo periodo dell art. 51 co. 3: cambia la soglia, non il meccanismo.'
       },
       'tuir-art-11': {
         label: 'art. 11 TUIR',

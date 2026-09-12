@@ -49,6 +49,13 @@ var ENGINE_BREAKPOINTS = function (parameters, maxRal, numbers, steps, RULES, po
   function getBreakpoints(input) {
     var position = withGross(input, 0);
     var share = position.daysWorked / parameters.employmentYear.days;
+
+    /**
+     * Quando i fringe benefit superano la soglia entrano nella retribuzione per
+     * intero, quindi a parita di imponibile la RAL e piu bassa di quel valore.
+     * Le soglie restano dove sono, e la conversione a RAL che si sposta.
+     */
+    var fringe = steps.computeFringeBenefits(position).taxable;
     var candidates = [];
 
     function add(space, threshold, id, label) {
@@ -82,7 +89,7 @@ var ENGINE_BREAKPOINTS = function (parameters, maxRal, numbers, steps, RULES, po
         scanBounds.push(candidate.threshold);
       }
     });
-    scanBounds.push(MAX_RAL - computeContributions(MAX_RAL).total);
+    scanBounds.push(MAX_RAL + fringe - computeContributions(MAX_RAL + fringe).total);
     scanBounds.sort(function (a, b) { return a - b; });
 
     function crossings(gap) {
@@ -171,8 +178,8 @@ var ENGINE_BREAKPOINTS = function (parameters, maxRal, numbers, steps, RULES, po
     var byKey = {};
     candidates.forEach(function (candidate) {
       var ral = candidate.space === 'gross'
-        ? candidate.threshold
-        : grossFromTaxable(candidate.threshold);
+        ? candidate.threshold - fringe
+        : grossFromTaxable(candidate.threshold) - fringe;
       var key = candidate.space + ':' + candidate.threshold.toFixed(6);
 
       if (!byKey[key]) {

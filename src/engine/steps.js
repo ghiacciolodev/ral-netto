@@ -84,6 +84,36 @@ var ENGINE_STEPS = function (parameters, local, numbers) {
   }
 
   /**
+   * Fringe benefit, art. 51 co. 3 TUIR con la soglia della L. 207/2024 co. 390.
+   *
+   * Il ritorno e o zero o tutto: la norma dice che se il valore supera il
+   * limite "lo stesso concorre interamente a formare il reddito". Non c e una
+   * quota esente da scorporare, e la differenza fra un euro sotto e un euro
+   * sopra vale l imposta sull intero benefit.
+   */
+  function computeFringeBenefits(position) {
+    var f = parameters.fringeBenefits;
+    var value = position.fringeBenefits;
+
+    /**
+     * La soglia doppia spetta a chi ha figli a carico ai sensi dell art. 12
+     * co. 2, e quella condizione parla di reddito, non di eta: vale anche per
+     * i figli sotto i 21 anni, che una detrazione non la prendono.
+     */
+    var family = position.family;
+    var withChildren = family.children + family.childrenUnder21 > 0;
+    var threshold = withChildren ? f.thresholdWithChildren : f.threshold;
+    var over = value > threshold;
+
+    return {
+      value: value,
+      threshold: threshold,
+      overThreshold: over,
+      taxable: over ? value : 0
+    };
+  }
+
+  /**
    * Detrazioni per carichi di famiglia, art. 12 TUIR.
    *
    * Three rules with one shape: a base amount scaled by the ratio between an
@@ -306,6 +336,7 @@ var ENGINE_STEPS = function (parameters, local, numbers) {
 
   return {
     computeContributions: computeContributions,
+    computeFringeBenefits: computeFringeBenefits,
     computeEmploymentDeduction: computeEmploymentDeduction,
     computeFamilyDeduction: computeFamilyDeduction,
     computeWedgeRelief: computeWedgeRelief,

@@ -124,7 +124,16 @@ var createUiHelpers = function createUiHelpers(engine) {
     return lines.slice(0, maxLines || 3);
   }
 
+  /** La stessa posizione con un altro valore di fringe benefit. */
+  function withFringe(position, value) {
+    var copy = {};
+    Object.keys(position).forEach(function (key) { copy[key] = position[key]; });
+    copy.fringeBenefits = value;
+    return copy;
+  }
+
   return {
+    withFringe: withFringe,
     engine: engine,
     parseAmount: parseAmount,
     euro: euro,

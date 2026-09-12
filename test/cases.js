@@ -42,6 +42,8 @@ var CASES = (function () {
       './suites/family.js'),
     resolve(typeof SUITE_LOCAL !== 'undefined' ? SUITE_LOCAL : undefined,
       './suites/local.js'),
+    resolve(typeof SUITE_BENEFITS !== 'undefined' ? SUITE_BENEFITS : undefined,
+      './suites/benefits.js'),
     resolve(typeof SUITE_YEARS !== 'undefined' ? SUITE_YEARS : undefined,
       './suites/years.js'),
     resolve(typeof SUITE_LEDGER !== 'undefined' ? SUITE_LEDGER : undefined,

@@ -30,8 +30,8 @@ var ENGINE_POSITION = function (parameters, local, maxRal, numbers) {
    * for Lazio returns an error instead of a Lombardy figure with the wrong label.
    *
    * @param {{grossAnnual: number, months?: number, daysWorked?: number,
-   *          contractType?: string, family?: object, region?: string,
-   *          municipality?: string, taxYear?: number}} input
+   *          contractType?: string, family?: object, fringeBenefits?: number,
+   *          region?: string, municipality?: string, taxYear?: number}} input
    */
   function normalizePosition(input) {
     if (input === null || typeof input !== 'object') {
@@ -50,6 +50,7 @@ var ENGINE_POSITION = function (parameters, local, maxRal, numbers) {
       daysWorked: fallback(input.daysWorked, parameters.employmentYear.days),
       contractType: String(fallback(input.contractType, 'permanent')).toLowerCase(),
       family: normalizeFamily(input.family),
+      fringeBenefits: fallback(input.fringeBenefits, 0),
       region: String(fallback(input.region, local.defaults.region)).toLowerCase(),
       municipality: String(fallback(input.municipality, local.defaults.municipality)).toLowerCase()
     };
@@ -81,6 +82,13 @@ var ENGINE_POSITION = function (parameters, local, maxRal, numbers) {
       throw new RangeError(
         'I giorni di rapporto devono stare fra 1 e ' + parameters.employmentYear.days +
         '. Ricevuto: ' + position.daysWorked + '.');
+    }
+
+    if (typeof position.fringeBenefits !== 'number' || !isFinite(position.fringeBenefits) ||
+        position.fringeBenefits < 0) {
+      throw new RangeError(
+        'Il valore dei fringe benefit deve essere un numero non negativo. Ricevuto: ' +
+        position.fringeBenefits + '.');
     }
 
     if (position.contractType !== 'permanent' && position.contractType !== 'fixed-term') {
@@ -145,6 +153,14 @@ var ENGINE_POSITION = function (parameters, local, maxRal, numbers) {
     var family = {
       spouse: raw.spouse === true,
       children: count(raw.children, 'Figli a carico', 10),
+
+      /**
+       * I figli sotto i 21 anni non danno detrazione, l assegno unico l ha
+       * sostituita dal marzo 2022. Stanno qui lo stesso perche restano a
+       * carico ai sensi dell art. 12 co. 2, e la soglia doppia dei fringe
+       * benefit guarda quella condizione, non l eta.
+       */
+      childrenUnder21: count(raw.childrenUnder21, 'Figli a carico sotto i 21 anni', 10),
       childrenSharePercent: raw.childrenSharePercent === undefined
         ? f.children.defaultSharePercent
         : raw.childrenSharePercent,

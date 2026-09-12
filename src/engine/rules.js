@@ -13,6 +13,7 @@ var ENGINE_RULES = function (parameters, local, numbers, steps) {
   var formatRate = numbers.formatRate;
 
   var computeContributions = steps.computeContributions;
+  var computeFringeBenefits = steps.computeFringeBenefits;
   var computeEmploymentDeduction = steps.computeEmploymentDeduction;
   var computeFamilyDeduction = steps.computeFamilyDeduction;
   var computeWedgeRelief = steps.computeWedgeRelief;
@@ -37,12 +38,29 @@ var ENGINE_RULES = function (parameters, local, numbers, steps) {
    * trail entry of its own.
    */
   var RULES = [
+    /**
+     * Viene per primo perche cambia la base di tutto il resto: quando il valore
+     * supera la soglia entra per intero nella retribuzione, e da li in poi e
+     * indistinguibile dal resto dell imponibile, contributi compresi.
+     *
+     * Non e cassa: e un valore ricevuto in beni e servizi. Fa pagare imposte
+     * senza portare euro in busta, ed e il motivo per cui superare la soglia
+     * puo costare piu di quanto il benefit valga.
+     */
+    {
+      id: 'fringe-benefits',
+      apply: function (ctx) {
+        ctx.fringe = computeFringeBenefits(ctx.position);
+        ctx.grossForContributions = ctx.ral + ctx.fringe.taxable;
+      }
+    },
+
     /** The cap truncates the IVS rate and the additional 1% alike. */
     {
       id: 'contributions',
       apply: function (ctx) {
-        ctx.contributions = computeContributions(ctx.ral);
-        ctx.taxable = ctx.ral - ctx.contributions.total;
+        ctx.contributions = computeContributions(ctx.grossForContributions);
+        ctx.taxable = ctx.grossForContributions - ctx.contributions.total;
 
         // Single-income case: total income, employment income and taxable base
         // are the same number. Kept apart so that adding other income later
