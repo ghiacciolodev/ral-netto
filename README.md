@@ -513,10 +513,30 @@ Niente moduli ES: su `file://` sono bloccati come `fetch`, e il sito deve funzio
 col doppio clic. Quindi classic script caricati in ordine, con lo stesso meccanismo
 che i parametri usavano gia: globale in pagina, `require` sotto Node.
 
+## Il sito
+
+Quattro pagine, non una sola con dentro tutto. Il **calcolatore** fa il calcolo,
+**come si calcola** lo spiega passo per passo e dichiara cosa il modello non fa,
+**parametri e fonti** elenca ogni valore usato con la norma che lo fissa, e
+**aliquota marginale** mostra dove la curva del netto smette di salire.
+
+La pagina dei parametri non è scritta a mano: percorre l'oggetto dei parametri
+dell'anno scelto e costruisce la tabella da lì. È una scelta precisa. Se un parametro
+nuovo viene aggiunto, compare da solo, magari con un'etichetta brutta, invece di
+restare invisibile perché nessuno si è ricordato di aggiungerlo a un elenco. E un
+parametro senza fonte scrive **senza fonte** invece di lasciare la cella vuota.
+
+Costruendola ha subito trovato due parametri che non citavano niente: le mensilità
+ammesse, che dipendono dal CCNL, e i 365 giorni del ragguaglio, che restano 365 anche
+negli anni bisestili per prassi ma senza una norma che l'ho trovata a dirlo. Adesso
+entrambi lo dichiarano.
+
 ## Struttura
 
 ```
-index.html                 calcolatore, inversa, costo azienda
+index.html                 il calcolatore
+metodo.html                come si calcola, e cosa il modello non fa
+parametri.html             ogni valore usato, con la sua fonte, per anno
 curva.html                 aliquota marginale e soglie
 src/parameters.js          registro degli anni: parametri statali e tabella locale
 src/parameters-2025.js     valori normativi statali e fonti dell anno 2025
@@ -533,6 +553,7 @@ src/engine/breakpoints.js  le soglie dichiarate e quelle che emergono
 src/engine/inverse.js      dal netto alla RAL, piu l oracolo binario dei test
 src/engine/monthly.js      il prospetto dei periodi di paga e il conguaglio
 src/ui-common.js           helper di rendering condivisi
+src/ui-parameters.js       pagina parametri, generata dai dati
 src/ui-calculator.js       pagina calcolatore
 src/ui-curve.js            pagina curva
 src/styles.css

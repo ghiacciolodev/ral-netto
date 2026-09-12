@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Come si calcola, anno d'imposta 2026</title>
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+
+  <nav aria-label="Sezioni del sito">
+    <ul class="site-nav">
+      <li><a href="index.html">Calcolatore</a></li>
+      <li><a href="metodo.html" aria-current="page">Come si calcola</a></li>
+      <li><a href="parametri.html">Parametri e fonti</a></li>
+      <li><a href="curva.html">Aliquota marginale</a></li>
+    </ul>
+  </nav>
+
+<header class="page-header">
+  <p class="eyebrow">Anno d'imposta <strong>2026</strong></p>
+  <h1>Come si calcola</h1>
+  <p class="lede">
+    Dalla RAL al netto ci sono dieci passaggi, e quasi nessuno funziona come
+    verrebbe da pensare. Qui ci sono tutti, con la norma che li produce, e in
+    fondo l'elenco di quello che il modello non fa.
+  </p>
+</header>
+
+<main class="prose">
+
+  <h2>I dieci passaggi</h2>
+
+  <ol>
+    <li>
+      <strong>Contributi.</strong> IVS a carico del dipendente sulla RAL, più
+      un punto percentuale sulla quota oltre la prima fascia. Il massimale
+      tronca entrambe le componenti, non solo l'IVS.
+    </li>
+    <li>
+      <strong>Imponibile fiscale</strong> = RAL meno contributi. È anche il
+      reddito complessivo che parametra detrazioni, cuneo e addizionali:
+      <strong>non si usa la RAL</strong>, ed è l'errore più comune.
+    </li>
+    <li><strong>IRPEF lorda</strong> a scaglioni, 23% / 33% / 43%.</li>
+    <li>
+      <strong>Detrazione per lavoro dipendente</strong>, art. 13 TUIR, con la
+      maggiorazione di 65 € fra 25.000 e 35.000 e il troncamento del rapporto a
+      quattro cifre decimali.
+    </li>
+    <li>
+      <strong>Riduzione del cuneo fiscale.</strong> Sotto i 20.000 di reddito è
+      una somma esente che non passa dall'IRPEF; fra 20.000 e 40.000 è una
+      detrazione che compete con le altre. Le due misure sono alternative.
+    </li>
+    <li>
+      <strong>Detrazioni per carichi di famiglia</strong>, art. 12 TUIR: coniuge,
+      figli dai 21 ai 29 anni, ascendenti conviventi.
+    </li>
+    <li>
+      <strong>Trattamento integrativo.</strong> 1.200 € fino a 15.000 di reddito;
+      fra 15.000 e 28.000 spetta invece per l'eccedenza delle detrazioni art. 12
+      e 13 sull'imposta lorda.
+    </li>
+    <li>
+      <strong>IRPEF netta</strong> = max(0, lorda meno detrazioni). L'eccedenza
+      per incapienza si perde e non è rimborsabile.
+    </li>
+    <li>
+      <strong>Addizionali</strong> regionale e comunale, sull'imponibile e mai
+      ridotte dalle detrazioni.
+    </li>
+    <li>
+      <strong>Netto</strong> = RAL meno contributi, IRPEF netta e addizionali,
+      più la somma esente del cuneo e il trattamento integrativo.
+    </li>
+  </ol>
+
+  <div class="callout">
+    <p>
+      Ogni voce del calcolatore riporta accanto la norma che la produce, e il
+      link porta al testo su Normattiva o alla pagina dell'ente che la pubblica.
+      Tutti i valori usati stanno in
+      <a href="parametri.html">parametri e fonti</a>.
+    </p>
+  </div>
+
+  <h2>Le cose che sorprendono</h2>
+
+  <h3>Il netto non sale sempre con il lordo</h3>
+  <p>
+    In alcuni punti un euro lordo in più fa scendere il netto. Succede quando si
+    perde una soglia: la fine del trattamento integrativo, il gradino della
+    detrazione art. 13, la soglia di esenzione dell'addizionale comunale, le
+    maggiorazioni per il coniuge. Da questo discendono due fatti opposti e facili
+    da confondere: dove il netto <em>sale</em> di scatto ci sono valori che
+    nessuna RAL raggiunge, dove <em>scende</em> ci sono netti prodotti da due RAL
+    diverse. <a href="curva.html">La pagina sull'aliquota marginale</a> li mostra
+    tutti.
+  </p>
+
+  <h3>La tredicesima è tassata di più</h3>
+  <p>
+    Sulle mensilità aggiuntive gli scaglioni si ragguagliano a mese e le
+    detrazioni non spettano, art. 23 co. 2 lett. b) DPR 600/1973. A parità di
+    lordo la tredicesima netta quasi duecento euro in meno di uno stipendio, su
+    una RAL di 30.000. Non è un anticipo che torna indietro: le detrazioni sono
+    comunque usate per intero sui dodici mesi ordinari.
+  </p>
+
+  <h3>I fringe benefit sono una scogliera</h3>
+  <p>
+    Il limite è 1.000 €, 2.000 per chi ha figli a carico. Non è una franchigia:
+    l'art. 51 co. 3 TUIR scrive che se il valore supera il limite
+    <strong>lo stesso concorre interamente</strong> a formare il reddito. Un
+    centesimo di troppo può costare più di quattrocento euro di busta.
+  </p>
+
+  <h3>Dove si abita pesa quanto un aumento</h3>
+  <p>
+    A parità di tutto il resto, con RAL 30.000, fra Trento e Roma ballano
+    quarantaquattro euro al mese. Sulla RAL da offrire per ottenere lo stesso
+    netto la differenza è di oltre millecinquecento euro.
+  </p>
+
+  <h3>Più della metà dei comuni non ha deliberato per quest'anno</h3>
+  <p>
+    Un ente che non delibera non azzera il tributo: le aliquote in vigore si
+    intendono prorogate di anno in anno, art. 1 co. 169 L. 296/2006. Per il 2026
+    hanno deliberato 3.208 comuni su 7.894; 3.827 vanno per proroga e 859 non
+    hanno mai deliberato, quindi non applicano l'addizionale. Il calcolatore dice
+    sempre da che anno arrivano le aliquote che sta usando.
+  </p>
+
+  <h2>Quello che il modello non fa</h2>
+
+  <p>
+    Ogni riga è una cosa che il modello <strong>non</strong> fa. Sono dichiarate
+    perché un calcolo che non dice cosa ha lasciato fuori non è verificabile.
+  </p>
+
+  <h3>Sul reddito</h3>
+  <ul>
+    <li>
+      Nessun onere deducibile o detraibile. Sull'art. 15 c'è una questione di
+      fonte aperta, spiegata sotto.
+    </li>
+    <li>
+      Nessun welfare aziendale né premio di risultato a tassazione sostitutiva.
+    </li>
+    <li>
+      Nessun regime agevolato: impatriati, forfettario e simili hanno una base
+      imponibile propria.
+    </li>
+    <li>
+      Reddito complessivo assunto uguale al reddito da lavoro dipendente. Vero
+      solo perché il caso è monoreddito.
+    </li>
+    <li>
+      Imponibile previdenziale assunto uguale a quello fiscale. Nel caso reale
+      differiscono per alcune voci.
+    </li>
+  </ul>
+
+  <h3>Sulle agevolazioni locali</h3>
+  <ul>
+    <li>
+      Le agevolazioni soggettive regionali, detrazioni per figli a carico o per
+      disabilità, non sono applicate: Bolzano, Campania, Sardegna e Umbria le
+      dichiarano sul portale del MEF.
+    </li>
+    <li>
+      127 comuni esentano per tipo di reddito, pensione o lavoro dipendente, e
+      non per soglia sull'imponibile. Non sono applicate, e il calcolatore lo
+      dice quando si sceglie uno di quei comuni.
+    </li>
+    <li>
+      Il dataset comunale è un estratto di massa e non è verificato voce per
+      voce: un campione di 120 comuni riscaricati è risultato identico.
+    </li>
+  </ul>
+
+  <h3>Sul cedolino</h3>
+  <ul>
+    <li>
+      Il prospetto mensile applica l'art. 23 alla lettera. Molti software di
+      paghe usano il metodo del reddito presunto annuo, che ridistribuisce lo
+      stesso totale sui mesi e riduce il conguaglio: il totale dell'anno è
+      identico, la distribuzione no.
+    </li>
+    <li>
+      Il prospetto è in regime stazionario: le addizionali trattenute sono
+      quelle di un anno uguale al precedente. Nel primo e nell'ultimo anno di un
+      rapporto cassa e competenza divergono.
+    </li>
+    <li>
+      Il mese delle mensilità aggiuntive lo decide il contratto collettivo, non
+      la legge: qui sono dicembre e giugno, come nel commercio.
+    </li>
+    <li>
+      Gli arrotondamenti interni al calcolo non sono modellati. Il risultato è
+      arrotondato al centesimo sul totale annuo.
+    </li>
+  </ul>
+
+  <h3>Sui limiti di validità</h3>
+  <ul>
+    <li>
+      Il TFR è escluso dal netto: è accantonato, non erogato. Compare solo nel
+      costo azienda, che è l'unico blocco non normativo di tutto il modello.
+    </li>
+    <li>
+      La sterilizzazione del beneficio sopra i 200.000 € di reddito non è
+      implementata: <strong>il modello non è valido</strong> sopra quella soglia.
+    </li>
+    <li>
+      Il décalage del cuneo non applica il troncamento a quattro decimali, che è
+      previsto dall'art. 13 TUIR e non dalla legge che disciplina il cuneo.
+      Incide di qualche centesimo ed è da verificare.
+    </li>
+  </ul>
+
+  <h2>Una fonte che non ho chiuso</h2>
+
+  <p>
+    Gli oneri detraibili dell'art. 15 TUIR sarebbero il passo successivo, e mi
+    sono fermato. Il testo consolidato su Normattiva, in vigore dal 1° gennaio
+    2025, dice che dall'imposta lorda si detrae <strong>il 22 per cento</strong>
+    degli oneri elencati. L'aliquota che tutti applicano è il
+    <strong>19 per cento</strong>.
+  </p>
+  <p>
+    Dentro le note dello stesso articolo si legge un rinvio legislativo a
+    <em>«gli oneri la cui detraibilità è fissata nella misura del 19 per cento
+    dal citato testo unico»</em>. Quindi il 19% è la misura applicata, ma la
+    norma che la fissa non è quella che ho sotto gli occhi, e finché non la trovo
+    non scrivo nessuna delle due cifre in un parametro.
+  </p>
+
+  <div class="callout">
+    <p>
+      È il motivo per cui ogni parametro di questo progetto porta una fonte: un
+      numero che nessuno sa da dove viene è un numero che prima o poi sbaglia.
+    </p>
+  </div>
+
+</main>
+
+<footer class="page-footer">
+  <p>
+    Prototipo a scopo dimostrativo. Non sostituisce un cedolino ed è valido solo
+    per il caso modellato.
+  </p>
+  <p>
+    Il calcolo avviene interamente nel tuo browser. La pagina non salva nulla,
+    non usa cookie, non carica risorse esterne e non invia da nessuna parte
+    quello che scrivi.
+  </p>
+</footer>
+
+</body>
+</html>

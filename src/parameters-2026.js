@@ -13,7 +13,8 @@ var PARAMETERS_2026 = (function () {
   return {
     taxYear: 2026,
     // `key` is what a position is matched against, `name` is what goes on screen.
-    payrollMonths: { allowed: [12, 13, 14], defaultValue: 13 },
+    // Quante mensilita: lo decide il contratto collettivo, non la legge.
+    payrollMonths: { allowed: [12, 13, 14], defaultValue: 13, sourceId: 'ccnl-commercio' },
     /**
      * Fringe benefit, art. 51 co. 3 TUIR e L. 207/2024 art. 1 co. 390.
      *
@@ -68,7 +69,12 @@ var PARAMETERS_2026 = (function () {
       sourceId: 'dpr-600-1973-art-23'
     },
 
-    employmentYear: { days: 365 },
+    /**
+     * Il denominatore del ragguaglio ai giorni. Resta 365 anche negli anni
+     * bisestili: e la prassi corrente, ma non ho trovato la norma che lo dice,
+     * quindi il parametro lo dichiara invece di far finta che sia ovvio.
+     */
+    employmentYear: { days: 365, sourceId: 'giorni-anno' },
 
     /**
      * Money is carried to the cent, half-up on the third decimal.
@@ -289,6 +295,13 @@ var PARAMETERS_2026 = (function () {
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1998-09-28;360',
         inForceFrom: '1999-01-01',
         note: 'L acconto si calcola sull imponibile dell anno precedente. Il comma 3-bis e la base della soglia di esenzione, che i comuni possono legare a specifici requisiti reddituali.'
+      },
+      'giorni-anno': {
+        label: 'assunzione dichiarata',
+        title: 'Il ragguaglio ai giorni usa 365 come denominatore, anche negli anni bisestili',
+        url: null,
+        inForceFrom: '2024-01-01',
+        note: 'Non ho chiuso la fonte. Negli anni bisestili il denominatore corretto potrebbe essere 366, e cambierebbe le detrazioni ragguagliate di qualche centesimo.'
       },
       'ccnl-commercio': {
         label: 'CCNL Terziario, distribuzione e servizi',

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parametri e fonti, anno d'imposta 2026</title>
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+
+  <nav aria-label="Sezioni del sito">
+    <ul class="site-nav">
+      <li><a href="index.html">Calcolatore</a></li>
+      <li><a href="metodo.html">Come si calcola</a></li>
+      <li><a href="parametri.html" aria-current="page">Parametri e fonti</a></li>
+      <li><a href="curva.html">Aliquota marginale</a></li>
+    </ul>
+  </nav>
+
+<header class="page-header">
+  <p class="eyebrow">Tutti i valori usati</p>
+  <h1>Parametri e fonti</h1>
+  <p class="lede">
+    Ogni numero che il calcolatore usa, con la norma che lo fissa e la data da
+    cui vale. Questa pagina non e scritta a mano: e letta dagli stessi dati che
+    fanno il calcolo, quindi non puo dire una cosa diversa.
+  </p>
+  <p class="case-note" id="parameters-summary"></p>
+</header>
+
+<main>
+  <div class="year-switch" id="year-switch">Anno d'imposta:</div>
+  <div id="parameters"></div>
+</main>
+
+<footer class="page-footer">
+  <p>
+    Solo fonti primarie: Normattiva per le norme, l'ente emittente per la prassi,
+    il portale del federalismo fiscale del MEF per le addizionali locali.
+  </p>
+  <p>
+    Per i parametri statali e per le 21 regioni ogni indirizzo e stato aperto e
+    controllato. Per i 7.894 comuni no: sono un estratto di massa con verifica
+    campionaria, come spiegato in <a href="metodo.html">come si calcola</a>.
+  </p>
+</footer>
+
+<script src="src/parameters-2025.js"></script>
+<script src="src/parameters-2026.js"></script>
+<script src="src/local-2025.js"></script>
+<script src="src/local-2026.js"></script>
+<script src="src/parameters.js"></script>
+<script src="src/engine/numbers.js"></script>
+<script src="src/engine/position.js"></script>
+<script src="src/engine/steps.js"></script>
+<script src="src/engine/rules.js"></script>
+<script src="src/engine/calculation.js"></script>
+<script src="src/engine/breakpoints.js"></script>
+<script src="src/engine/inverse.js"></script>
+<script src="src/engine/monthly.js"></script>
+<script src="src/engine.js"></script>
+<script src="src/ui-parameters.js"></script>
+
+</body>
+</html>

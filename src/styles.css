@@ -36,6 +36,24 @@
   --radius: 12px;
   --radius-sm: 8px;
 
+  /* Scala tipografica e spaziature. Sono arrivate tardi, quando le pagine sono
+     diventate quattro e ognuna aveva i suoi valori a occhio: i componenti piu
+     vecchi portano ancora numeri letterali, i nuovi usano solo questi. */
+  --text-xs: 0.74rem;
+  --text-sm: 0.83rem;
+  --text-base: 0.95rem;
+  --text-md: 1.05rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.6rem;
+  --text-2xl: clamp(1.9rem, 5vw, 2.9rem);
+
+  --space-1: 0.35rem;
+  --space-2: 0.7rem;
+  --space-3: 1.1rem;
+  --space-4: 1.75rem;
+  --space-5: 2.75rem;
+  --space-6: 4rem;
+
   /* Wide on purpose: this is a dense data tool, not an article. Only the prose
      blocks keep a narrow measure, so lines stay readable while tables and the
      chart use the screen they are given. */
@@ -69,23 +87,42 @@ body {
 
 .page-header { padding-top: 2.75rem; padding-bottom: 1.75rem; }
 
-/* Only on the second page: there are two pages, so one way back is enough. */
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 1.4rem;
-  padding: 0.42rem 0.9rem 0.42rem 0.7rem;
-  background: var(--surface);
-  border: 1px solid var(--line);
+/* La navigazione del sito. Quando le pagine erano due bastava un link di
+   ritorno; adesso sono quattro e servono tutte per capire un numero, quindi
+   stanno sullo stesso piano invece che una dentro l altra. */
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-4) 0 0;
+  margin: 0;
+  list-style: none;
+}
+
+.site-nav a {
+  display: inline-block;
+  padding: 0.42rem 0.85rem;
   border-radius: 999px;
-  font-size: 0.83rem;
+  font-size: var(--text-sm);
   font-weight: 650;
   color: var(--text-muted);
   text-decoration: none;
+  border: 1px solid transparent;
 }
-.back-link:hover { color: var(--text); border-color: var(--line-strong); }
-.back-link svg { width: 14px; height: 14px; flex: none; }
+
+.site-nav a:hover {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+/* La pagina corrente si marca con aria-current, cosi il segno visivo e quello
+   per chi legge con lo schermo sono la stessa cosa e non due. */
+.site-nav a[aria-current='page'] {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
 
 .eyebrow {
   margin: 0 0 0.85rem;
@@ -621,6 +658,96 @@ tfoot td {
 .wf-value { font-size: 10.5px; font-weight: 650; fill: var(--text); }
 .wf-connector { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 2 2; }
 .wf-axis { stroke: var(--line); stroke-width: 1; }
+
+
+/* ------------------------------------------------------------------- prose */
+
+/* Le pagine di testo hanno una misura stretta, il calcolatore no: una tabella
+   di tredici periodi vuole lo schermo, un paragrafo no. */
+.prose { max-width: var(--prose); }
+
+.prose h2 {
+  margin: var(--space-5) 0 var(--space-2);
+  font-size: var(--text-xl);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.prose h3 {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--text-lg);
+  line-height: 1.2;
+}
+
+.prose p, .prose li { font-size: var(--text-md); line-height: 1.6; }
+.prose p { margin: 0 0 var(--space-3); }
+.prose ul, .prose ol { margin: 0 0 var(--space-3); padding-left: 1.3rem; }
+.prose li { margin-bottom: var(--space-1); }
+.prose a { color: var(--link); }
+
+.prose strong { font-weight: 700; }
+
+/* Un punto che vale la pena leggere due volte, non un riquadro decorativo. */
+.prose .callout {
+  margin: var(--space-3) 0 var(--space-4);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+.prose .callout p:last-child { margin-bottom: 0; }
+
+/* ------------------------------------------------------------- parametri */
+
+.param-group { margin-bottom: var(--space-5); }
+
+.param-group > h2 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
+}
+
+.param-group > p {
+  margin: 0 0 var(--space-3);
+  max-width: var(--prose);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.param-path {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.year-switch {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  margin: var(--space-3) 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.year-switch button {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 650;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.year-switch button:hover { border-color: var(--line-strong); color: var(--text); }
+
+.year-switch button.is-current {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
 
 /* ------------------------------------------------------------------ footer */
 
