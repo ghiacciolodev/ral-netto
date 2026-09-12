@@ -208,6 +208,111 @@
     tbody.appendChild(total);
   }
 
+
+  /**
+   * Il prospetto dei periodi di paga. Il netto mensile del riepilogo e una
+   * media annua: qui si vede che i mesi non sono uguali fra loro, e perche.
+   */
+  function renderPayroll(position) {
+    var schedule = engine.monthlySchedule(position);
+    var table = document.getElementById('payroll-table');
+    var tbody = table.querySelector('tbody');
+    var tfoot = table.querySelector('tfoot');
+
+    ui.clear(tbody);
+    ui.clear(tfoot);
+
+    schedule.periods.forEach(function (period) {
+      var row = document.createElement('tr');
+      if (period.extra) row.className = 'is-subtle';
+
+      var nome = period.extra
+        ? 'mensilità aggiuntiva'
+        : period.name + (period.adjustment !== 0 ? ', con conguaglio' : '');
+
+      ui.cell(row, nome, 'voice');
+      ui.cell(row, ui.euro(period.gross), 'num');
+      ui.cell(row, ui.euro(-period.contributions), 'num');
+      ui.cell(row, ui.euro(-(period.irpefWithheld + period.adjustment)), 'num');
+      ui.cell(row, ui.euro(-period.surtaxes), 'num');
+      ui.cell(row, ui.euro(period.wedgeExempt + period.supplementaryAllowance), 'num');
+      ui.cell(row, ui.euro(period.net), 'num');
+      tbody.appendChild(row);
+    });
+
+    var total = document.createElement('tr');
+    total.className = 'is-total';
+    ui.cell(total, 'Anno');
+    ui.cell(total, ui.euro(schedule.totals.gross), 'num');
+    ui.cell(total, ui.euro(-schedule.totals.contributions), 'num');
+    ui.cell(total, ui.euro(-(schedule.totals.irpefWithheld + schedule.adjustment)), 'num');
+    ui.cell(total, ui.euro(-schedule.totals.surtaxes), 'num');
+    ui.cell(total, ui.euro(schedule.totals.wedgeExempt +
+      schedule.totals.supplementaryAllowance), 'num');
+    ui.cell(total, ui.euro(schedule.totals.net), 'num');
+    tfoot.appendChild(total);
+
+    describePayroll(schedule);
+  }
+
+  /**
+   * Le due cose che rendono i mesi diversi vanno spiegate dove si vedono, non
+   * lasciate a chi va a cercarle nel README.
+   */
+  function describePayroll(schedule) {
+    var righe = [];
+    var aggiuntive = schedule.periods.filter(function (period) { return period.extra; });
+    var ordinari = schedule.periods.filter(function (period) { return !period.extra; });
+
+    if (aggiuntive.length) {
+      var regola = 'Sulle mensilità aggiuntive non spettano detrazioni, ' +
+        'art. 23 co. 2 lett. b) DPR 600/1973. ';
+
+      /**
+       * La regola è sempre la stessa, l'effetto no: chi non ha detrazioni da
+       * perdere non ci rimette niente, e la mensilità aggiuntiva netta persino
+       * di più perché su di essa non cade la rata delle addizionali.
+       */
+      if (aggiuntive[0].deduction === 0 && ordinari[6].deduction === 0) {
+        regola += 'A questo reddito non ci sono detrazioni da perdere, quindi non ' +
+          'cambia niente: la mensilità aggiuntiva netta ' + ui.euro(aggiuntive[0].net) +
+          ', più di un mese ordinario solo perché non porta la rata delle addizionali.';
+      } else {
+        regola += 'La mensilità aggiuntiva netta ' + ui.euro(aggiuntive[0].net) +
+          ' contro ' + ui.euro(ordinari[6].net) + ' di un mese ordinario. Non è un ' +
+          'anticipo che torna indietro: le detrazioni sono comunque usate per intero ' +
+          'sui dodici mesi, e il totale dell\'anno non cambia.';
+      }
+
+      righe.push(regola);
+    }
+
+    if (Math.abs(schedule.adjustment) >= 0.01) {
+      righe.push(schedule.adjustment > 0
+        ? 'A ' + schedule.adjustmentMonth + ' il conguaglio trattiene ' +
+          ui.euro(schedule.adjustment) + ' in più: ogni periodo vede un tredicesimo ' +
+          'della RAL attraverso scaglioni ragguagliati a un dodicesimo, e la ' +
+          'progressività morde meno di quanto dovrebbe.'
+        : 'A ' + schedule.adjustmentMonth + ' il conguaglio restituisce ' +
+          ui.euro(-schedule.adjustment) + ': nei mesi in cui le detrazioni superano ' +
+          'l\'imposta la ritenuta si ferma a zero, e quello che avanza non si perde.');
+    } else {
+      righe.push('Il conguaglio è nullo: con una retribuzione costante dentro un ' +
+        'solo scaglione non c\'è niente da sistemare a fine anno.');
+    }
+
+    righe.push('Le addizionali si trattengono a rate e non nell\'anno di competenza: ' +
+      'il saldo dell\'anno prima in undici rate da gennaio, l\'acconto comunale del ' +
+      '30% in nove rate da marzo.');
+
+    // Il modello arrotonda al centesimo sul totale annuo, non su ogni riga:
+    // le colonne possono non tornare di un centesimo, ed e meglio dirlo.
+    righe.push('Gli importi sono arrotondati al centesimo per la lettura, quindi una ' +
+      'riga può non tornare di un centesimo: il modello arrotonda sul totale annuo.');
+
+    document.getElementById('payroll-note').textContent = righe.join(' ');
+  }
+
   function renderDeductions(result) {
     var tbody = document.getElementById('deduction-table').querySelector('tbody');
     var d = result.irpef.deductions;
@@ -430,6 +535,7 @@
     renderSummary(result);
     renderWaterfall(result);
     renderLedger(result);
+    renderPayroll(currentPosition(ral));
     renderBrackets(result);
     renderDeductions(result);
     renderEmployerCost(result);

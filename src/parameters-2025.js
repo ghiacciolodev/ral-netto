@@ -15,6 +15,36 @@ var PARAMETERS_2025 = (function () {
     taxYear: 2025,
     // `key` is what a position is matched against, `name` is what goes on screen.
     payrollMonths: { allowed: [12, 13, 14], defaultValue: 13 },
+    /**
+     * Il prospetto dei periodi di paga, art. 23 DPR 600/1973.
+     *
+     * `extraMonths` dice in quale mese cadono le mensilita aggiuntive. Non e un
+     * valore normativo: lo decide il CCNL, e questi sono quelli del commercio.
+     *
+     * Le addizionali non si trattengono nell anno di competenza. Il saldo si
+     * determina al conguaglio e si preleva l anno dopo in un massimo di undici
+     * rate; il solo acconto comunale, il 30% calcolato sull imponibile
+     * dell anno precedente, si preleva nell anno stesso in nove rate da marzo.
+     * Su una retribuzione costante quello che esce per cassa in un anno
+     * coincide con quello che si deve per competenza: la differenza esiste solo
+     * nel primo e nell ultimo anno di un rapporto, che il modello non copre.
+     */
+    payroll: {
+      ordinaryPeriods: 12,
+      extraMonths: { 12: [], 13: [12], 14: [6, 12] },
+      extraMonthsSourceId: 'ccnl-commercio',
+      surtaxInstalments: {
+        balanceInstalments: 11,
+        balanceFirstMonth: 1,
+        municipalAdvanceShare: 0.3,
+        municipalAdvanceInstalments: 9,
+        municipalAdvanceFirstMonth: 3,
+        regionalSourceId: 'dlgs-446-1997-art-50',
+        municipalSourceId: 'dlgs-360-1998-art-1'
+      },
+      sourceId: 'dpr-600-1973-art-23'
+    },
+
     employmentYear: { days: 365 },
 
     /**
@@ -216,6 +246,34 @@ var PARAMETERS_2025 = (function () {
      * was opened and checked to land on the document it claims.
      */
     sources: {
+      'dpr-600-1973-art-23': {
+        label: 'art. 23 DPR 600/1973',
+        title: 'Ritenute sui redditi di lavoro dipendente, periodi di paga e conguaglio',
+        url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1973-09-29;600',
+        inForceFrom: '1974-01-01',
+        note: 'Comma 2 lett. a) per i periodi ordinari, con scaglioni e detrazioni ragguagliati al periodo di paga. Comma 2 lett. b) per le mensilita aggiuntive, che ragguagliano gli scaglioni a mese e non nominano le detrazioni. Comma 3 per il conguaglio.'
+      },
+      'dlgs-446-1997-art-50': {
+        label: 'art. 50 co. 4 D.Lgs. 446/1997',
+        title: 'Addizionale regionale, trattenuta in un massimo di undici rate dopo il conguaglio',
+        url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1997-12-15;446',
+        inForceFrom: '1998-01-01',
+        note: 'Nessun acconto: l addizionale regionale di un anno si preleva per intero l anno successivo.'
+      },
+      'dlgs-360-1998-art-1': {
+        label: 'art. 1 co. 4 e 5 D.Lgs. 360/1998',
+        title: 'Addizionale comunale, acconto del 30% in nove rate da marzo e saldo in undici rate',
+        url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1998-09-28;360',
+        inForceFrom: '1999-01-01',
+        note: 'L acconto si calcola sull imponibile dell anno precedente. Il comma 3-bis e la base della soglia di esenzione, che i comuni possono legare a specifici requisiti reddituali.'
+      },
+      'ccnl-commercio': {
+        label: 'CCNL Terziario, distribuzione e servizi',
+        title: 'Mensilita aggiuntive: tredicesima a dicembre, quattordicesima a giugno',
+        url: null,
+        inForceFrom: '2024-01-01',
+        note: 'Non e una fonte normativa: il mese in cui cadono le mensilita aggiuntive lo decide il contratto collettivo, e questo e un assunzione dichiarata come il costo azienda.'
+      },
       'tuir-art-11': {
         label: 'art. 11 TUIR',
         title: 'DPR 22 dicembre 1986 n. 917, art. 11, tre scaglioni resi strutturali da L. 207/2024',

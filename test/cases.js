@@ -51,7 +51,9 @@ var CASES = (function () {
     resolve(typeof SUITE_SHAPE !== 'undefined' ? SUITE_SHAPE : undefined,
       './suites/shape.js'),
     resolve(typeof SUITE_INVERSE !== 'undefined' ? SUITE_INVERSE : undefined,
-      './suites/inverse.js')
+      './suites/inverse.js'),
+    resolve(typeof SUITE_PAYROLL !== 'undefined' ? SUITE_PAYROLL : undefined,
+      './suites/payroll.js')
   ];
 
   return {

@@ -47,6 +47,9 @@ var createEngine = (function () {
   var makeInverse = resolve(
     typeof ENGINE_INVERSE !== 'undefined' ? ENGINE_INVERSE : undefined,
     './engine/inverse.js');
+  var makeMonthly = resolve(
+    typeof ENGINE_MONTHLY !== 'undefined' ? ENGINE_MONTHLY : undefined,
+    './engine/monthly.js');
 
   /**
    * The ceiling of the modelled range. Not a tax parameter: a guard against a
@@ -83,6 +86,7 @@ var createEngine = (function () {
     var calculation = makeCalculation(rules, position, steps);
     var breakpoints = makeBreakpoints(parameters, MAX_RAL, numbers, steps, rules, position);
     var inverse = makeInverse(MAX_RAL, position, breakpoints, calculation);
+    var monthly = makeMonthly(parameters, numbers, calculation);
 
     return {
       parameters: parameters,
@@ -104,6 +108,7 @@ var createEngine = (function () {
       normalizePosition: position.normalizePosition,
       withGross: position.withGross,
       calculateNet: calculation.calculateNet,
+      monthlySchedule: monthly.monthlySchedule,
       grossFromTaxable: breakpoints.grossFromTaxable,
       getBreakpoints: breakpoints.getBreakpoints,
       solveGrossFromNet: inverse.solveGrossFromNet,

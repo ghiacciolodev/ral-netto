@@ -165,6 +165,28 @@
     </section>
 
     <section class="block">
+      <h3>Mese per mese</h3>
+      <p class="hint hint-block" id="payroll-note"></p>
+      <div class="table-scroll">
+        <table class="ledger" id="payroll-table">
+          <thead>
+            <tr>
+              <th scope="col">Periodo di paga</th>
+              <th scope="col" class="num">Lordo</th>
+              <th scope="col" class="num">Contributi</th>
+              <th scope="col" class="num">IRPEF</th>
+              <th scope="col" class="num">Addizionali</th>
+              <th scope="col" class="num">Cuneo e integrativo</th>
+              <th scope="col" class="num">Netto</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
       <h3>Voce per voce</h3>
       <table class="ledger" id="ledger-table">
         <thead>
@@ -313,6 +335,7 @@
 <script src="src/engine/calculation.js"></script>
 <script src="src/engine/breakpoints.js"></script>
 <script src="src/engine/inverse.js"></script>
+<script src="src/engine/monthly.js"></script>
 <script src="src/engine.js"></script>
 <script src="src/ui-common.js"></script>
 <script src="src/ui-calculator.js"></script>

@@ -202,6 +202,78 @@ Quanto pesa il posto, a parità di tutto il resto? Con RAL 30.000 su 13 mensilit
 Quarantaquattro euro al mese fra Trento e Roma, che sulla RAL da offrire per lo stesso
 netto diventano **1.565 €**.
 
+## Mese per mese
+
+Il netto mensile del riepilogo è una media: netto annuo diviso le mensilità. Il
+prospetto dei periodi di paga mostra che i mesi non sono uguali fra loro, e perché.
+La fonte è l'**art. 23 DPR 600/1973**, che dice tre cose.
+
+**Comma 2 lett. a)**, periodi ordinari: la ritenuta si calcola ragguagliando al periodo
+di paga gli scaglioni annui, e applicando le detrazioni degli articoli 12 e 13
+rapportate allo stesso periodo.
+
+**Comma 2 lett. b)**, mensilità aggiuntive: si ragguagliano a mese gli scaglioni, e le
+detrazioni **non sono nominate**. Non è una dimenticanza: le detrazioni spettano per il
+periodo di paga, e la tredicesima non aggiunge giorni.
+
+**Comma 3**, conguaglio: si confronta il già trattenuto con il dovuto sull'ammontare
+complessivo.
+
+### La tredicesima è tassata di più, e non torna indietro
+
+Con RAL 30.000 su 13 mensilità, a Milano:
+
+| Periodo | Lordo | IRPEF | Netto |
+|---|---|---|---|
+| un mese ordinario | 2.307,69 € | 228,30 € | 1.811,82 € |
+| tredicesima | 2.307,69 € | **481,99 €** | **1.613,62 €** |
+
+Stesso lordo, imposta lorda identica, ma sulla tredicesima non c'è niente da
+sottrarre: quasi **duecento euro di differenza**. E non è un anticipo che si recupera,
+perché le detrazioni vengono comunque usate per intero sui dodici mesi ordinari. Il
+totale dell'anno è lo stesso, è la distribuzione a non esserlo.
+
+A redditi alti l'effetto sparisce, perché non ci sono detrazioni da perdere.
+
+### Il conguaglio non è sempre zero
+
+Su una retribuzione costante tutta dentro uno scaglione il conguaglio è nullo, ed è un
+risultato, non una mancanza. Ma non sempre:
+
+| Caso | Conguaglio a dicembre |
+|---|---|
+| RAL 30.000 | 0,00 € |
+| RAL 80.000 | **+ 650,00 €** da trattenere |
+| RAL 20.000 con coniuge e tre figli | **− 321,33 €** da restituire |
+
+A 80.000 ogni periodo vede un tredicesimo della RAL attraverso scaglioni ragguagliati a
+un dodicesimo: si presenta più povero di quello che è, la progressività morde meno, e a
+dicembre arriva il conto in una volta sola. A 12 mensilità l'effetto non esiste.
+
+Nel caso opposto, quando le detrazioni superano l'imposta del mese, la ritenuta si
+ferma a zero e quello che avanza non si perde: torna al conguaglio.
+
+### Le addizionali non si pagano nell'anno di competenza
+
+Il saldo si determina al conguaglio e si trattiene l'anno dopo in un massimo di
+**undici rate** ([art. 50 co. 4 D.Lgs. 446/1997](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1997-12-15;446) per la regionale,
+[art. 1 co. 5 D.Lgs. 360/1998](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1998-09-28;360) per la comunale). Il solo acconto comunale, il **30%**
+calcolato sull'imponibile dell'anno precedente, si trattiene nell'anno stesso in
+**nove rate da marzo**.
+
+Su una retribuzione costante i due anni coincidono, quindi quello che esce per cassa in
+un anno è esattamente l'addizionale dovuta per quell'anno: è la distribuzione dentro
+l'anno a non essere uniforme. La differenza fra cassa e competenza esiste solo nel
+primo e nell'ultimo anno di un rapporto, che questo modello non copre.
+
+### Come si sa che è giusto
+
+Il modello annuale e il prospetto sono **due strade diverse per lo stesso numero**. La
+somma dei netti di periodo deve fare il netto annuo, al centesimo, su qualunque
+posizione: nove casi lo verificano, dall'incapiente al reddito oltre il massimale, con
+familiari a carico, su rapporto parziale e in comuni diversi. Se il prospetto sbagliasse
+una regola, la somma smetterebbe di tornare.
+
 ## Assunzioni e semplificazioni
 
 Ogni riga è una cosa che il modello **non** fa, con il motivo.
@@ -218,8 +290,9 @@ Ogni riga è una cosa che il modello **non** fa, con il motivo.
 | TFR escluso dal netto | È accantonato, non erogato. Compare solo nel costo azienda. |
 | Nessuna rivalutazione del TFR | Il TFR accantonato si rivaluta di 1,5% più il 75% dell'indice ISTAT. |
 | Nessun fringe benefit, welfare, premio di risultato o straordinario a tassazione agevolata | Ognuno avrebbe una base imponibile propria. |
-| Addizionali per competenza sull'anno corrente | Il meccanismo reale è saldo dell'anno precedente più acconto. |
-| Nessun conguaglio di fine anno | Il modello calcola l'anno intero in una volta. |
+| Il prospetto mensile applica l'art. 23 alla lettera | Molti software di paghe usano invece il metodo del reddito presunto annuo, che ridistribuisce lo stesso totale sui mesi e riduce il conguaglio. Il totale dell'anno è identico nei due metodi, la distribuzione no. |
+| Prospetto in regime stazionario | Le addizionali trattenute sono quelle di un anno uguale al precedente. Nel primo e nell'ultimo anno di un rapporto cassa e competenza divergono. |
+| Il mese delle mensilità aggiuntive è un'assunzione | Dicembre per la tredicesima, giugno per la quattordicesima: lo decide il CCNL, non la legge. |
 | Imponibile previdenziale assunto uguale a imponibile fiscale | Nel caso reale differiscono per alcune voci. |
 | Reddito complessivo assunto uguale al reddito da lavoro dipendente | Vero solo perché monoreddito. Nel motore restano due parametri distinti. |
 | Netto mensile come media annua | Non è un cedolino: la ritenuta reale varia di mese in mese. |
@@ -315,7 +388,7 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-549 asserzioni, divise in dodici suite per area. Se il codice e un valore atteso non
+622 asserzioni, divise in tredici suite per area. Se il codice e un valore atteso non
 concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
@@ -412,6 +485,7 @@ src/engine/rules.js        i provvedimenti come oggetti: calcolo, traccia, sogli
 src/engine/calculation.js  esegue le regole una volta e raccoglie il risultato
 src/engine/breakpoints.js  le soglie dichiarate e quelle che emergono
 src/engine/inverse.js      dal netto alla RAL, piu l oracolo binario dei test
+src/engine/monthly.js      il prospetto dei periodi di paga e il conguaglio
 src/ui-common.js           helper di rendering condivisi
 src/ui-calculator.js       pagina calcolatore
 src/ui-curve.js            pagina curva
