@@ -53,13 +53,25 @@
 <script src="../src/engine/inverse.js"></script>
 <script src="../src/engine.js"></script>
 <script src="harness.js"></script>
+<script src="fixtures.js"></script>
+<script src="suites/numbers.js"></script>
+<script src="suites/validation.js"></script>
+<script src="suites/values.js"></script>
+<script src="suites/partial-year.js"></script>
+<script src="suites/family.js"></script>
+<script src="suites/local.js"></script>
+<script src="suites/years.js"></script>
+<script src="suites/ledger.js"></script>
+<script src="suites/breakpoints.js"></script>
+<script src="suites/shape.js"></script>
+<script src="suites/inverse.js"></script>
 <script src="cases.js"></script>
 <script>
 (function () {
   'use strict';
 
   var engine = createEngine(PARAMETERS);
-  var summary = runTests(engine, createHarness(), PARAMETERS, createEngine);
+  var summary = CASES.runTests(engine, createHarness(), PARAMETERS, createEngine);
 
   var verdict = document.getElementById('verdict');
   verdict.className = 'verdict ' + (summary.failed === 0 ? 'pass' : 'fail');

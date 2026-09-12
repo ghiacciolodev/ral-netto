@@ -233,7 +233,8 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-464 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
+464 asserzioni, divise in undici suite per area. Se il codice e un valore atteso non
+concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
 
@@ -333,7 +334,9 @@ src/ui-common.js           helper di rendering condivisi
 src/ui-calculator.js       pagina calcolatore
 src/ui-curve.js            pagina curva
 src/styles.css
-test/cases.js              casi di valore e test strutturali
+test/cases.js              registro delle suite, nell ordine in cui girano
+test/fixtures.js           valori attesi condivisi fra le suite
+test/suites/*.js           una suite per area, undici file
 test/harness.js            runner di asserzioni
 test/run.js                esecuzione da riga di comando
 test/runner.html           esecuzione in browser
