@@ -300,7 +300,7 @@
 
     var result;
     try {
-      result = engine.calculateNet(ral, { months: parseInt(inputMonths.value, 10) });
+      result = engine.calculateNet({ grossAnnual: ral, months: parseInt(inputMonths.value, 10) });
     } catch (e) {
       showError(e.message);
       employerBlock.hidden = true;
@@ -426,12 +426,13 @@
    */
   function renderLearnt() {
     var card = document.getElementById('learned-card');
-    var smooth = { months: 13, exactRatios: true };
+    var base = { months: 13 };
+    var smooth = { exactRatios: true };
     var h = 1;
 
     function marginalAt(ral) {
-      return (engine.calculateNet(ral + h, smooth).netAnnual -
-              engine.calculateNet(ral - h, smooth).netAnnual) / (2 * h);
+      return (engine.calculateNet(engine.withGross(base, ral + h), smooth).netAnnual -
+              engine.calculateNet(engine.withGross(base, ral - h), smooth).netAnnual) / (2 * h);
     }
 
     var low = marginalAt(LEARNT_LOW);

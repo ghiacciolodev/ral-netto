@@ -15,7 +15,9 @@
   var CURVE_SAMPLES = 250;
 
   var MONTHS = 13;
-  var SMOOTH = { months: MONTHS, exactRatios: true };
+  // The subject stays fixed; only the gross is swept along the axis.
+  var BASE = { months: MONTHS };
+  var SMOOTH = { exactRatios: true };
 
   // Two salaries far apart in the brackets, used to show that the lower one can
   // keep less of a raise than the higher one. Illustrative choice; the rates
@@ -26,8 +28,8 @@
   /** How much of one extra gross euro reaches the net, at this gross pay. */
   function marginalAt(ral) {
     var h = 1;
-    return (engine.calculateNet(ral + h, SMOOTH).netAnnual -
-            engine.calculateNet(ral - h, SMOOTH).netAnnual) / (2 * h);
+    return (engine.calculateNet(engine.withGross(BASE, ral + h), SMOOTH).netAnnual -
+            engine.calculateNet(engine.withGross(BASE, ral - h), SMOOTH).netAnnual) / (2 * h);
   }
 
   /**
@@ -77,8 +79,8 @@
       for (var i = 0; i <= share; i++) {
         var ral = lo + ((hi - lo) * i) / share;
         var marginal =
-          (engine.calculateNet(ral + step, SMOOTH).netAnnual -
-           engine.calculateNet(ral - step, SMOOTH).netAnnual) / (2 * step);
+          (engine.calculateNet(engine.withGross(BASE, ral + step), SMOOTH).netAnnual -
+           engine.calculateNet(engine.withGross(BASE, ral - step), SMOOTH).netAnnual) / (2 * step);
 
         run.push(x(ral).toFixed(1) + ',' + y(marginal).toFixed(1));
       }
@@ -146,8 +148,8 @@
     ui.clear(tbody);
 
     marks.forEach(function (bp, index) {
-      var before = engine.calculateNet(bp.ral - delta, SMOOTH).netAnnual;
-      var after = engine.calculateNet(bp.ral + delta, SMOOTH).netAnnual;
+      var before = engine.calculateNet(engine.withGross(BASE, bp.ral - delta), SMOOTH).netAnnual;
+      var after = engine.calculateNet(engine.withGross(BASE, bp.ral + delta), SMOOTH).netAnnual;
       var jump = after - before;
       var flat = Math.abs(jump) < 0.5;
 

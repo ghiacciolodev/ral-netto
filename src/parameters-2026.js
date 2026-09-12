@@ -12,10 +12,12 @@
 var PARAMETERS_2026 = (function () {
   return {
     taxYear: 2026,
-    region: 'Lombardia',
-    municipality: 'Milano',
+    // `key` is what a position is matched against, `name` is what goes on screen.
+    region: { key: 'lombardia', name: 'Lombardia' },
+    municipality: { key: 'milano', name: 'Milano' },
 
     payrollMonths: { allowed: [12, 13, 14], defaultValue: 13 },
+    employmentYear: { days: 365 },
 
     // Employee social security. The cap truncates both the IVS rate and the
     // additional 1%, so a single capped base feeds both.

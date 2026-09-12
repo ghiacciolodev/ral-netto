@@ -72,35 +72,94 @@ var createEngine = function createEngine(parameters) {
     return pct.replace('.', ',') + '%';
   }
 
-  // ------------------------------------------------------------ validation
+  // -------------------------------------------------------------- position
 
-  function normalizeOptions(options) {
-    var opts = options || {};
-    var months = opts.months === undefined ? parameters.payrollMonths.defaultValue : opts.months;
-
-    if (parameters.payrollMonths.allowed.indexOf(months) === -1) {
-      throw new RangeError(
-        'Mensilita non ammesse: ' + months +
-        '. Valori consentiti: ' + parameters.payrollMonths.allowed.join(', ') + '.'
-      );
+  /**
+   * A position is the subject of the calculation: who is paid, how and where.
+   * Anything left out falls back to the modelled case.
+   *
+   * Some fields accept exactly one value today. They are in the contract anyway,
+   * on purpose: it turns a documented simplification into an enforced one. Asking
+   * for Lazio returns an error instead of a Lombardy figure with the wrong label.
+   *
+   * @param {{grossAnnual: number, months?: number, daysWorked?: number,
+   *          region?: string, municipality?: string}} input
+   */
+  function normalizePosition(input) {
+    if (input === null || typeof input !== 'object') {
+      throw new TypeError(
+        'La posizione deve essere un oggetto, per esempio { grossAnnual: 30000, months: 13 }.');
     }
 
-    // `exactRatios` skips the statutory truncation. It is not a tax option: it
-    // is the smooth model the inverse solver fits and the tests use to prove the
-    // breakpoint list is complete. Statutory behaviour is the default.
-    return { months: months, exactRatios: opts.exactRatios === true };
-  }
+    function fallback(value, standard) {
+      return value === undefined ? standard : value;
+    }
 
-  function validateRal(ral) {
-    if (typeof ral !== 'number' || !isFinite(ral)) {
+    var position = {
+      grossAnnual: input.grossAnnual,
+      months: fallback(input.months, parameters.payrollMonths.defaultValue),
+      daysWorked: fallback(input.daysWorked, parameters.employmentYear.days),
+      region: String(fallback(input.region, parameters.region.key)).toLowerCase(),
+      municipality: String(fallback(input.municipality, parameters.municipality.key)).toLowerCase()
+    };
+
+    if (typeof position.grossAnnual !== 'number' || !isFinite(position.grossAnnual)) {
       throw new TypeError('La RAL deve essere un numero.');
     }
-    if (ral < 0) {
+    if (position.grossAnnual < 0) {
       throw new RangeError('La RAL non puo essere negativa.');
     }
-    if (ral > MAX_RAL) {
+    if (position.grossAnnual > MAX_RAL) {
       throw new RangeError('La RAL supera il limite gestito di ' + formatAmount(MAX_RAL) + ' euro.');
     }
+
+    if (parameters.payrollMonths.allowed.indexOf(position.months) === -1) {
+      throw new RangeError(
+        'Mensilita non ammesse: ' + position.months +
+        '. Valori consentiti: ' + parameters.payrollMonths.allowed.join(', ') + '.');
+    }
+
+    if (position.daysWorked !== parameters.employmentYear.days) {
+      throw new RangeError(
+        'Il modello copre solo il rapporto per l intero anno, ' +
+        parameters.employmentYear.days + ' giorni. Il ragguaglio ai giorni non e implementato.');
+    }
+
+    if (position.region !== parameters.region.key) {
+      throw new RangeError(
+        'Regione non supportata: ' + position.region +
+        '. Il modello copre solo ' + parameters.region.name + '.');
+    }
+
+    if (position.municipality !== parameters.municipality.key) {
+      throw new RangeError(
+        'Comune non supportato: ' + position.municipality +
+        '. Il modello copre solo ' + parameters.municipality.name + '.');
+    }
+
+    return position;
+  }
+
+  /**
+   * Same subject, different gross. Used wherever the gross is swept.
+   * Takes a partial position too, so a template without a gross is a valid
+   * starting point: the merge happens before validation, not after.
+   */
+  function withGross(position, grossAnnual) {
+    var merged = { grossAnnual: grossAnnual };
+    Object.keys(position || {}).forEach(function (key) {
+      if (key !== 'grossAnnual') merged[key] = position[key];
+    });
+    return normalizePosition(merged);
+  }
+
+  /**
+   * How to compute, not who for. `exactRatios` skips the statutory truncation to
+   * recover the smooth model that the inverse solver fits and the tests use to
+   * prove the breakpoint list is complete.
+   */
+  function normalizeOptions(options) {
+    return { exactRatios: (options || {}).exactRatios === true };
   }
 
   // ------------------------------------------------------------- the steps
@@ -252,12 +311,13 @@ var createEngine = function createEngine(parameters) {
   // ------------------------------------------------------------------ main
 
   /**
-   * @param {number} ral
-   * @param {{months?: number}} [options]
+   * @param {object} input the position, see normalizePosition
+   * @param {{exactRatios?: boolean}} [options]
    */
-  function calculateNet(ral, options) {
-    validateRal(ral);
+  function calculateNet(input, options) {
+    var position = normalizePosition(input);
     var opts = normalizeOptions(options);
+    var ral = position.grossAnnual;
 
     var contributions = computeContributions(ral);
     var taxable = ral - contributions.total;
@@ -300,8 +360,9 @@ var createEngine = function createEngine(parameters) {
     });
 
     return {
+      position: position,
       ral: ral,
-      months: opts.months,
+      months: position.months,
       contributions: {
         ivs: contributions.ivs,
         additionalRate: contributions.additionalRate,
@@ -332,7 +393,7 @@ var createEngine = function createEngine(parameters) {
         total: surtaxes.total
       },
       netAnnual: netAnnual,
-      netMonthly: netAnnual / opts.months,
+      netMonthly: netAnnual / position.months,
       employerCost: computeEmployerCost(ral),
       ledger: ledger
     };
@@ -382,7 +443,7 @@ var createEngine = function createEngine(parameters) {
 
     entries.push({
       id: 'surtax.regional',
-      label: 'Addizionale regionale ' + parameters.region,
+      label: 'Addizionale regionale ' + parameters.region.name,
       sign: -1,
       base: s.taxable,
       formula: 'scaglioni progressivi su ' + formatAmount(s.taxable),
@@ -392,7 +453,7 @@ var createEngine = function createEngine(parameters) {
 
     entries.push({
       id: 'surtax.municipal',
-      label: 'Addizionale comunale ' + parameters.municipality,
+      label: 'Addizionale comunale ' + parameters.municipality.name,
       sign: -1,
       base: s.taxable,
       formula: s.surtaxes.municipalExempt
@@ -571,12 +632,12 @@ var createEngine = function createEngine(parameters) {
    * candidate is within about 0.3 euro of the answer, so a short scan settles
    * the staircase that the smooth model cannot see.
    */
-  function refineCandidate(candidate, lo, hi, targetNet, opts) {
+  function refineCandidate(candidate, lo, hi, targetNet, position) {
     var from = Math.max(lo, candidate - REFINE_WINDOW);
     var to = Math.min(hi, candidate + REFINE_WINDOW);
 
     for (var x = from; x <= to + 1e-9; x += REFINE_STEP) {
-      if (calculateNet(x, opts).netAnnual >= targetNet - 1e-9) return x;
+      if (calculateNet(withGross(position, x)).netAnnual >= targetNet - 1e-9) return x;
     }
 
     return null;
@@ -596,16 +657,16 @@ var createEngine = function createEngine(parameters) {
    * gaps, so an exact hit need not exist at all.
    *
    * @param {number} targetNet
-   * @param {{months?: number}} [options]
+   * @param {object} [input] the position whose gross is being solved for
    */
-  function solveGrossFromNet(targetNet, options) {
-    var opts = normalizeOptions(options);
+  function solveGrossFromNet(targetNet, input) {
+    var position = withGross(input, 0);
 
     if (typeof targetNet !== 'number' || !isFinite(targetNet) || targetNet < 0) {
       throw new RangeError('Il netto obiettivo deve essere un numero non negativo.');
     }
 
-    var smooth = { months: opts.months, exactRatios: true };
+    var smooth = { exactRatios: true };
     var points = segmentBounds();
     var solutions = [];
     var reachable = [];
@@ -618,14 +679,14 @@ var createEngine = function createEngine(parameters) {
       var span = hi - lo;
       var p1 = lo + span / 3;
       var p2 = lo + (2 * span) / 3;
-      var n1 = calculateNet(p1, smooth).netAnnual;
-      var n2 = calculateNet(p2, smooth).netAnnual;
+      var n1 = calculateNet(withGross(position, p1), smooth).netAnnual;
+      var n2 = calculateNet(withGross(position, p2), smooth).netAnnual;
 
       var slope = (n2 - n1) / (p2 - p1);
 
       var edge = Math.min(span * 1e-9, 1e-6);
-      reachable.push({ ral: lo + edge, net: calculateNet(lo + edge, opts).netAnnual });
-      reachable.push({ ral: hi - edge, net: calculateNet(hi - edge, opts).netAnnual });
+      reachable.push({ ral: lo + edge, net: calculateNet(withGross(position, lo + edge)).netAnnual });
+      reachable.push({ ral: hi - edge, net: calculateNet(withGross(position, hi - edge)).netAnnual });
 
       if (Math.abs(slope) < 1e-12) continue;
 
@@ -634,7 +695,7 @@ var createEngine = function createEngine(parameters) {
       if (candidate < lo - 1 || candidate > hi + 1) continue;
 
       var refined = refineCandidate(
-        Math.min(Math.max(candidate, lo), hi), lo, hi, targetNet, opts);
+        Math.min(Math.max(candidate, lo), hi), lo, hi, targetNet, position);
 
       if (refined !== null) solutions.push(refined);
     }
@@ -642,7 +703,7 @@ var createEngine = function createEngine(parameters) {
     if (solutions.length > 0) {
       solutions.sort(function (a, b) { return a - b; });
       var best = solutions[0];
-      var result = calculateNet(best, opts);
+      var result = calculateNet(withGross(position, best));
       return {
         found: true,
         ral: best,
@@ -668,14 +729,14 @@ var createEngine = function createEngine(parameters) {
    * violates at two thresholds; outside those it must agree with the exact
    * solver, and two implementations agreeing is a real correctness argument.
    */
-  function solveGrossFromNetBinary(targetNet, options) {
-    var opts = normalizeOptions(options);
+  function solveGrossFromNetBinary(targetNet, input) {
+    var position = withGross(input, 0);
     var lo = 0;
     var hi = MAX_RAL;
 
     for (var i = 0; i < 100; i++) {
       var mid = (lo + hi) / 2;
-      if (calculateNet(mid, opts).netAnnual < targetNet) lo = mid; else hi = mid;
+      if (calculateNet(withGross(position, mid)).netAnnual < targetNet) lo = mid; else hi = mid;
     }
 
     return hi;
@@ -686,6 +747,8 @@ var createEngine = function createEngine(parameters) {
     maxRal: MAX_RAL,
     truncate: truncate,
     applyBrackets: applyBrackets,
+    normalizePosition: normalizePosition,
+    withGross: withGross,
     formatAmount: formatAmount,
     formatRate: formatRate,
     calculateNet: calculateNet,

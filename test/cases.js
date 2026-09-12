@@ -155,17 +155,29 @@ var runTests = function runTests(engine, t) {
   t.close('rapporto del caso 35.000', engine.truncate(18216.5 / 22000, 4), 0.8280, 1e-12);
 
   t.group('Validazione input');
-  t.throws('RAL negativa', function () { engine.calculateNet(-1); });
-  t.throws('RAL non numerica', function () { engine.calculateNet('30000'); });
-  t.throws('RAL oltre il limite', function () { engine.calculateNet(engine.maxRal + 1); });
-  t.throws('mensilita non ammesse', function () { engine.calculateNet(30000, { months: 15 }); });
-  t.ok('RAL zero e ammessa', engine.calculateNet(0).netAnnual === 0);
+  t.throws('RAL negativa', function () { engine.calculateNet({ grossAnnual: -1 }); });
+  t.throws('RAL non numerica', function () { engine.calculateNet({ grossAnnual: '30000' }); });
+  t.throws('RAL oltre il limite', function () { engine.calculateNet({ grossAnnual: engine.maxRal + 1 }); });
+  t.throws('mensilita non ammesse', function () { engine.calculateNet({ grossAnnual: 30000, months: 15 }); });
+  t.ok('RAL zero e ammessa', engine.calculateNet({ grossAnnual: 0 }).netAnnual === 0);
+  t.throws('posizione non oggetto', function () { engine.calculateNet(30000); });
+  t.throws('regione non modellata', function () {
+    engine.calculateNet({ grossAnnual: 30000, region: 'lazio' });
+  });
+  t.throws('comune non modellato', function () {
+    engine.calculateNet({ grossAnnual: 30000, municipality: 'roma' });
+  });
+  t.throws('anno non intero', function () {
+    engine.calculateNet({ grossAnnual: 30000, daysWorked: 180 });
+  });
+  t.ok('la posizione normalizzata torna nel risultato',
+    engine.calculateNet({ grossAnnual: 30000 }).position.region === 'lombardia');
 
   // ------------------------------------------------------------ value cases
 
   t.group('Casi di valore');
   VALUE_CASES.forEach(function (c) {
-    var r = engine.calculateNet(c.ral, { months: c.months });
+    var r = engine.calculateNet({ grossAnnual: c.ral, months: c.months });
     var tag = 'RAL ' + c.ral + ' (' + c.note + ')';
 
     t.close(tag + ' - contributi', r.contributions.total, c.contributions);
@@ -189,7 +201,7 @@ var runTests = function runTests(engine, t) {
 
   t.group('La traccia ricostruisce il netto');
   VALUE_CASES.forEach(function (c) {
-    var r = engine.calculateNet(c.ral, { months: c.months });
+    var r = engine.calculateNet({ grossAnnual: c.ral, months: c.months });
     var rebuilt = r.ledger.reduce(function (sum, entry) {
       return sum + entry.sign * entry.amount;
     }, r.ral);
@@ -199,7 +211,7 @@ var runTests = function runTests(engine, t) {
   t.group('Ogni voce della traccia cita una fonte esistente');
   var orphans = [];
   VALUE_CASES.forEach(function (c) {
-    engine.calculateNet(c.ral).ledger.forEach(function (entry) {
+    engine.calculateNet({ grossAnnual: c.ral }).ledger.forEach(function (entry) {
       if (!engine.parameters.sources[entry.sourceId]) orphans.push(entry.id + ' -> ' + entry.sourceId);
     });
   });
@@ -245,18 +257,19 @@ var runTests = function runTests(engine, t) {
     if (hi - lo < 1e-6) continue;
 
     var span = hi - lo;
-    var smooth = { months: 13, exactRatios: true };
+    var base = { months: 13 };
+    var smooth = { exactRatios: true };
     var x1 = lo + span / 3;
     var x2 = lo + (2 * span) / 3;
-    var y1 = engine.calculateNet(x1, smooth).netAnnual;
-    var y2 = engine.calculateNet(x2, smooth).netAnnual;
+    var y1 = engine.calculateNet(engine.withGross(base, x1), smooth).netAnnual;
+    var y2 = engine.calculateNet(engine.withGross(base, x2), smooth).netAnnual;
 
     var slope = (y2 - y1) / (x2 - x1);
     var intercept = y1 - slope * x1;
 
     var probe = lo + span / 2;
     var predicted = slope * probe + intercept;
-    var actual = engine.calculateNet(probe, smooth).netAnnual;
+    var actual = engine.calculateNet(engine.withGross(base, probe), smooth).netAnnual;
 
     t.close(
       'segmento ' + lo.toFixed(2) + ' - ' + hi.toFixed(2) + ' e affine',
@@ -272,8 +285,8 @@ var runTests = function runTests(engine, t) {
   t.group('Scarto introdotto dal troncamento');
   var worstGap = 0;
   for (var ral = 10000; ral <= 80000; ral += 37) {
-    var statutory = engine.calculateNet(ral, { months: 13 }).netAnnual;
-    var idealised = engine.calculateNet(ral, { months: 13, exactRatios: true }).netAnnual;
+    var statutory = engine.calculateNet({ grossAnnual: ral, months: 13 }).netAnnual;
+    var idealised = engine.calculateNet({ grossAnnual: ral, months: 13 }, { exactRatios: true }).netAnnual;
     var gap = idealised - statutory;
     if (gap > worstGap) worstGap = gap;
     if (gap < -1e-9) worstGap = 999;
@@ -287,12 +300,12 @@ var runTests = function runTests(engine, t) {
   var noTaxArea = breakpoints.filter(function (bp) { return bp.id === 'no-tax-area'; })[0];
   t.ok('il punto esiste', !!noTaxArea);
   t.close('cade esattamente a imponibile 8.500', noTaxArea ? noTaxArea.threshold : NaN, 8500, 1e-9);
-  t.close('IRPEF netta nulla appena sotto', engine.calculateNet(noTaxArea.ral - 1).irpef.net, 0, 1e-9);
-  t.ok('IRPEF netta positiva appena sopra', engine.calculateNet(noTaxArea.ral + 1).irpef.net > 0);
+  t.close('IRPEF netta nulla appena sotto', engine.calculateNet({ grossAnnual: noTaxArea.ral - 1 }).irpef.net, 0, 1e-9);
+  t.ok('IRPEF netta positiva appena sopra', engine.calculateNet({ grossAnnual: noTaxArea.ral + 1 }).irpef.net > 0);
 
   t.group('Limiti e monotonia');
   [5000, 12000, 20000, 30000, 45000, 70000, 150000].forEach(function (ral) {
-    var r = engine.calculateNet(ral);
+    var r = engine.calculateNet({ grossAnnual: ral });
     t.ok('RAL ' + ral + ': netto tra zero e lordo', r.netAnnual >= 0 && r.netAnnual <= ral);
   });
 
@@ -302,8 +315,8 @@ var runTests = function runTests(engine, t) {
   ];
   drops.forEach(function (d) {
     var ral = engine.grossFromTaxable(d.taxable);
-    var before = engine.calculateNet(ral - 1).netAnnual;
-    var after = engine.calculateNet(ral + 1).netAnnual;
+    var before = engine.calculateNet({ grossAnnual: ral - 1 }).netAnnual;
+    var after = engine.calculateNet({ grossAnnual: ral + 1 }).netAnnual;
     t.ok('il netto scende attraversando imponibile ' + d.taxable + ' (' + d.label + ')',
       after < before, 'prima ' + before.toFixed(2) + ', dopo ' + after.toFixed(2));
   });
@@ -312,7 +325,7 @@ var runTests = function runTests(engine, t) {
 
   t.group('Inversione, andata e ritorno');
   [18000, 30000, 35000, 45000, 60000, 90000].forEach(function (ral) {
-    var target = engine.calculateNet(ral, { months: 13 }).netAnnual;
+    var target = engine.calculateNet({ grossAnnual: ral, months: 13 }).netAnnual;
     var solved = engine.solveGrossFromNet(target, { months: 13 });
     t.ok('RAL ' + ral + ': soluzione trovata', solved.found);
     if (solved.found) {
@@ -324,7 +337,7 @@ var runTests = function runTests(engine, t) {
 
   t.group('Inversione esatta contro oracolo binario');
   [30000, 35000, 45000, 60000, 90000].forEach(function (ral) {
-    var target = engine.calculateNet(ral, { months: 13 }).netAnnual;
+    var target = engine.calculateNet({ grossAnnual: ral, months: 13 }).netAnnual;
     var exact = engine.solveGrossFromNet(target, { months: 13 });
     var oracle = engine.solveGrossFromNetBinary(target, { months: 13 });
     t.close('netto da RAL ' + ral + ': i due metodi concordano',
@@ -344,8 +357,8 @@ var runTests = function runTests(engine, t) {
   t.ok('la soglia di capienza del trattamento integrativo esiste', !!upBp);
 
   var upRal = upBp.ral;
-  var underGap = engine.calculateNet(upRal - 0.5, { months: 13 }).netAnnual;
-  var overGap = engine.calculateNet(upRal + 0.5, { months: 13 }).netAnnual;
+  var underGap = engine.calculateNet({ grossAnnual: upRal - 0.5, months: 13 }).netAnnual;
+  var overGap = engine.calculateNet({ grossAnnual: upRal + 0.5, months: 13 }).netAnnual;
 
   t.ok('l ingresso del trattamento integrativo fa salire il netto', overGap > underGap,
     'sotto ' + underGap.toFixed(2) + ', sopra ' + overGap.toFixed(2));
@@ -365,11 +378,11 @@ var runTests = function runTests(engine, t) {
   t.group('Trattamento integrativo');
   var ti = engine.parameters.supplementaryAllowance;
   t.close('spetta pieno appena sopra la soglia di capienza',
-    engine.calculateNet(upRal + 1).supplementaryAllowance.amount, ti.amount);
+    engine.calculateNet({ grossAnnual: upRal + 1 }).supplementaryAllowance.amount, ti.amount);
   t.close('non spetta appena sotto',
-    engine.calculateNet(upRal - 1).supplementaryAllowance.amount, 0);
+    engine.calculateNet({ grossAnnual: upRal - 1 }).supplementaryAllowance.amount, 0);
   t.close('spetta ancora all ultimo euro della prima fascia',
-    engine.calculateNet(engine.grossFromTaxable(ti.incomeUpTo) - 0.5).supplementaryAllowance.amount,
+    engine.calculateNet({ grossAnnual: engine.grossFromTaxable(ti.incomeUpTo) - 0.5 }).supplementaryAllowance.amount,
     ti.amount);
 
   /**
@@ -380,20 +393,20 @@ var runTests = function runTests(engine, t) {
    */
   var anyInSecondBand = 0;
   for (var band = ti.incomeUpTo + 100; band <= ti.secondBandUpTo; band += 250) {
-    anyInSecondBand += engine.calculateNet(engine.grossFromTaxable(band)).supplementaryAllowance.amount;
+    anyInSecondBand += engine.calculateNet({ grossAnnual: engine.grossFromTaxable(band) }).supplementaryAllowance.amount;
   }
   t.close('nella seconda fascia resta sempre zero nel caso modellato', anyInSecondBand, 0);
 
   t.group('Salti in giu: stesso netto da due RAL');
   var stepRal = engine.grossFromTaxable(engine.parameters.employmentDeduction.flatUpTo);
   t.ok('perso il trattamento integrativo, il gradino art. 13 diventa un salto in giu',
-    engine.calculateNet(stepRal + 0.5).netAnnual < engine.calculateNet(stepRal - 0.5).netAnnual,
-    'sotto ' + engine.calculateNet(stepRal - 0.5).netAnnual.toFixed(2) +
-    ', sopra ' + engine.calculateNet(stepRal + 0.5).netAnnual.toFixed(2));
+    engine.calculateNet({ grossAnnual: stepRal + 0.5 }).netAnnual < engine.calculateNet({ grossAnnual: stepRal - 0.5 }).netAnnual,
+    'sotto ' + engine.calculateNet({ grossAnnual: stepRal - 0.5 }).netAnnual.toFixed(2) +
+    ', sopra ' + engine.calculateNet({ grossAnnual: stepRal + 0.5 }).netAnnual.toFixed(2));
 
   var downRal = engine.grossFromTaxable(23000);
-  var beforeDrop = engine.calculateNet(downRal - 0.5, { months: 13 }).netAnnual;
-  var afterDrop = engine.calculateNet(downRal + 0.5, { months: 13 }).netAnnual;
+  var beforeDrop = engine.calculateNet({ grossAnnual: downRal - 0.5, months: 13 }).netAnnual;
+  var afterDrop = engine.calculateNet({ grossAnnual: downRal + 0.5, months: 13 }).netAnnual;
 
   t.ok('la soglia comunale fa scendere il netto', afterDrop < beforeDrop,
     'sotto ' + beforeDrop.toFixed(2) + ', sopra ' + afterDrop.toFixed(2));
