@@ -1,4 +1,4 @@
-# Da RAL a netto, anno d'imposta 2026
+# Da RAL a netto, anni d'imposta 2025 e 2026
 
 Calcolatore che, data una retribuzione annua lorda, mostra il netto annuo e mensile
 di un dipendente e ogni voce trattenuta, con accanto la norma che la produce.
@@ -170,7 +170,7 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-309 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
+326 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
 
@@ -183,6 +183,23 @@ l'unità di validità naturale: una regola cambiata a metà anno sarebbe due voc
 registro, non un intervallo di date dentro una. **Un motore è legato a un anno solo**,
 scelto alla costruzione, così un singolo calcolo non può mescolare due regolamenti.
 
+Ogni anno è un file completo, non una variazione sull'anno vicino. Deve poter essere
+letto e verificato da solo contro le fonti di quell'anno, e una base condivisa
+significherebbe che correggere qualcosa per il 2026 cambia in silenzio quello che il
+file dice fosse la legge nel 2025. Il prezzo è la duplicazione, e contro la deriva
+accidentale c'è un test: confronta i due insiemi e pretende che differiscano
+**esattamente** nei cinque punti previsti, e in nessun altro.
+
+Le differenze fra i due anni presenti:
+
+| | 2025 | 2026 |
+|---|---|---|
+| Seconda aliquota IRPEF | 35% | 33% |
+| Prima fascia contributiva | 55.448 € | 56.224 € |
+| Massimale contributivo | 120.607 € | 122.295 € |
+
+Detrazioni, cuneo, trattamento integrativo e addizionali locali sono identici.
+
 Il motore non si tocca, perché non contiene nessun numero: aliquote, soglie, formule
 e perfino la posizione delle soglie sul grafico sono derivate dai parametri. Se un
 aggiornamento richiedesse di modificare il motore, sarebbe un difetto del motore.
@@ -193,6 +210,7 @@ aggiornamento richiedesse di modificare il motore, sarebbe un difetto del motore
 index.html                 calcolatore, inversa, costo azienda
 curva.html                 aliquota marginale e soglie
 src/parameters.js          registro degli anni d imposta disponibili
+src/parameters-2025.js     valori normativi e fonti dell anno 2025
 src/parameters-2026.js     valori normativi e fonti, unico posto con dei numeri
 src/engine.js              logica di calcolo, funzioni pure
 src/ui-common.js           helper di rendering condivisi

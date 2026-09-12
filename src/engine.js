@@ -777,6 +777,15 @@ var createEngine = function createEngine(source, taxYear) {
   return {
     parameters: parameters,
     taxYear: parameters.taxYear,
+
+    /** The same engine for another year, when built from the registry. */
+    forTaxYear: function (otherYear) {
+      if (!source || typeof source.forYear !== 'function') {
+        throw new Error('Questo motore non e stato costruito da un registro di anni.');
+      }
+      return createEngine(source, otherYear);
+    },
+
     maxRal: MAX_RAL,
     truncate: truncate,
     roundTo: roundTo,

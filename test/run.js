@@ -9,7 +9,7 @@ var cases = require('./cases.js');
 
 var engine = createEngine(parameters);
 var harness = createHarness();
-var summary = cases.runTests(engine, harness);
+var summary = cases.runTests(engine, harness, parameters);
 
 var lastGroup = '';
 summary.results.forEach(function (r) {

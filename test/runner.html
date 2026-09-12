@@ -39,6 +39,7 @@
   <div id="results"></div>
 </main>
 
+<script src="../src/parameters-2025.js"></script>
 <script src="../src/parameters-2026.js"></script>
 <script src="../src/parameters.js"></script>
 <script src="../src/engine.js"></script>
@@ -49,7 +50,7 @@
   'use strict';
 
   var engine = createEngine(PARAMETERS);
-  var summary = runTests(engine, createHarness());
+  var summary = runTests(engine, createHarness(), PARAMETERS);
 
   var verdict = document.getElementById('verdict');
   verdict.className = 'verdict ' + (summary.failed === 0 ? 'pass' : 'fail');

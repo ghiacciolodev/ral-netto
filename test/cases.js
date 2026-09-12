@@ -141,7 +141,43 @@ var BREAKPOINT_CASES = [
   { threshold: 122295, space: 'gross', ral: 122295.00 }
 ];
 
-var runTests = function runTests(engine, t) {
+/**
+ * Values hand-computed for 2025, the year where the second bracket is still 35%
+ * and the contribution thresholds are lower.
+ */
+var VALUE_CASES_2025 = [
+  {
+    ral: 50000, months: 13, note: 'seconda aliquota al 35%, non al 33%',
+    contributions: 4595.00, taxable: 45405.00, irpefGross: 12531.75,
+    irpefNet: 12132.94, regional: 689.27, municipal: 363.24,
+    netAnnual: 32219.55
+  },
+  {
+    ral: 56000, months: 13, note: 'sopra la prima fascia 2025, che nel 2026 non lo sarebbe',
+    contributions: 5151.92, taxable: 50848.08, irpefGross: 14504.67,
+    irpefNet: 14504.67, regional: 782.97, municipal: 406.78,
+    netAnnual: 35153.65
+  }
+];
+
+/** Every leaf path where two parameter sets disagree. */
+function diffPaths(a, b, prefix) {
+  var keys = {};
+  Object.keys(a || {}).concat(Object.keys(b || {})).forEach(function (k) { keys[k] = true; });
+
+  return Object.keys(keys).reduce(function (paths, key) {
+    var here = prefix ? prefix + '.' + key : key;
+    var left = (a || {})[key];
+    var right = (b || {})[key];
+
+    if (left && right && typeof left === 'object' && typeof right === 'object') {
+      return paths.concat(diffPaths(left, right, here));
+    }
+    return left === right ? paths : paths.concat([here]);
+  }, []);
+}
+
+var runTests = function runTests(engine, t, registry) {
 
   // ------------------------------------------------------------- unit rules
 
@@ -181,6 +217,48 @@ var runTests = function runTests(engine, t) {
   t.equal('RAL 74.600: IRPEF netta al centesimo giusto',
     engine.formatAmount(engine.calculateNet({ grossAnnual: 74600, months: 13 }).irpef.net),
     '21.251,02');
+
+  t.group('Anno d imposta 2025');
+  if (!registry) {
+    t.ok('registro degli anni disponibile', false, 'runTests chiamato senza registro');
+  } else {
+    var e2025 = engine.forTaxYear(2025);
+
+    t.equal('il registro contiene 2025 e 2026', registry.years.join(','), '2025,2026');
+    t.equal('il motore 2025 e legato al suo anno', e2025.taxYear, 2025);
+
+    VALUE_CASES_2025.forEach(function (c) {
+      var r = e2025.calculateNet({ grossAnnual: c.ral, months: c.months });
+      var tag = '2025 RAL ' + c.ral + ' (' + c.note + ')';
+      t.close(tag + ' - contributi', r.contributions.total, c.contributions);
+      t.close(tag + ' - imponibile', r.taxableIncome, c.taxable);
+      t.close(tag + ' - IRPEF lorda', r.irpef.gross, c.irpefGross);
+      t.close(tag + ' - IRPEF netta', r.irpef.net, c.irpefNet);
+      t.close(tag + ' - addizionale regionale', r.surtaxes.regional, c.regional);
+      t.close(tag + ' - addizionale comunale', r.surtaxes.municipal, c.municipal);
+      t.close(tag + ' - netto annuo', r.netAnnual, c.netAnnual);
+    });
+
+    /**
+     * Drift guard. The two year files are full copies on purpose, so the risk is
+     * that a fix lands in one and not the other. This asserts that the parameters
+     * differ in exactly the places they are meant to, and nowhere else.
+     */
+    var expected = [
+      'taxYear',
+      'irpef.brackets.1.rate',
+      'contributions.additionalThreshold',
+      'contributions.cap',
+      'contributions.sourceId'
+    ].sort();
+
+    var found = diffPaths(registry.byYear[2025], registry.byYear[2026], '')
+      .filter(function (path) { return path.indexOf('sources') !== 0; })
+      .sort();
+
+    t.equal('2025 e 2026 differiscono solo dove devono',
+      found.join(' | '), expected.join(' | '));
+  }
 
   t.group('Anno d imposta');
   t.equal('il motore e legato a un anno solo', engine.taxYear, engine.parameters.taxYear);

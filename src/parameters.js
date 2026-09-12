@@ -15,12 +15,15 @@ var PARAMETERS = (function () {
 
   // In pagina i file sono caricati in ordine e il set e gia globale; sotto Node
   // va richiesto. Il ramo require non viene mai valutato nel browser.
-  var set2026 = (typeof PARAMETERS_2026 !== 'undefined')
-    ? PARAMETERS_2026
-    : require('./parameters-2026.js');
+  function resolve(global, path) {
+    return (typeof global !== 'undefined') ? global : require(path);
+  }
 
   var byYear = {
-    2026: set2026
+    2025: resolve(typeof PARAMETERS_2025 !== 'undefined' ? PARAMETERS_2025 : undefined,
+      './parameters-2025.js'),
+    2026: resolve(typeof PARAMETERS_2026 !== 'undefined' ? PARAMETERS_2026 : undefined,
+      './parameters-2026.js')
   };
 
   var years = Object.keys(byYear)
