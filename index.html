@@ -16,10 +16,12 @@
     accanto la norma che la produce, così ogni numero si può risalire alla fonte.
   </p>
   <p class="case-note">
-    Caso modellato: impiegato residente a Milano (Lombardia), con la retribuzione
-    effettivamente percepita nell'anno. Nessuna agevolazione, nessun onere
-    deducibile o detraibile. L'elenco completo delle semplificazioni e la fonte
-    primaria di ogni parametro sono nel README del repository.
+    Caso modellato: impiegato con la retribuzione effettivamente percepita
+    nell'anno. Nessuna agevolazione, nessun onere deducibile o detraibile, e
+    nessuna delle agevolazioni soggettive che diverse regioni prevedono. Il
+    comune è al momento il capoluogo di ogni regione. L'elenco completo delle
+    semplificazioni e la fonte primaria di ogni parametro sono nel README del
+    repository.
   </p>
 </header>
 
@@ -52,6 +54,18 @@
       <input id="input-days" name="days" type="number" min="1" max="365" step="1"
              value="365" aria-describedby="hint-days">
       <p class="hint" id="hint-days">Giorni utili alla detrazione, non giornate lavorate.</p>
+    </div>
+
+    <div class="field">
+      <label for="input-region">Regione</label>
+      <select id="input-region" aria-describedby="hint-region"></select>
+      <p class="hint" id="hint-region">Decide l'addizionale regionale.</p>
+    </div>
+
+    <div class="field">
+      <label for="input-municipality">Comune</label>
+      <select id="input-municipality" aria-describedby="hint-municipality"></select>
+      <p class="hint" id="hint-municipality"></p>
     </div>
 
     <div class="field">

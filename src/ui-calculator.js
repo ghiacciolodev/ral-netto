@@ -12,6 +12,8 @@
   var inputMonths = /** @type {HTMLSelectElement} */ (document.getElementById('input-months'));
   var inputDays = /** @type {HTMLInputElement} */ (document.getElementById('input-days'));
   var inputContract = /** @type {HTMLSelectElement} */ (document.getElementById('input-contract'));
+  var inputRegion = /** @type {HTMLSelectElement} */ (document.getElementById('input-region'));
+  var inputMunicipality = /** @type {HTMLSelectElement} */ (document.getElementById('input-municipality'));
   var inputSpouse = /** @type {HTMLInputElement} */ (document.getElementById('input-spouse'));
   var inputChildren = /** @type {HTMLInputElement} */ (document.getElementById('input-children'));
   var inputChildrenShare = /** @type {HTMLSelectElement} */ (document.getElementById('input-children-share'));
@@ -26,6 +28,69 @@
   var inverseError = document.getElementById('inverse-error');
   var inverseResult = document.getElementById('inverse-result');
 
+  /**
+   * The two selects are filled from the dataset, never written in the page: the
+   * day a comune is added it turns up here on its own.
+   */
+  function byName(entities) {
+    return Object.keys(entities).sort(function (a, b) {
+      return entities[a].name.localeCompare(entities[b].name, 'it');
+    });
+  }
+
+  function fillRegions() {
+    ui.clear(inputRegion);
+    byName(engine.local.regions).forEach(function (key) {
+      var option = document.createElement('option');
+      option.value = key;
+      option.textContent = engine.local.regions[key].name;
+      option.selected = key === engine.local.defaults.region;
+      inputRegion.appendChild(option);
+    });
+  }
+
+  /** Only the comuni of the chosen region: the engine refuses the other pairs. */
+  function fillMunicipalities(region) {
+    var all = engine.local.municipalities;
+    var here = byName(all).filter(function (key) { return all[key].region === region; });
+
+    ui.clear(inputMunicipality);
+    here.forEach(function (key) {
+      var option = document.createElement('option');
+      option.value = key;
+      option.textContent = all[key].name;
+      inputMunicipality.appendChild(option);
+    });
+
+    inputMunicipality.disabled = here.length < 2;
+    describeMunicipality();
+  }
+
+  /**
+   * An entity that has not deliberated for the year keeps the rates it had:
+   * the hint says so rather than letting the figure imply a fresh decision.
+   */
+  function describeMunicipality() {
+    var chosen = engine.local.municipalities[inputMunicipality.value];
+    var hint = document.getElementById('hint-municipality');
+    if (!chosen) { hint.textContent = ''; return; }
+
+    if (chosen.deliberatedFor === null) {
+      hint.textContent = 'Non applica l\'addizionale comunale.';
+    } else if (chosen.deliberatedFor < engine.taxYear) {
+      hint.textContent = 'Aliquote del ' + chosen.deliberatedFor +
+        ', prorogate in mancanza di una delibera per il ' + engine.taxYear + '.';
+    } else {
+      hint.textContent = 'Aliquote deliberate per il ' + engine.taxYear + '.';
+    }
+  }
+
+  function recalculate() {
+    describeMunicipality();
+    if (!results.hidden) calculate();
+    solveInverse();
+  }
+
   /** The subject as the form currently describes it. */
   function currentPosition(grossAnnual) {
     return {
@@ -33,6 +98,8 @@
       months: parseInt(inputMonths.value, 10),
       daysWorked: parseInt(inputDays.value, 10),
       contractType: inputContract.value,
+      region: inputRegion.value,
+      municipality: inputMunicipality.value,
       family: {
         spouse: inputSpouse.checked,
         children: parseInt(inputChildren.value, 10) || 0,
@@ -506,15 +573,20 @@
     solveInverse();
   });
 
-  [inputMonths, inputDays, inputContract, inputSpouse, inputChildren,
+  inputRegion.addEventListener('change', function () {
+    fillMunicipalities(inputRegion.value);
+    recalculate();
+  });
+
+  [inputMonths, inputDays, inputContract, inputMunicipality, inputSpouse, inputChildren,
     inputChildrenShare, inputAscendants, inputFamilyMonths].forEach(function (field) {
-    field.addEventListener('change', function () {
-      if (!results.hidden) calculate();
-      solveInverse();
-    });
+    field.addEventListener('change', recalculate);
   });
 
   inputNetBasis.addEventListener('change', solveInverse);
+
+  fillRegions();
+  fillMunicipalities(engine.local.defaults.region);
 
   // The condition for being a carico is a parameter, not prose: reading it from
   // the year in force keeps the form honest when the limits move.

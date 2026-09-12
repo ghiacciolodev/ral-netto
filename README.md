@@ -127,6 +127,48 @@ sale e poi torna giù. Due euro di imponibile in più sopra 35.200 fanno **scend
 netto di circa nove euro. Si aggiunge ai due casi già noti, il gradino dell'art. 13 e la
 soglia dell'addizionale comunale.
 
+### Le addizionali locali, e le due cose che la tabella non dice
+
+Ci sono tutte e 21 le regioni e province autonome, e un comune per ognuna, il
+capoluogo. La fonte è il portale del federalismo fiscale del MEF, che raccoglie le
+delibere e pubblica le aliquote applicabili: ogni voce del dataset porta il link alla
+propria pagina.
+
+Il calcolo passa dagli scaglioni su entrambi i livelli. Non è una generalizzazione
+prudente: **Torino, Genova, Cagliari e Potenza hanno l'addizionale comunale
+progressiva**, con aliquote diverse per scaglione di reddito, esattamente come le
+regioni.
+
+**Un ente che non delibera non azzera il tributo.** Le aliquote in vigore si intendono
+prorogate di anno in anno (art. 1 co. 169 L. 296/2006). Per l'anno d'imposta 2026,
+venti capoluoghi su ventuno non hanno deliberato: valgono le aliquote del 2025.
+L'unico che ha deliberato è Palermo, che è passato dall'1,014% all'1,03%. Ogni comune
+porta `deliberatedFor`, l'anno dell'ultima delibera pubblicata, e l'interfaccia lo
+dice invece di lasciare che il numero sembri una decisione fresca.
+
+Due capoluoghi non prelevano affatto, per ragioni diverse. **Bolzano** delibera
+un'aliquota dello 0%. **Trento** non ha mai deliberato: il portale non riporta nulla,
+in nessun anno.
+
+**Le agevolazioni soggettive non sono applicate.** Diverse regioni prevedono
+detrazioni per figli a carico, per disabilità, soglie di esenzione legate alla
+persona: Bolzano, Campania, Sardegna e Umbria lo dicono esplicitamente sul portale. Il
+modello calcola le aliquote ordinarie per scaglione, e la nota della fonte segnala
+dove c'è dell'altro.
+
+Quanto pesa il posto, a parità di tutto il resto? Con RAL 30.000 su 13 mensilità:
+
+| Dove | Netto mensile | Addizionali |
+|---|---|---|
+| Trento | 1.822,02 € | 335,09 € |
+| Firenze | 1.813,75 € | 442,56 € |
+| Milano | 1.801,96 € | 595,88 € |
+| Torino | 1.787,10 € | 789,06 € |
+| Roma | 1.777,61 € | 912,38 € |
+
+Quarantaquattro euro al mese fra Trento e Roma, che sulla RAL da offrire per lo stesso
+netto diventano **1.565 €**.
+
 ## Assunzioni e semplificazioni
 
 Ogni riga è una cosa che il modello **non** fa, con il motivo.
@@ -136,7 +178,8 @@ Ogni riga è una cosa che il modello **non** fa, con il motivo.
 | Nessun onere deducibile o detraibile | Ridurrebbero rispettivamente imponibile e imposta. |
 | Il part-time non è un input separato | Non cambia il calcolo fiscale: un part-time con 15.000 di RAL è tassato come un full time con 15.000, perché la RAL riflette già l'orario. Entra solo attraverso i giorni, che il part-time verticale riduce e quello orizzontale no. |
 | Iscrizione previdenziale successiva al 31/12/1995 | Senza questa, il massimale di 122.295 € non si applicherebbe. La circolare INPS 6/2026 distingue esplicitamente le due platee. |
-| Il dataset locale contiene una regione e un comune | Lombardia e Milano. La forma dei dati regge gli altri, comprese le addizionali comunali progressive, e c'è un test che lo verifica su un ente inventato. Quello che manca sono i dati, non il motore. |
+| Un comune per regione, il capoluogo | Ci sono tutte e 21 le regioni e province autonome, ma 21 comuni su quasi 8.000. Gli altri richiedono un'estrazione di massa dal portale MEF, una pagina per comune. |
+| Agevolazioni soggettive regionali non applicate | Diverse regioni prevedono detrazioni per figli a carico, per disabilità, esenzioni legate alla persona. Il modello calcola le aliquote ordinarie per scaglione. Dove ci sono, la nota della fonte lo dice. |
 | Nessun regime agevolato (impatriati, forfettario) né agevolazione contributiva | Ognuno avrebbe una base imponibile propria. |
 | TFR escluso dal netto | È accantonato, non erogato. Compare solo nel costo azienda. |
 | Nessuna rivalutazione del TFR | Il TFR accantonato si rivaluta di 1,5% più il 75% dell'indice ISTAT. |
@@ -174,8 +217,9 @@ stato aperto e controllato che porti al documento che dichiara.
 | Minimi garantiti non ragguagliati | 690 € e 1.380 € | circ. Agenzia delle Entrate 15/2007 |
 | Prassi applicativa del cuneo | | [circ. Agenzia delle Entrate 4/E del 16 maggio 2025](https://www.agenziaentrate.gov.it/portale/documents/20143/8410823/Circolare+lavoro+dipendente+LB2025+DD+IRPEF+n.+4+del+16+maggio+2025.pdf/36979eaa-9fc5-a4ec-a7aa-136497c53f91) |
 | Prima fascia e massimale | 56.224 € e 122.295 € | [circ. INPS n. 6 del 30 gennaio 2026](https://www.inps.it/it/it/inps-comunica/atti/circolari-messaggi-e-normativa/dettaglio.circolari-e-messaggi.2026.01.circolare-numero-6-del-30-01-2026_15151.html) |
-| Addizionale regionale Lombardia | 1,23% / 1,58% / 1,72% / 1,73% a scaglioni | [art. 72 co. 1 L.R. 10/2003, portale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/addregirpef/addregirpef.php?reg=10) |
-| Addizionale comunale Milano | 0,80% con esenzione fino a 23.000 € | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/risultato.htm?anno=9999&lista=1&pagina=lombardia.htm&cm=&pr=MI&cc=F205&r=1) |
+| Addizionali regionali | 21 regioni e province autonome | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/addregirpef/addregirpef.php?reg=10), una pagina per regione, linkata da ogni voce del dataset |
+| Addizionali comunali | 21 capoluoghi | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/risultato.htm?anno=9999&lista=1&r=1&pagina=lombardia.htm&pr=MI&cc=F205), una pagina per comune, linkata da ogni voce |
+| Proroga delle aliquote non rideliberate | | [art. 1 co. 169 L. 296/2006](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2006-12-27;296) |
 | TFR | quota annua pari a RAL / 13,5 | [art. 2120 codice civile](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:regio.decreto:1942-03-16;262) |
 | Contributo aggiuntivo IVS sul TFR | 0,50%, detratto dalla quota | [art. 3 L. 297/1982](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:1982-05-29;297). Non è il Fondo di garanzia TFR, che è l'art. 2 della stessa legge ed è lo 0,20% |
 | Costo azienda | 29,4% datore, INAIL 0,5% | Nessuna fonte primaria: sono medie di categoria |
@@ -233,7 +277,7 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-464 asserzioni, divise in undici suite per area. Se il codice e un valore atteso non
+488 asserzioni, divise in undici suite per area. Se il codice e un valore atteso non
 concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
@@ -320,8 +364,8 @@ curva.html                 aliquota marginale e soglie
 src/parameters.js          registro degli anni: parametri statali e tabella locale
 src/parameters-2025.js     valori normativi statali e fonti dell anno 2025
 src/parameters-2026.js     valori normativi statali e fonti dell anno 2026
-src/local-2025.js          addizionali regionali e comunali 2025
-src/local-2026.js          addizionali regionali e comunali 2026
+src/local-2025.js          addizionali di 21 regioni e 21 capoluoghi, 2025
+src/local-2026.js          addizionali di 21 regioni e 21 capoluoghi, 2026
 src/engine.js              il cablaggio: monta i moduli e ne espone l interfaccia
 src/engine/numbers.js      troncamento, arrotondamento, scaglioni, formattazione
 src/engine/position.js     chi viene pagato, e la validazione di quel che si chiede

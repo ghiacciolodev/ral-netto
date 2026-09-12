@@ -77,12 +77,24 @@ var SUITE_YEARS = function (context) {
      * between the two years, so the only difference allowed is the year itself.
      * The day a comune moves its rate, this says so out loud.
      */
+    var localExpected = [
+      'taxYear',
+      'regions.emilia-romagna.brackets.2.rate',
+      'regions.piemonte.brackets.1.rate',
+      'regions.piemonte.brackets.2.rate',
+      'regions.puglia.brackets.1.rate',
+      'regions.puglia.brackets.2.rate',
+      'regions.puglia.brackets.3.rate',
+      'municipalities.palermo.brackets.0.rate',
+      'municipalities.palermo.deliberatedFor'
+    ].sort();
+
     var localFound = diffPaths(registry.localByYear[2025], registry.localByYear[2026], '')
       .filter(function (path) { return path.indexOf('sources') !== 0; })
       .sort();
 
-    t.equal('le addizionali locali dei due anni differiscono solo nell anno',
-      localFound.join(' | '), 'taxYear');
+    t.equal('fra 2025 e 2026 hanno cambiato aliquota solo quattro enti',
+      localFound.join(' | '), localExpected.join(' | '));
   }
 };
 
