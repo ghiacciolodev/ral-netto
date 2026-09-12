@@ -136,7 +136,7 @@ Ogni riga è una cosa che il modello **non** fa, con il motivo.
 | Nessun onere deducibile o detraibile | Ridurrebbero rispettivamente imponibile e imposta. |
 | Il part-time non è un input separato | Non cambia il calcolo fiscale: un part-time con 15.000 di RAL è tassato come un full time con 15.000, perché la RAL riflette già l'orario. Entra solo attraverso i giorni, che il part-time verticale riduce e quello orizzontale no. |
 | Iscrizione previdenziale successiva al 31/12/1995 | Senza questa, il massimale di 122.295 € non si applicherebbe. La circolare INPS 6/2026 distingue esplicitamente le due platee. |
-| Solo Lombardia e Milano | Addizionali regionali e comunali cambiano per ogni ente. |
+| Il dataset locale contiene una regione e un comune | Lombardia e Milano. La forma dei dati regge gli altri, comprese le addizionali comunali progressive, e c'è un test che lo verifica su un ente inventato. Quello che manca sono i dati, non il motore. |
 | Nessun regime agevolato (impatriati, forfettario) né agevolazione contributiva | Ognuno avrebbe una base imponibile propria. |
 | TFR escluso dal netto | È accantonato, non erogato. Compare solo nel costo azienda. |
 | Nessuna rivalutazione del TFR | Il TFR accantonato si rivaluta di 1,5% più il 75% dell'indice ISTAT. |
@@ -233,13 +233,13 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-449 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
+464 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
 
-Si copia `src/parameters-2026.js` in `src/parameters-2027.js`, si aggiornano valori e
-fonti, si aggiunge una riga al registro in `src/parameters.js` e si carica il file
-nuovo nelle pagine.
+Si copiano `src/parameters-2026.js` e `src/local-2026.js` nei corrispondenti file
+del 2027, si aggiornano valori e fonti, si aggiungono due righe al registro in
+`src/parameters.js` e si caricano i file nuovi nelle pagine.
 
 Nel fisco le regole valgono "a decorrere dal periodo d'imposta X", quindi l'anno è
 l'unità di validità naturale: una regola cambiata a metà anno sarebbe due voci del
@@ -268,6 +268,17 @@ e perfino la posizione delle soglie sul grafico sono derivate dai parametri. Se 
 aggiornamento richiedesse di modificare il motore, sarebbe un difetto del motore.
 
 ## Architettura
+
+I dati stanno in due posti, perche sono due tipi di dato. I **parametri statali**
+sono una manciata di valori scritti a mano, letti uno per uno sulla norma e rivisti a
+ogni modifica. Le **addizionali locali** sono una tabella: venti regioni e quasi
+ottomila comuni, che cambiano ogni anno e che nessuno rilegge. Tenerli insieme
+avrebbe voluto dire duplicare la tabella a ogni anno d'imposta.
+
+Le aliquote comunali sono a scaglioni anche dove lo scaglione e uno solo, perche
+molti comuni hanno un'addizionale progressiva e la forma deve reggerli senza che il
+motore cambi. E ogni comune dichiara la sua regione, cosi chiedere Milano nel Lazio
+viene rifiutato invece di produrre un numero con l'etichetta sbagliata.
 
 Il motore e diviso in moduli e `src/engine.js` non contiene logica: monta i pezzi e
 dichiara cosa espone. Ogni modulo e una funzione che riceve quello che gli serve e
@@ -305,9 +316,11 @@ che i parametri usavano gia: globale in pagina, `require` sotto Node.
 ```
 index.html                 calcolatore, inversa, costo azienda
 curva.html                 aliquota marginale e soglie
-src/parameters.js          registro degli anni d imposta disponibili
-src/parameters-2025.js     valori normativi e fonti dell anno 2025
-src/parameters-2026.js     valori normativi e fonti, unico posto con dei numeri
+src/parameters.js          registro degli anni: parametri statali e tabella locale
+src/parameters-2025.js     valori normativi statali e fonti dell anno 2025
+src/parameters-2026.js     valori normativi statali e fonti dell anno 2026
+src/local-2025.js          addizionali regionali e comunali 2025
+src/local-2026.js          addizionali regionali e comunali 2026
 src/engine.js              il cablaggio: monta i moduli e ne espone l interfaccia
 src/engine/numbers.js      troncamento, arrotondamento, scaglioni, formattazione
 src/engine/position.js     chi viene pagato, e la validazione di quel che si chiede

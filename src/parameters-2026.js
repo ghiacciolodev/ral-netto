@@ -13,9 +13,6 @@ var PARAMETERS_2026 = (function () {
   return {
     taxYear: 2026,
     // `key` is what a position is matched against, `name` is what goes on screen.
-    region: { key: 'lombardia', name: 'Lombardia' },
-    municipality: { key: 'milano', name: 'Milano' },
-
     payrollMonths: { allowed: [12, 13, 14], defaultValue: 13 },
     employmentYear: { days: 365 },
 
@@ -198,24 +195,6 @@ var PARAMETERS_2026 = (function () {
       sourceId: 'dl-3-2020'
     },
 
-    regionalSurtax: {
-      brackets: [
-        { upTo: 15000, rate: 0.0123 },
-        { upTo: 28000, rate: 0.0158 },
-        { upTo: 50000, rate: 0.0172 },
-        { upTo: null, rate: 0.0173 }
-      ],
-      sourceId: 'lombardia-lr-10-2003'
-    },
-
-    // A threshold, not an allowance: one euro over and the whole taxable base
-    // is charged.
-    municipalSurtax: {
-      rate: 0.008,
-      exemptionThreshold: 23000,
-      sourceId: 'milano-delibera-46-2020'
-    },
-
     // Estimates calibrated on CCNL Commercio, not statutory values.
     employerCost: {
       contributionRate: 0.294,
@@ -347,20 +326,6 @@ var PARAMETERS_2026 = (function () {
         url: 'https://www.inps.it/it/it/inps-comunica/atti/circolari-messaggi-e-normativa/dettaglio.circolari-e-messaggi.2026.01.circolare-numero-6-del-30-01-2026_15151.html',
         inForceFrom: '2026-01-01',
         note: 'Assunzione del modello: lavoratore iscritto al FPLD con aliquota ordinaria. Non sono modellate contribuzioni minori legate all inquadramento aziendale.'
-      },
-      'lombardia-lr-10-2003': {
-        label: 'art. 72 co. 1 L.R. Lombardia 10/2003',
-        title: 'Addizionale regionale IRPEF, come modificato da art. 1 co. 1 lett. a) L.R. 5/2022',
-        url: 'https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/addregirpef/addregirpef.php?reg=10',
-        inForceFrom: '2022-01-01',
-        note: 'Quattro scaglioni progressivi sul reddito complessivo al netto degli oneri deducibili.'
-      },
-      'milano-delibera-46-2020': {
-        label: 'delibera Comune di Milano 46/2020',
-        title: 'Addizionale comunale IRPEF, portale del federalismo fiscale MEF',
-        url: 'https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/risultato.htm?anno=9999&lista=1&pagina=lombardia.htm&cm=&pr=MI&cc=F205&r=1',
-        inForceFrom: '2021-01-01',
-        note: 'Aliquota unica 0,8% con soglia di esenzione a 23.000 di imponibile, confermata con pubblicazione del 20 dicembre 2025.'
       },
       'cc-art-2120': {
         label: 'art. 2120 codice civile',

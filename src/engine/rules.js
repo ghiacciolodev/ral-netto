@@ -6,7 +6,7 @@
  * its thresholds together. The array is also the order of the steps.
  */
 
-var ENGINE_RULES = function (parameters, numbers, steps) {
+var ENGINE_RULES = function (parameters, local, numbers, steps) {
   var applyBrackets = numbers.applyBrackets;
   var isNotNull = numbers.isNotNull;
   var formatAmount = numbers.formatAmount;
@@ -306,44 +306,66 @@ var ENGINE_RULES = function (parameters, numbers, steps) {
     {
       id: 'surtaxes',
       apply: function (ctx) {
-        ctx.surtaxes = computeSurtaxes(ctx.taxable);
+        ctx.surtaxes = computeSurtaxes(ctx.taxable, ctx.position);
       },
       ledger: function (ctx) {
-        var m = parameters.municipalSurtax;
+        var municipality = ctx.surtaxes.municipality;
+
+        /** A single open bracket reads better as a rate than as a scale. */
+        function describe(brackets) {
+          return brackets.length === 1 && brackets[0].upTo === null
+            ? formatRate(brackets[0].rate) + ' di ' + formatAmount(ctx.taxable)
+            : 'scaglioni progressivi su ' + formatAmount(ctx.taxable);
+        }
 
         return [
           {
             id: 'surtax.regional',
-            label: 'Addizionale regionale ' + parameters.region.name,
+            label: 'Addizionale regionale ' + ctx.surtaxes.region.name,
             sign: -1,
             base: ctx.taxable,
-            formula: 'scaglioni progressivi su ' + formatAmount(ctx.taxable),
+            formula: describe(ctx.surtaxes.region.brackets),
             amount: ctx.surtaxes.regional,
-            sourceId: parameters.regionalSurtax.sourceId
+            sourceId: ctx.surtaxes.region.sourceId
           },
           {
             id: 'surtax.municipal',
-            label: 'Addizionale comunale ' + parameters.municipality.name,
+            label: 'Addizionale comunale ' + municipality.name,
             sign: -1,
             base: ctx.taxable,
             formula: ctx.surtaxes.municipalExempt
-              ? 'esente, imponibile non superiore a ' + formatAmount(m.exemptionThreshold)
-              : formatRate(m.rate) + ' di ' + formatAmount(ctx.taxable),
+              ? 'esente, imponibile non superiore a ' +
+                formatAmount(municipality.exemptionThreshold)
+              : describe(municipality.brackets),
             amount: ctx.surtaxes.municipal,
-            sourceId: m.sourceId
+            sourceId: municipality.sourceId
           }
         ];
       },
-      thresholds: function () {
-        var list = parameters.regionalSurtax.brackets.map(function (bracket, index) {
-          return bracket.upTo === null ? null : {
-            space: 'taxable', threshold: bracket.upTo,
-            id: 'regional-bracket-' + (index + 1), label: 'Scaglione addizionale regionale'
-          };
-        }).filter(isNotNull);
+      thresholds: function (position) {
+        var region = local.regions[position.region];
+        var municipality = local.municipalities[position.municipality];
+
+        function bracketThresholds(brackets, prefix, label) {
+          return brackets.map(function (bracket, index) {
+            return bracket.upTo === null ? null : {
+              space: 'taxable', threshold: bracket.upTo,
+              id: prefix + (index + 1), label: label
+            };
+          }).filter(isNotNull);
+        }
+
+        var list = bracketThresholds(
+          region.brackets, 'regional-bracket-', 'Scaglione addizionale regionale');
+
+        bracketThresholds(
+          municipality.brackets, 'municipal-bracket-', 'Scaglione addizionale comunale'
+        ).forEach(function (threshold) {
+          list.push(threshold);
+        });
 
         list.push({
-          space: 'taxable', threshold: parameters.municipalSurtax.exemptionThreshold,
+          space: 'taxable', threshold: municipality.exemptionThreshold,
           id: 'municipal-exemption', label: 'Soglia esenzione addizionale comunale'
         });
 

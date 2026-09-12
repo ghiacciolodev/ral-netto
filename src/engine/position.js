@@ -6,9 +6,20 @@
  * They sit side by side on purpose: telling the two apart is the point.
  */
 
-var ENGINE_POSITION = function (parameters, maxRal, numbers) {
+var ENGINE_POSITION = function (parameters, local, maxRal, numbers) {
   var MAX_RAL = maxRal;
   var formatAmount = numbers.formatAmount;
+
+  /**
+   * Che cosa c e nel dataset, senza elencarne ottomila. Con pochi enti li dice
+   * tutti, che e quello che serve a chi ha sbagliato a scrivere; con tanti dice
+   * quanti sono.
+   */
+  function available(entities) {
+    var keys = Object.keys(entities).sort();
+    if (keys.length > 8) return 'Il dataset ne contiene ' + keys.length;
+    return 'Disponibili: ' + keys.join(', ');
+  }
 
   /**
    * A position is the subject of the calculation: who is paid, how and where.
@@ -39,8 +50,8 @@ var ENGINE_POSITION = function (parameters, maxRal, numbers) {
       daysWorked: fallback(input.daysWorked, parameters.employmentYear.days),
       contractType: String(fallback(input.contractType, 'permanent')).toLowerCase(),
       family: normalizeFamily(input.family),
-      region: String(fallback(input.region, parameters.region.key)).toLowerCase(),
-      municipality: String(fallback(input.municipality, parameters.municipality.key)).toLowerCase()
+      region: String(fallback(input.region, local.defaults.region)).toLowerCase(),
+      municipality: String(fallback(input.municipality, local.defaults.municipality)).toLowerCase()
     };
 
     if (position.taxYear !== parameters.taxYear) {
@@ -78,16 +89,27 @@ var ENGINE_POSITION = function (parameters, maxRal, numbers) {
         '. Valori ammessi: permanent, fixed-term.');
     }
 
-    if (position.region !== parameters.region.key) {
+    if (!local.regions[position.region]) {
       throw new RangeError(
-        'Regione non supportata: ' + position.region +
-        '. Il modello copre solo ' + parameters.region.name + '.');
+        'Regione non riconosciuta: ' + position.region + '. ' + available(local.regions) + '.');
     }
 
-    if (position.municipality !== parameters.municipality.key) {
+    var municipality = local.municipalities[position.municipality];
+    if (!municipality) {
       throw new RangeError(
-        'Comune non supportato: ' + position.municipality +
-        '. Il modello copre solo ' + parameters.municipality.name + '.');
+        'Comune non riconosciuto: ' + position.municipality + '. ' +
+        available(local.municipalities) + '.');
+    }
+
+    /**
+     * Un comune appartiene a una regione, e le due addizionali si sommano sulla
+     * stessa busta. Senza questo controllo si potrebbe chiedere Milano nel
+     * Lazio e ottenere un numero che non esiste.
+     */
+    if (municipality.region !== position.region) {
+      throw new RangeError(
+        'Il comune di ' + municipality.name + ' non sta in ' + position.region +
+        ' ma in ' + municipality.region + '.');
     }
 
     return position;

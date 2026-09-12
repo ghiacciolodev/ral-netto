@@ -56,27 +56,42 @@ var createEngine = (function () {
 
   return function createEngine(source, taxYear) {
 
-    var parameters = (source && typeof source.forYear === 'function')
-      ? source.forYear(taxYear)
-      : source;
+    if (!source || typeof source.forYear !== 'function') {
+      throw new TypeError(
+        'Il motore va costruito da un registro di anni d imposta, non da un singolo insieme di parametri.');
+    }
+
+    var parameters = source.forYear(taxYear);
+    var local = source.localForYear(parameters.taxYear);
+
+    /**
+     * Le fonti arrivano da due dataset e la traccia non deve sapere da quale:
+     * una voce cita un articolo di legge o una delibera comunale allo stesso
+     * modo. Vista unita, costruita qui e non scritta da nessuna parte.
+     */
+    var sources = {};
+    [parameters.sources, local.sources].forEach(function (set) {
+      Object.keys(set || {}).forEach(function (id) {
+        sources[id] = set[id];
+      });
+    });
 
     var numbers = makeNumbers(parameters);
-    var position = makePosition(parameters, MAX_RAL, numbers);
-    var steps = makeSteps(parameters, numbers);
-    var rules = makeRules(parameters, numbers, steps);
+    var position = makePosition(parameters, local, MAX_RAL, numbers);
+    var steps = makeSteps(parameters, local, numbers);
+    var rules = makeRules(parameters, local, numbers, steps);
     var calculation = makeCalculation(rules, position, steps);
     var breakpoints = makeBreakpoints(parameters, MAX_RAL, numbers, steps, rules, position);
     var inverse = makeInverse(MAX_RAL, position, breakpoints, calculation);
 
     return {
       parameters: parameters,
+      local: local,
+      sources: sources,
       taxYear: parameters.taxYear,
 
-      /** The same engine for another year, when built from the registry. */
+      /** The same engine for another year, same registry. */
       forTaxYear: function (otherYear) {
-        if (!source || typeof source.forYear !== 'function') {
-          throw new Error('Questo motore non e stato costruito da un registro di anni.');
-        }
         return createEngine(source, otherYear);
       },
 

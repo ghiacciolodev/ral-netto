@@ -2,7 +2,13 @@
 'use strict';
 
 /**
- * Registry of parameter sets, one per tax year.
+ * Registry of everything that varies by tax year: the state parameters, and the
+ * table of local surtaxes that goes with them.
+ *
+ * The two are registered together because they share one clock, and kept in
+ * separate files because they are different kinds of data. The state parameters
+ * are a handful of values read one by one off the statute. The local ones are a
+ * table nobody proofreads by hand.
  *
  * Income tax rules take effect "a decorrere dal periodo d'imposta X", so the
  * year is the natural unit of validity: a rule that changed mid-year would be
@@ -26,12 +32,20 @@ var PARAMETERS = (function () {
       './parameters-2026.js')
   };
 
+  var localByYear = {
+    2025: resolve(typeof LOCAL_2025 !== 'undefined' ? LOCAL_2025 : undefined,
+      './local-2025.js'),
+    2026: resolve(typeof LOCAL_2026 !== 'undefined' ? LOCAL_2026 : undefined,
+      './local-2026.js')
+  };
+
   var years = Object.keys(byYear)
     .map(Number)
     .sort(function (a, b) { return a - b; });
 
   return {
     byYear: byYear,
+    localByYear: localByYear,
     years: years,
     latest: years[years.length - 1],
 
@@ -50,6 +64,24 @@ var PARAMETERS = (function () {
       }
 
       return byYear[year];
+    },
+
+    /**
+     * The local surtaxes of a year. Same year, same refusal: an engine that
+     * silently mixed a year of state rules with another of local ones would be
+     * wrong in a way nobody would spot.
+     * @param {number} [taxYear]
+     */
+    localForYear: function (taxYear) {
+      var year = taxYear === undefined ? years[years.length - 1] : taxYear;
+
+      if (!localByYear[year]) {
+        throw new RangeError(
+          'Addizionali locali non disponibili per l anno ' + year +
+          '. Anni presenti: ' + Object.keys(localByYear).join(', ') + '.');
+      }
+
+      return localByYear[year];
     }
   };
 })();

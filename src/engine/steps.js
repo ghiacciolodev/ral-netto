@@ -8,7 +8,7 @@
  * to the rules. These are the arithmetic of the statute, and they are pure.
  */
 
-var ENGINE_STEPS = function (parameters, numbers) {
+var ENGINE_STEPS = function (parameters, local, numbers) {
   var truncate = numbers.truncate;
   var applyBrackets = numbers.applyBrackets;
 
@@ -257,18 +257,34 @@ var ENGINE_STEPS = function (parameters, numbers) {
     return { amount: 0, band: 'nessuno' };
   }
 
-  /** Charged on taxable income, never reduced by tax credits. */
-  function computeSurtaxes(taxable) {
-    var regional = applyBrackets(taxable, parameters.regionalSurtax.brackets);
-    var m = parameters.municipalSurtax;
-    var exempt = taxable <= m.exemptionThreshold;
+  /**
+   * Charged on taxable income, never reduced by tax credits.
+   *
+   * The only step that depends on where the taxpayer lives, so it is also the
+   * only one that reads the position to find its own rates. Both surtaxes go
+   * through the bracket machinery even where a comune has a single rate: many
+   * have a progressive one, and a shape that only fits Milano would have to be
+   * rewritten the day the second comune arrives.
+   */
+  function computeSurtaxes(taxable, position) {
+    var region = local.regions[position.region];
+    var municipality = local.municipalities[position.municipality];
+
+    var regional = applyBrackets(taxable, region.brackets);
+    var exempt = taxable <= municipality.exemptionThreshold;
+    var municipal = exempt
+      ? { total: 0, detail: [] }
+      : applyBrackets(taxable, municipality.brackets);
 
     return {
+      region: region,
+      municipality: municipality,
       regional: regional.total,
       regionalDetail: regional.detail,
-      municipal: exempt ? 0 : taxable * m.rate,
+      municipal: municipal.total,
+      municipalDetail: municipal.detail,
       municipalExempt: exempt,
-      total: regional.total + (exempt ? 0 : taxable * m.rate)
+      total: regional.total + municipal.total
     };
   }
 

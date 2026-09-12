@@ -10,7 +10,7 @@
  */
 var createUiHelpers = function createUiHelpers(engine) {
 
-  var sources = engine.parameters.sources;
+  var sources = engine.sources;
 
   /** Italian convention: dot groups thousands, comma opens the decimals. */
   function parseAmount(raw) {

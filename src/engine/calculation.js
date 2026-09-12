@@ -94,6 +94,7 @@ var ENGINE_CALCULATION = function (RULES, position, steps) {
         regional: ctx.surtaxes.regional,
         regionalDetail: ctx.surtaxes.regionalDetail,
         municipal: ctx.surtaxes.municipal,
+        municipalDetail: ctx.surtaxes.municipalDetail,
         municipalExempt: ctx.surtaxes.municipalExempt,
         total: ctx.surtaxes.total
       },
