@@ -92,6 +92,11 @@ var createEngine = function createEngine(source, taxYear) {
     return sign + parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + parts[1];
   }
 
+  /** Used by the threshold faces, which skip the open ended last band. */
+  function isNotNull(value) {
+    return value !== null;
+  }
+
   function formatRate(rate) {
     var pct = (rate * 100).toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
     return pct.replace('.', ',') + '%';
@@ -261,7 +266,7 @@ var createEngine = function createEngine(source, taxYear) {
 
   // ------------------------------------------------------------- the steps
 
-  /** Step 1. The cap truncates the IVS rate and the additional 1% alike. */
+  /** The cap truncates the IVS rate and the additional 1% alike. */
   function computeContributions(ral) {
     var c = parameters.contributions;
     var base = Math.min(ral, c.cap);
@@ -278,7 +283,7 @@ var createEngine = function createEngine(source, taxYear) {
   }
 
   /**
-   * Step 4. Art. 13 TUIR.
+   * Art. 13 TUIR.
    *
    * Comma 6 truncates the ratio to four decimals, which turns the deduction into
    * a staircase stepping every 1,30 euro of income rather than a straight line.
@@ -333,7 +338,7 @@ var createEngine = function createEngine(source, taxYear) {
   }
 
   /**
-   * Step 4b. Detrazioni per carichi di famiglia, art. 12 TUIR.
+   * Detrazioni per carichi di famiglia, art. 12 TUIR.
    *
    * Three rules with one shape: a base amount scaled by the ratio between an
    * income ceiling and the income itself. Comma 4 truncates every ratio to four
@@ -411,7 +416,7 @@ var createEngine = function createEngine(source, taxYear) {
   }
 
   /**
-   * Step 5. The two reliefs are alternative. The exempt sum is a percentage of
+   * The two reliefs are alternative. The exempt sum is a percentage of
    * employment income applied to the whole amount, not by bracket, and it never
    * passes through IRPEF.
    */
@@ -506,7 +511,7 @@ var createEngine = function createEngine(source, taxYear) {
     return { amount: 0, band: 'nessuno' };
   }
 
-  /** Step 7. Charged on taxable income, never reduced by tax credits. */
+  /** Charged on taxable income, never reduced by tax credits. */
   function computeSurtaxes(taxable) {
     var regional = applyBrackets(taxable, parameters.regionalSurtax.brackets);
     var m = parameters.municipalSurtax;
@@ -537,6 +542,375 @@ var createEngine = function createEngine(source, taxYear) {
     };
   }
 
+  // -------------------------------------------------------------- the rules
+
+  /**
+   * One object per provision, carrying up to three faces: what it computes,
+   * what it writes in the trail, and which thresholds it introduces.
+   *
+   * They live together on purpose. They used to live in three separate
+   * functions, and adding a provision while forgetting two of them failed
+   * quietly: the figure came out right while the trail and the threshold list
+   * went stale, and nothing said so.
+   *
+   * `apply` reads the calculation in progress and adds to it, so this array is
+   * also the order of the steps. That order is the statute's, not an
+   * implementation detail, which is why it is written out rather than inferred.
+   *
+   * `ledger` and `thresholds` are optional. A provision that reaches the net
+   * through the tax rather than beside it, like the art. 13 deduction, has no
+   * trail entry of its own.
+   */
+  var RULES = [
+    /** The cap truncates the IVS rate and the additional 1% alike. */
+    {
+      id: 'contributions',
+      apply: function (ctx) {
+        ctx.contributions = computeContributions(ctx.ral);
+        ctx.taxable = ctx.ral - ctx.contributions.total;
+
+        // Single-income case: total income, employment income and taxable base
+        // are the same number. Kept apart so that adding other income later
+        // does not mean rewriting every rule that reads them.
+        ctx.totalIncome = ctx.taxable;
+        ctx.employmentIncome = ctx.taxable;
+      },
+      ledger: function (ctx) {
+        var c = parameters.contributions;
+        var entries = [{
+          id: 'contributions.ivs',
+          label: 'Contributi IVS a carico dipendente',
+          sign: -1,
+          base: ctx.contributions.base,
+          formula: formatRate(c.ivsRate) + ' di ' + formatAmount(ctx.contributions.base) +
+            (ctx.contributions.capApplied ? ' (base limitata al massimale)' : ''),
+          amount: ctx.contributions.ivs,
+          sourceId: c.ivsSourceId
+        }];
+
+        if (ctx.contributions.additionalRate > 0) {
+          entries.push({
+            id: 'contributions.additional',
+            label: 'Contributo aggiuntivo IVS 1%',
+            sign: -1,
+            base: ctx.contributions.base - c.additionalThreshold,
+            formula: formatRate(c.additionalRate) + ' sulla quota oltre ' +
+              formatAmount(c.additionalThreshold),
+            amount: ctx.contributions.additionalRate,
+            sourceId: c.sourceId
+          });
+        }
+
+        return entries;
+      },
+      thresholds: function () {
+        var c = parameters.contributions;
+        return [
+          {
+            space: 'gross', threshold: c.additionalThreshold,
+            id: 'additional-contribution', label: 'Contributo aggiuntivo IVS 1%'
+          },
+          {
+            space: 'gross', threshold: c.cap,
+            id: 'contribution-cap', label: 'Massimale contributivo'
+          }
+        ];
+      }
+    },
+
+    /** IRPEF lorda. No trail entry: only the net tax reaches the pay packet. */
+    {
+      id: 'gross-tax',
+      apply: function (ctx) {
+        ctx.irpefGross = applyBrackets(ctx.taxable, parameters.irpef.brackets);
+      },
+      thresholds: function () {
+        return parameters.irpef.brackets.map(function (bracket, index) {
+          return bracket.upTo === null ? null : {
+            space: 'taxable', threshold: bracket.upTo,
+            id: 'irpef-bracket-' + (index + 1), label: 'Scaglione IRPEF'
+          };
+        }).filter(isNotNull);
+      }
+    },
+
+    /** Detrazione per lavoro dipendente, art. 13 TUIR. */
+    {
+      id: 'employment-deduction',
+      apply: function (ctx) {
+        ctx.employmentDeduction =
+          computeEmploymentDeduction(ctx.totalIncome, ctx.exactRatios, ctx.position);
+        ctx.deductions.push(ctx.employmentDeduction.total);
+      },
+      thresholds: function () {
+        var d = parameters.employmentDeduction;
+        var list = [
+          {
+            space: 'taxable', threshold: d.flatUpTo,
+            id: 'employment-deduction-step', label: 'Gradino detrazione art. 13'
+          },
+          {
+            space: 'taxable', threshold: d.bonus.over,
+            id: 'bonus65-start', label: 'Inizio maggiorazione 65 euro'
+          },
+          {
+            space: 'taxable', threshold: d.bonus.upTo,
+            id: 'bonus65-end', label: 'Fine maggiorazione 65 euro'
+          }
+        ];
+
+        d.bands.forEach(function (band, index) {
+          list.push({
+            space: 'taxable', threshold: band.upTo,
+            id: 'employment-deduction-band-' + (index + 1),
+            label: 'Cambio formula detrazione art. 13'
+          });
+        });
+
+        return list;
+      }
+    },
+
+    /** Detrazioni per carichi di famiglia, art. 12 TUIR. */
+    {
+      id: 'family-deduction',
+      apply: function (ctx) {
+        ctx.familyDeduction =
+          computeFamilyDeduction(ctx.totalIncome, ctx.exactRatios, ctx.position);
+        ctx.deductions.push(ctx.familyDeduction.total);
+      },
+      // These thresholds exist only for the dependants actually declared, which
+      // is why this face takes the position and the others do not.
+      thresholds: function (position) {
+        var f = parameters.familyDeduction;
+        var family = position.family;
+        var list = [];
+
+        if (family.spouse) {
+          list.push({
+            space: 'taxable', threshold: f.spouse.firstBand.upTo,
+            id: 'spouse-band-1', label: 'Cambio formula detrazione coniuge'
+          });
+          list.push({
+            space: 'taxable', threshold: f.spouse.middleBand.upTo,
+            id: 'spouse-band-2', label: 'Cambio formula detrazione coniuge'
+          });
+          list.push({
+            space: 'taxable', threshold: f.spouse.lastBand.upTo,
+            id: 'spouse-band-3', label: 'Azzeramento detrazione coniuge'
+          });
+
+          f.spouse.increases.forEach(function (step, index) {
+            list.push({
+              space: 'taxable', threshold: step.over,
+              id: 'spouse-increase-' + (index + 1) + '-start',
+              label: 'Gradino maggiorazione coniuge'
+            });
+            list.push({
+              space: 'taxable', threshold: step.upTo,
+              id: 'spouse-increase-' + (index + 1) + '-end',
+              label: 'Gradino maggiorazione coniuge'
+            });
+          });
+        }
+
+        if (family.children > 0) {
+          list.push({
+            space: 'taxable',
+            threshold: f.children.ceiling +
+              f.children.ceilingIncrement * (family.children - 1),
+            id: 'children-deduction-end', label: 'Azzeramento detrazione figli'
+          });
+        }
+
+        if (family.ascendants > 0) {
+          list.push({
+            space: 'taxable', threshold: f.ascendants.ceiling,
+            id: 'ascendants-deduction-end', label: 'Azzeramento detrazione ascendenti'
+          });
+        }
+
+        return list;
+      }
+    },
+
+    /**
+     * Riduzione del cuneo fiscale. The one provision that shows up in both
+     * places: as a deduction it competes for available tax, as an exempt sum it
+     * bypasses the tax entirely and lands in the trail on its own.
+     */
+    {
+      id: 'wedge-relief',
+      apply: function (ctx) {
+        ctx.wedge = computeWedgeRelief(ctx.totalIncome, ctx.employmentIncome, ctx.position);
+        ctx.wedgeDeduction = ctx.wedge.type === 'deduction' ? ctx.wedge.amount : 0;
+        ctx.exemptSum = ctx.wedge.type === 'exempt' ? ctx.wedge.amount : 0;
+        ctx.deductions.push(ctx.wedgeDeduction);
+      },
+      ledger: function (ctx) {
+        if (ctx.exemptSum <= 0) return [];
+
+        return [{
+          id: 'wedge.exempt',
+          label: 'Somma esente riduzione cuneo fiscale',
+          sign: 1,
+          base: ctx.taxable,
+          formula: formatRate(ctx.wedge.rate) + ' di ' + formatAmount(ctx.taxable) +
+            ', non concorre al reddito',
+          amount: ctx.exemptSum,
+          sourceId: parameters.wedgeRelief.sourceId
+        }];
+      },
+      thresholds: function (position) {
+        var w = parameters.wedgeRelief;
+        var share = position.daysWorked / parameters.employmentYear.days;
+
+        /**
+         * The exempt bands are read on the income projected to a full year, so
+         * on a short contract they sit proportionally lower in actual income.
+         * The last band has no ceiling and therefore no threshold to mark.
+         */
+        var list = w.exempt.rates.map(function (rate, index) {
+          return rate.upTo === null ? null : {
+            space: 'taxable', threshold: rate.upTo * share,
+            id: 'wedge-exempt-rate-' + (index + 1),
+            label: 'Cambio fascia somma esente cuneo'
+          };
+        }).filter(isNotNull);
+
+        list.push({
+          space: 'taxable', threshold: w.deduction.over,
+          id: 'wedge-mode-switch', label: 'Passaggio da somma esente a detrazione'
+        });
+        list.push({
+          space: 'taxable', threshold: w.deduction.fullUpTo,
+          id: 'wedge-taper-start', label: 'Inizio decalage detrazione cuneo'
+        });
+        list.push({
+          space: 'taxable', threshold: w.deduction.taperTo,
+          id: 'wedge-taper-end', label: 'Azzeramento detrazione cuneo'
+        });
+
+        return list;
+      }
+    },
+
+    /**
+     * IRPEF netta. Every deduction collected so far is summed here and nowhere
+     * else, so a new one is a single push in its own rule. What exceeds gross
+     * tax is lost: deductions cannot turn into a refund.
+     *
+     * The thresholds this creates are not written in any statute, so they are
+     * not declared here but solved in getBreakpoints.
+     */
+    {
+      id: 'net-tax',
+      apply: function (ctx) {
+        ctx.deductionsTotal = ctx.deductions.reduce(function (sum, amount) {
+          return sum + amount;
+        }, 0);
+
+        ctx.irpefNet = Math.max(0, ctx.irpefGross.total - ctx.deductionsTotal);
+        ctx.lostToInsufficientTax = Math.max(0, ctx.deductionsTotal - ctx.irpefGross.total);
+      },
+      ledger: function (ctx) {
+        return [{
+          id: 'irpef.net',
+          label: 'IRPEF netta',
+          sign: -1,
+          base: ctx.taxable,
+          formula: formatAmount(ctx.irpefGross.total) + ' di imposta lorda meno ' +
+            formatAmount(ctx.deductionsTotal) + ' di detrazioni',
+          amount: ctx.irpefNet,
+          sourceId: parameters.irpef.sourceId
+        }];
+      }
+    },
+
+    /** Addizionali, sull imponibile e mai ridotte dalle detrazioni. */
+    {
+      id: 'surtaxes',
+      apply: function (ctx) {
+        ctx.surtaxes = computeSurtaxes(ctx.taxable);
+      },
+      ledger: function (ctx) {
+        var m = parameters.municipalSurtax;
+
+        return [
+          {
+            id: 'surtax.regional',
+            label: 'Addizionale regionale ' + parameters.region.name,
+            sign: -1,
+            base: ctx.taxable,
+            formula: 'scaglioni progressivi su ' + formatAmount(ctx.taxable),
+            amount: ctx.surtaxes.regional,
+            sourceId: parameters.regionalSurtax.sourceId
+          },
+          {
+            id: 'surtax.municipal',
+            label: 'Addizionale comunale ' + parameters.municipality.name,
+            sign: -1,
+            base: ctx.taxable,
+            formula: ctx.surtaxes.municipalExempt
+              ? 'esente, imponibile non superiore a ' + formatAmount(m.exemptionThreshold)
+              : formatRate(m.rate) + ' di ' + formatAmount(ctx.taxable),
+            amount: ctx.surtaxes.municipal,
+            sourceId: m.sourceId
+          }
+        ];
+      },
+      thresholds: function () {
+        var list = parameters.regionalSurtax.brackets.map(function (bracket, index) {
+          return bracket.upTo === null ? null : {
+            space: 'taxable', threshold: bracket.upTo,
+            id: 'regional-bracket-' + (index + 1), label: 'Scaglione addizionale regionale'
+          };
+        }).filter(isNotNull);
+
+        list.push({
+          space: 'taxable', threshold: parameters.municipalSurtax.exemptionThreshold,
+          id: 'municipal-exemption', label: 'Soglia esenzione addizionale comunale'
+        });
+
+        return list;
+      }
+    },
+
+    /** Trattamento integrativo, che non passa dall IRPEF ma si somma al netto. */
+    {
+      id: 'supplementary-allowance',
+      apply: function (ctx) {
+        ctx.supplementary = computeSupplementaryAllowance(
+          ctx.totalIncome, ctx.irpefGross.total, ctx.employmentDeduction.employment,
+          ctx.familyDeduction.total, ctx.position);
+      },
+      ledger: function (ctx) {
+        if (ctx.supplementary.amount <= 0) return [];
+
+        var s = parameters.supplementaryAllowance;
+
+        return [{
+          id: 'supplementary.allowance',
+          label: 'Trattamento integrativo',
+          sign: 1,
+          base: ctx.taxable,
+          formula: ctx.supplementary.band === 'differenziale'
+            ? 'eccedenza delle detrazioni art. 12 e 13 co. 1 sull imposta lorda, non concorre al reddito'
+            : 'spetta fino a ' + formatAmount(s.incomeUpTo) +
+              ' di reddito, non concorre al reddito',
+          amount: ctx.supplementary.amount,
+          sourceId: s.sourceId
+        }];
+      },
+      thresholds: function () {
+        return [{
+          space: 'taxable', threshold: parameters.supplementaryAllowance.incomeUpTo,
+          id: 'supplementary-allowance-end', label: 'Fine trattamento integrativo'
+        }];
+      }
+    }
+  ];
+
   // ------------------------------------------------------------------ main
 
   /**
@@ -546,194 +920,115 @@ var createEngine = function createEngine(source, taxYear) {
   function calculateNet(input, options) {
     var position = normalizePosition(input);
     var opts = normalizeOptions(options);
-    var ral = position.grossAnnual;
 
-    var contributions = computeContributions(ral);
-    var taxable = ral - contributions.total;
+    /**
+     * The calculation in progress. Each rule reads what the earlier ones left
+     * here and adds its own result, so RULES is the pipeline and nothing else
+     * decides the order.
+     */
+    var ctx = {
+      position: position,
+      exactRatios: opts.exactRatios,
+      ral: position.grossAnnual,
+      deductions: []
+    };
 
-    // Single-income case: total income, employment income and taxable base are
-    // the same number. Kept as separate arguments so adding other income later
-    // does not mean rewriting the logic.
-    var totalIncome = taxable;
-    var employmentIncome = taxable;
-
-    var irpefGross = applyBrackets(taxable, parameters.irpef.brackets);
-    var deduction = computeEmploymentDeduction(totalIncome, opts.exactRatios, position);
-    var familyDeduction = computeFamilyDeduction(totalIncome, opts.exactRatios, position);
-    var wedge = computeWedgeRelief(totalIncome, employmentIncome, position);
-
-    var wedgeDeduction = wedge.type === 'deduction' ? wedge.amount : 0;
-    var deductionsTotal = deduction.total + familyDeduction.total + wedgeDeduction;
-    var irpefNet = Math.max(0, irpefGross.total - deductionsTotal);
-    var lostToInsufficientTax = Math.max(0, deductionsTotal - irpefGross.total);
-
-    var surtaxes = computeSurtaxes(taxable);
-    var exemptSum = wedge.type === 'exempt' ? wedge.amount : 0;
-
-    var supplementary = computeSupplementaryAllowance(
-      totalIncome, irpefGross.total, deduction.employment, familyDeduction.total, position);
-
-    var netAnnual = ral - contributions.total - irpefNet - surtaxes.total +
-      exemptSum + supplementary.amount;
-
-    var ledger = buildLedger({
-      ral: ral,
-      contributions: contributions,
-      taxable: taxable,
-      irpefGross: irpefGross.total,
-      deductionsTotal: deductionsTotal,
-      irpefNet: irpefNet,
-      surtaxes: surtaxes,
-      wedge: wedge,
-      exemptSum: exemptSum,
-      supplementary: supplementary
+    RULES.forEach(function (rule) {
+      rule.apply(ctx);
     });
+
+    /**
+     * Written out rather than folded from the trail, on purpose. The trail has
+     * to reconstruct this number and a test asserts that it does, which only
+     * proves something as long as the two are arrived at separately. Adding a
+     * trail entry means adding a term here, and forgetting to is exactly what
+     * that test catches.
+     */
+    var netAnnual = ctx.ral - ctx.contributions.total - ctx.irpefNet -
+      ctx.surtaxes.total + ctx.exemptSum + ctx.supplementary.amount;
 
     return {
       position: position,
-      ral: ral,
+      ral: ctx.ral,
       months: position.months,
       contributions: {
-        ivs: contributions.ivs,
-        additionalRate: contributions.additionalRate,
-        total: contributions.total,
-        capApplied: contributions.capApplied
+        ivs: ctx.contributions.ivs,
+        additionalRate: ctx.contributions.additionalRate,
+        total: ctx.contributions.total,
+        capApplied: ctx.contributions.capApplied
       },
-      taxableIncome: taxable,
+      taxableIncome: ctx.taxable,
       irpef: {
-        gross: irpefGross.total,
-        byBracket: irpefGross.detail,
+        gross: ctx.irpefGross.total,
+        byBracket: ctx.irpefGross.detail,
         deductions: {
-          employment: deduction.employment,
-          bonus65: deduction.bonus,
-          ratio: deduction.ratio,
-          minimumApplied: deduction.minimumApplied,
+          employment: ctx.employmentDeduction.employment,
+          bonus65: ctx.employmentDeduction.bonus,
+          ratio: ctx.employmentDeduction.ratio,
+          minimumApplied: ctx.employmentDeduction.minimumApplied,
           family: {
-            spouse: familyDeduction.spouse,
-            children: familyDeduction.children,
-            ascendants: familyDeduction.ascendants,
-            total: familyDeduction.total
+            spouse: ctx.familyDeduction.spouse,
+            children: ctx.familyDeduction.children,
+            ascendants: ctx.familyDeduction.ascendants,
+            total: ctx.familyDeduction.total
           },
-          wedge: wedgeDeduction,
-          total: deductionsTotal,
-          lostToInsufficientTax: lostToInsufficientTax
+          wedge: ctx.wedgeDeduction,
+          total: ctx.deductionsTotal,
+          lostToInsufficientTax: ctx.lostToInsufficientTax
         },
-        net: irpefNet
+        net: ctx.irpefNet
       },
       wedge: {
-        type: wedge.type,
-        amount: wedge.amount,
-        rate: wedge.rate,
-        projectedIncome: wedge.projectedIncome === undefined ? null : wedge.projectedIncome
+        type: ctx.wedge.type,
+        amount: ctx.wedge.amount,
+        rate: ctx.wedge.rate,
+        projectedIncome: ctx.wedge.projectedIncome === undefined
+          ? null
+          : ctx.wedge.projectedIncome
       },
-      supplementaryAllowance: { amount: supplementary.amount, band: supplementary.band },
+      supplementaryAllowance: {
+        amount: ctx.supplementary.amount,
+        band: ctx.supplementary.band
+      },
       surtaxes: {
-        regional: surtaxes.regional,
-        regionalDetail: surtaxes.regionalDetail,
-        municipal: surtaxes.municipal,
-        municipalExempt: surtaxes.municipalExempt,
-        total: surtaxes.total
+        regional: ctx.surtaxes.regional,
+        regionalDetail: ctx.surtaxes.regionalDetail,
+        municipal: ctx.surtaxes.municipal,
+        municipalExempt: ctx.surtaxes.municipalExempt,
+        total: ctx.surtaxes.total
       },
       netAnnual: netAnnual,
       netMonthly: netAnnual / position.months,
-      employerCost: computeEmployerCost(ral),
-      ledger: ledger
+      employerCost: computeEmployerCost(ctx.ral),
+      ledger: buildLedger(ctx)
     };
   }
 
   /**
-   * The ordered gross-to-net trail. Load bearing, not decoration: the UI renders
-   * only this, and a test asserts that it reconstructs the net exactly.
+   * The gross-to-net trail, collected from whichever rules declare one. Load
+   * bearing, not decoration: the UI renders only this, and a test asserts that
+   * it reconstructs the net exactly.
+   *
+   * What goes out is listed before what comes in. A payslip reads that way, and
+   * the waterfall chart is drawn on it: the drops first, then the credits.
    */
-  function buildLedger(s) {
-    var c = parameters.contributions;
+  function buildLedger(ctx) {
     var entries = [];
 
-    entries.push({
-      id: 'contributions.ivs',
-      label: 'Contributi IVS a carico dipendente',
-      sign: -1,
-      base: s.contributions.base,
-      formula: formatRate(c.ivsRate) + ' di ' + formatAmount(s.contributions.base) +
-        (s.contributions.capApplied ? ' (base limitata al massimale)' : ''),
-      amount: s.contributions.ivs,
-      sourceId: c.ivsSourceId
+    RULES.forEach(function (rule) {
+      if (!rule.ledger) return;
+      rule.ledger(ctx).forEach(function (entry) {
+        entries.push(entry);
+      });
     });
 
-    if (s.contributions.additionalRate > 0) {
-      entries.push({
-        id: 'contributions.additional',
-        label: 'Contributo aggiuntivo IVS 1%',
-        sign: -1,
-        base: s.contributions.base - c.additionalThreshold,
-        formula: formatRate(c.additionalRate) + ' sulla quota oltre ' + formatAmount(c.additionalThreshold),
-        amount: s.contributions.additionalRate,
-        sourceId: c.sourceId
+    function withSign(sign) {
+      return entries.filter(function (entry) {
+        return entry.sign === sign;
       });
     }
 
-    entries.push({
-      id: 'irpef.net',
-      label: 'IRPEF netta',
-      sign: -1,
-      base: s.taxable,
-      formula: formatAmount(s.irpefGross) + ' di imposta lorda meno ' +
-        formatAmount(s.deductionsTotal) + ' di detrazioni',
-      amount: s.irpefNet,
-      sourceId: parameters.irpef.sourceId
-    });
-
-    entries.push({
-      id: 'surtax.regional',
-      label: 'Addizionale regionale ' + parameters.region.name,
-      sign: -1,
-      base: s.taxable,
-      formula: 'scaglioni progressivi su ' + formatAmount(s.taxable),
-      amount: s.surtaxes.regional,
-      sourceId: parameters.regionalSurtax.sourceId
-    });
-
-    entries.push({
-      id: 'surtax.municipal',
-      label: 'Addizionale comunale ' + parameters.municipality.name,
-      sign: -1,
-      base: s.taxable,
-      formula: s.surtaxes.municipalExempt
-        ? 'esente, imponibile non superiore a ' + formatAmount(parameters.municipalSurtax.exemptionThreshold)
-        : formatRate(parameters.municipalSurtax.rate) + ' di ' + formatAmount(s.taxable),
-      amount: s.surtaxes.municipal,
-      sourceId: parameters.municipalSurtax.sourceId
-    });
-
-    if (s.supplementary.amount > 0) {
-      entries.push({
-        id: 'supplementary.allowance',
-        label: 'Trattamento integrativo',
-        sign: 1,
-        base: s.taxable,
-        formula: s.supplementary.band === 'differenziale'
-          ? 'eccedenza delle detrazioni art. 12 e 13 co. 1 sull imposta lorda, non concorre al reddito'
-          : 'spetta fino a ' +
-            formatAmount(parameters.supplementaryAllowance.incomeUpTo) +
-            ' di reddito, non concorre al reddito',
-        amount: s.supplementary.amount,
-        sourceId: parameters.supplementaryAllowance.sourceId
-      });
-    }
-
-    if (s.exemptSum > 0) {
-      entries.push({
-        id: 'wedge.exempt',
-        label: 'Somma esente riduzione cuneo fiscale',
-        sign: 1,
-        base: s.taxable,
-        formula: formatRate(s.wedge.rate) + ' di ' + formatAmount(s.taxable) + ', non concorre al reddito',
-        amount: s.exemptSum,
-        sourceId: parameters.wedgeRelief.sourceId
-      });
-    }
-
-    return entries;
+    return withSign(-1).concat(withSign(1));
   }
 
   // ----------------------------------------------------------- breakpoints
@@ -767,82 +1062,23 @@ var createEngine = function createEngine(source, taxYear) {
   function getBreakpoints(input) {
     var position = withGross(input, 0);
     var share = position.daysWorked / parameters.employmentYear.days;
-    var d = parameters.employmentDeduction;
-    var w = parameters.wedgeRelief;
-    var f = parameters.familyDeduction;
     var candidates = [];
 
     function add(space, threshold, id, label) {
       candidates.push({ space: space, threshold: threshold, id: id, label: label });
     }
 
-    add('taxable', parameters.supplementaryAllowance.incomeUpTo,
-      'supplementary-allowance-end', 'Fine trattamento integrativo');
-
-    add('taxable', d.flatUpTo, 'employment-deduction-step', 'Gradino detrazione art. 13');
-    d.bands.forEach(function (band, i) {
-      add('taxable', band.upTo, 'employment-deduction-band-' + (i + 1),
-        'Cambio formula detrazione art. 13');
-    });
-    add('taxable', d.bonus.over, 'bonus65-start', 'Inizio maggiorazione 65 euro');
-    add('taxable', d.bonus.upTo, 'bonus65-end', 'Fine maggiorazione 65 euro');
-
     /**
-     * The exempt bands are read on the income projected to a full year, so on
-     * a short contract they sit proportionally lower in actual income. The
-     * last band has no ceiling and therefore no threshold to mark.
+     * Everything a provision states as a number. Whatever a rule declares turns
+     * up here without anyone having to remember to copy it across, which is the
+     * whole point of keeping the three faces of a rule together.
      */
-    w.exempt.rates.forEach(function (r, i) {
-      if (r.upTo === null) return;
-      add('taxable', r.upTo * share, 'wedge-exempt-rate-' + (i + 1),
-        'Cambio fascia somma esente cuneo');
-    });
-    add('taxable', w.deduction.over, 'wedge-mode-switch', 'Passaggio da somma esente a detrazione');
-    add('taxable', w.deduction.fullUpTo, 'wedge-taper-start', 'Inizio decalage detrazione cuneo');
-    add('taxable', w.deduction.taperTo, 'wedge-taper-end', 'Azzeramento detrazione cuneo');
-
-    parameters.irpef.brackets.forEach(function (b, i) {
-      if (b.upTo !== null) add('taxable', b.upTo, 'irpef-bracket-' + (i + 1), 'Scaglione IRPEF');
-    });
-    parameters.regionalSurtax.brackets.forEach(function (b, i) {
-      if (b.upTo !== null) add('taxable', b.upTo, 'regional-bracket-' + (i + 1),
-        'Scaglione addizionale regionale');
-    });
-
-    add('taxable', parameters.municipalSurtax.exemptionThreshold,
-      'municipal-exemption', 'Soglia esenzione addizionale comunale');
-
-    add('gross', parameters.contributions.additionalThreshold,
-      'additional-contribution', 'Contributo aggiuntivo IVS 1%');
-    add('gross', parameters.contributions.cap,
-      'contribution-cap', 'Massimale contributivo');
-
-    // Art. 12 thresholds exist only for the dependants actually declared.
-    if (position.family.spouse) {
-      add('taxable', f.spouse.firstBand.upTo, 'spouse-band-1',
-        'Cambio formula detrazione coniuge');
-      add('taxable', f.spouse.middleBand.upTo, 'spouse-band-2',
-        'Cambio formula detrazione coniuge');
-      add('taxable', f.spouse.lastBand.upTo, 'spouse-band-3',
-        'Azzeramento detrazione coniuge');
-      f.spouse.increases.forEach(function (step, i) {
-        add('taxable', step.over, 'spouse-increase-' + (i + 1) + '-start',
-          'Gradino maggiorazione coniuge');
-        add('taxable', step.upTo, 'spouse-increase-' + (i + 1) + '-end',
-          'Gradino maggiorazione coniuge');
+    RULES.forEach(function (rule) {
+      if (!rule.thresholds) return;
+      rule.thresholds(position).forEach(function (threshold) {
+        candidates.push(threshold);
       });
-    }
-
-    if (position.family.children > 0) {
-      add('taxable',
-        f.children.ceiling + f.children.ceilingIncrement * (position.family.children - 1),
-        'children-deduction-end', 'Azzeramento detrazione figli');
-    }
-
-    if (position.family.ascendants > 0) {
-      add('taxable', f.ascendants.ceiling,
-        'ascendants-deduction-end', 'Azzeramento detrazione ascendenti');
-    }
+    });
 
     /**
      * Two thresholds are written in no statute: they are where two straight
