@@ -23,9 +23,15 @@ var CASES = (function () {
   var fixtures = resolve(
     typeof TEST_FIXTURES !== 'undefined' ? TEST_FIXTURES : undefined, './fixtures.js');
 
+  // Vive in tools/ perche serve a generare il dataset, non a calcolare, ma e la
+  // parte che sbaglierebbe piu silenziosamente: i test la seguono dove sta.
+  var fasce = resolve(typeof FASCE !== 'undefined' ? FASCE : undefined, '../tools/fasce.js');
+
   var SUITES = [
     resolve(typeof SUITE_NUMBERS !== 'undefined' ? SUITE_NUMBERS : undefined,
       './suites/numbers.js'),
+    resolve(typeof SUITE_FASCE !== 'undefined' ? SUITE_FASCE : undefined,
+      './suites/fasce.js'),
     resolve(typeof SUITE_VALIDATION !== 'undefined' ? SUITE_VALIDATION : undefined,
       './suites/validation.js'),
     resolve(typeof SUITE_VALUES !== 'undefined' ? SUITE_VALUES : undefined,
@@ -63,7 +69,8 @@ var CASES = (function () {
         t: t,
         registry: registry,
         createEngine: createEngine,
-        fixtures: fixtures
+        fixtures: fixtures,
+        fasce: fasce
       };
 
       SUITES.forEach(function (suite) {

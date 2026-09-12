@@ -1,0 +1,3 @@
+# Lo scaricato grezzo del portale MEF: una trentina di megabyte, si rigenera
+# con tools/estrai-comuni.js e non ha senso versionarlo.
+tools/dati/

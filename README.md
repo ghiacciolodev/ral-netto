@@ -177,10 +177,17 @@ portale. Il modello calcola le aliquote ordinarie per scaglione.
 
 Un estratto di massa non si legge riga per riga, ma si campiona. **120 comuni presi a
 caso sono stati riscaricati dal portale e confrontati con il dataset: 120 su 120
-identici.** Prima di generare, ho classificato tutte le diciture della colonna "Fascia
-di applicazione": le varianti tipografiche, entità HTML non decodificate, spazi
-mancanti, "ad euro" invece di "a euro", refusi, sono normalizzate; quello che resta
-non viene indovinato, viene marcato.
+identici.**
+
+Prima di generare, ho classificato tutte le diciture della colonna "Fascia di
+applicazione": le varianti tipografiche, entità HTML non decodificate, spazi mancanti,
+"ad euro" invece di "a euro", refusi, sono normalizzate; quello che resta non viene
+indovinato, viene marcato. Quella lettura è l'unica parte di `tools/` con una suite di
+test propria, `test/suites/fasce.js`, con casi presi tutti dal portale: un errore lì
+non si vedrebbe, si propagherebbe in un netto credibile.
+
+`src/local-2025.js` e `src/local-2026.js` sono file generati e si rigenerano in due
+comandi, documentati in [tools/README.md](tools/README.md).
 
 Quanto pesa il posto, a parità di tutto il resto? Con RAL 30.000 su 13 mensilità:
 
@@ -308,7 +315,7 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-498 asserzioni, divise in undici suite per area. Se il codice e un valore atteso non
+549 asserzioni, divise in dodici suite per area. Se il codice e un valore atteso non
 concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
@@ -415,7 +422,11 @@ test/suites/*.js           una suite per area, undici file
 test/harness.js            runner di asserzioni
 test/run.js                esecuzione da riga di comando
 test/runner.html           esecuzione in browser
-tools/estrai-comuni.js     scarica le aliquote comunali dal portale MEF
+tools/estrai-comuni.js     passo 1, scarica le aliquote comunali dal portale MEF
+tools/genera-locale.js     passo 2, genera src/local-YYYY.js
+tools/fasce.js             lettura delle diciture del portale, la parte fragile
+tools/regioni.js           le 21 regioni, lette a mano
+tools/README.md            come si rigenera il dataset
 .nojekyll                  dice a GitHub Pages di pubblicare i file cosi come sono
 ```
 

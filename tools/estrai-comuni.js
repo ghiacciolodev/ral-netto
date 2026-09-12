@@ -7,20 +7,21 @@
  * poi una pagina per comune. La pagina con anno=9999 porta tutta la storia, per
  * cui basta una richiesta per comune per avere ogni anno.
  *
- * Scrive su disco a ogni provincia e riparte da dove si era fermato.
+ * Scrive su disco a ogni provincia e riparte da dove si era fermato: la
+ * scaricata intera sono quasi ottomila richieste e una decina di minuti.
  *
- * Questo e il primo dei due passi. Produce comuni-raw.json, la storia completa
- * di ogni comune cosi come il portale la pubblica. Il secondo passo, quello che
- * normalizza le diciture della colonna "Fascia di applicazione" e scrive
- * src/local-YYYY.js, **non e ancora in questo repository**: e una lacuna nota,
- * e finche resta tale il dataset non e rigenerabile da qui.
+ * Passo 1 di 2. Qui esce tools/dati/comuni-raw.json, la storia completa di ogni
+ * comune cosi come il portale la pubblica. Il passo 2 e tools/genera-locale.js,
+ * che la trasforma in src/local-YYYY.js.
  */
 var fs = require('fs');
 var path = require('path');
 
 var HOST = 'https://www1.finanze.gov.it';
 var BASE = HOST + '/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/';
-var OUT = __dirname;
+var OUT = path.join(__dirname, 'dati');
+if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
+
 var INDEX_FILE = path.join(OUT, 'comuni-index.json');
 var RAW_FILE = path.join(OUT, 'comuni-raw.json');
 

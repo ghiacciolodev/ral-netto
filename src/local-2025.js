@@ -4,36 +4,36 @@
 /**
  * Addizionali regionali e comunali in vigore nell anno d imposta 2025.
  *
- * Estratto il 12 settembre 2026 dal portale del federalismo fiscale del MEF,
- * che e la fonte che fa fede: raccoglie le delibere di regioni e comuni e
- * pubblica le aliquote applicabili. Ogni voce porta il link alla sua pagina.
+ * FILE GENERATO da tools/genera-locale.js. Non si modifica a mano: si
+ * cambia l ingresso e si rigenera.
  *
- * Le ventuno regioni stanno scritte per esteso. I 7.894 comuni stanno in una
- * tabella compatta con il suo decodificatore: e un file generato, e va riletto
- * come si rilegge una tabella, non riga per riga. **Non e stato verificato voce
- * per voce**, a differenza dei parametri statali: e un estratto di massa.
+ * Estratto il 12 settembre 2026 dal portale del federalismo fiscale del
+ * MEF, che e la fonte che fa fede: raccoglie le delibere di regioni e comuni
+ * e pubblica le aliquote applicabili. Ogni voce porta il link alla sua pagina.
+ *
+ * Le ventuno regioni sono lette a mano, una pagina per volta. I comuni sono
+ * un estratto di massa e **non sono verificati voce per voce**: la verifica e
+ * campionaria, vedi il README.
  *
  * Tre cose che la colonna delle aliquote non dice e che vanno dette qui.
  *
  * Un ente che non delibera non azzera il tributo: le aliquote in vigore si
- * intendono prorogate di anno in anno, art. 1 co. 169 L. 296/2006. Ogni comune
- * porta percio `deliberatedFor`, l anno dell ultima delibera pubblicata. Se e
- * minore dell anno d imposta, quelle aliquote valgono per proroga. Ottocento
- * comuni non hanno mai deliberato: per loro l addizionale comunale e zero.
+ * intendono prorogate di anno in anno, art. 1 co. 169 L. 296/2006. Ogni
+ * comune porta percio `deliberatedFor`, l anno dell ultima delibera
+ * pubblicata. Se e minore dell anno d imposta, quelle aliquote valgono per
+ * proroga. I comuni che non hanno mai deliberato hanno addizionale zero.
  *
- * Circa centoventi comuni prevedono esenzioni legate al tipo di reddito, a
- * pensione, a lavoro dipendente, a terreni, o alla persona. Non sono una soglia
- * sull imponibile e il modello **non le applica**: quei comuni portano
- * `unmodelledRelief` e lo dichiarano.
+ * Alcuni comuni prevedono esenzioni legate al tipo di reddito, a pensione, a
+ * lavoro dipendente, a terreni, o alla persona. Non sono una soglia sull
+ * imponibile e il modello **non le applica**: portano `unmodelledRelief`.
  *
- * Lo stesso vale per le agevolazioni soggettive di diverse regioni, detrazioni
- * per figli a carico o per disabilita. Il modello calcola le aliquote ordinarie
- * per scaglione, e la nota della fonte segnala dove c e dell altro.
+ * Lo stesso vale per le agevolazioni soggettive di diverse regioni. Il
+ * modello calcola le aliquote ordinarie per scaglione, e la nota della fonte
+ * segnala dove c e dell altro.
  */
 var LOCAL_2025 = (function () {
 
   var MEF = 'https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/';
-
 
   /** Da regione a pagina del portale, per ricostruire i link. */
   var PAGES = {
@@ -8306,15 +8306,15 @@ var LOCAL_2025 = (function () {
    *    anno della delibera, "numero|data", bandiere]
    *
    * dove uno scaglione e [tetto, aliquota percentuale] con tetto 0 per lo
-   * scaglione aperto, e le bandiere sono 1 per aliquota inserita d ufficio e
-   * 2 per esenzione soggettiva non modellata.
+   * scaglione aperto, e le bandiere sono 1 per aliquota inserita d ufficio
+   * e 2 per esenzione soggettiva non modellata.
    *
    * La chiave e il nome piu la sigla della provincia: i nomi dei comuni non
    * sono unici in Italia, i codici catastali non si leggono.
    *
-   * Le percentuali si arrotondano invece di dividere e basta: 1,1 diviso 100
-   * non da lo stesso double di 0.011, e le due strade devono portare allo
-   * stesso numero.
+   * Le percentuali si arrotondano invece di dividere e basta: 1,1 diviso
+   * 100 non da lo stesso double di 0.011, e le due strade devono portare
+   * allo stesso numero.
    */
   function decode() {
     var municipalities = {};
@@ -8327,11 +8327,10 @@ var LOCAL_2025 = (function () {
       var region = row[3];
       var year = row[6];
       var flags = row[8];
-      var key = slug(name) + '-' + province.toLowerCase();
-      var sourceId = 'addcom-' + code.toLowerCase();
       var place = PAGES[region];
+      var sourceId = 'addcom-' + code.toLowerCase();
 
-      municipalities[key] = {
+      municipalities[slug(name) + '-' + province.toLowerCase()] = {
         name: name,
         province: province,
         region: region,
@@ -8349,6 +8348,7 @@ var LOCAL_2025 = (function () {
 
       var parts = row[7] ? row[7].split('|') : null;
       var notes = [];
+
       if ((flags & 1) !== 0) notes.push('Aliquota non inviata dal comune e inserita d ufficio.');
       if (year === null) {
         notes.push('Il portale non riporta alcuna delibera, in nessun anno: il comune non applica l addizionale.');
@@ -8394,8 +8394,8 @@ var LOCAL_2025 = (function () {
     taxYear: 2025,
 
     /**
-     * Su cosa cade il calcolo quando la posizione non lo dice. Non e una scelta
-     * fiscale, e il caso di partenza dell interfaccia.
+     * Su cosa cade il calcolo quando la posizione non lo dice. Non e una
+     * scelta fiscale, e il caso di partenza dell interfaccia.
      */
     defaults: {
       region: 'lombardia',
