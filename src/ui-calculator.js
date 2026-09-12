@@ -10,6 +10,8 @@
   var form = document.getElementById('calc-form');
   var inputRal = /** @type {HTMLInputElement} */ (document.getElementById('input-ral'));
   var inputMonths = /** @type {HTMLSelectElement} */ (document.getElementById('input-months'));
+  var inputDays = /** @type {HTMLInputElement} */ (document.getElementById('input-days'));
+  var inputContract = /** @type {HTMLSelectElement} */ (document.getElementById('input-contract'));
   var errorBox = document.getElementById('error-box');
   var results = document.getElementById('results');
 
@@ -18,6 +20,16 @@
   var inputNetBasis = /** @type {HTMLSelectElement} */ (document.getElementById('input-net-basis'));
   var inverseError = document.getElementById('inverse-error');
   var inverseResult = document.getElementById('inverse-result');
+
+  /** The subject as the form currently describes it. */
+  function currentPosition(grossAnnual) {
+    return {
+      grossAnnual: grossAnnual,
+      months: parseInt(inputMonths.value, 10),
+      daysWorked: parseInt(inputDays.value, 10),
+      contractType: inputContract.value
+    };
+  }
 
   function bracketRange(bracket) {
     if (bracket.from === 0) return 'fino a ' + engine.formatAmount(bracket.to);
@@ -116,6 +128,10 @@
     if (d.ratio !== null) {
       ui.detailRow(tbody, 'Rapporto troncato a 4 decimali',
         String(d.ratio).replace('.', ','), 'is-subtle');
+    }
+    if (d.minimumApplied) {
+      ui.detailRow(tbody, 'Minimo garantito, non ragguagliato ai giorni',
+        'applicato', 'is-subtle');
     }
     if (d.bonus65 > 0) {
       ui.detailRow(tbody, 'Maggiorazione art. 13 co. 1.1', ui.euro(d.bonus65));
@@ -300,7 +316,7 @@
 
     var result;
     try {
-      result = engine.calculateNet({ grossAnnual: ral, months: parseInt(inputMonths.value, 10) });
+      result = engine.calculateNet(currentPosition(ral));
     } catch (e) {
       showError(e.message);
       employerBlock.hidden = true;
@@ -401,7 +417,7 @@
 
     var solved;
     try {
-      solved = engine.solveGrossFromNet(targetAnnual, { months: months });
+      solved = engine.solveGrossFromNet(targetAnnual, currentPosition(0));
     } catch (e) {
       inverseError.textContent = e.message;
       inverseError.hidden = false;
@@ -469,9 +485,11 @@
     solveInverse();
   });
 
-  inputMonths.addEventListener('change', function () {
-    if (!results.hidden) calculate();
-    solveInverse();
+  [inputMonths, inputDays, inputContract].forEach(function (field) {
+    field.addEventListener('change', function () {
+      if (!results.hidden) calculate();
+      solveInverse();
+    });
   });
 
   inputNetBasis.addEventListener('change', solveInverse);

@@ -64,6 +64,13 @@ var PARAMETERS_2026 = (function () {
         { upTo: 50000, base: 0, coefficient: 1910, span: 22000 }
       ],
       bonus: { amount: 65, over: 25000, upTo: 35000, sourceId: 'tuir-art-13-c1-1' },
+      // Minimo garantito della prima fascia. Si applica alla detrazione gia
+      // ragguagliata ai giorni e non va a sua volta ragguagliato.
+      minimum: {
+        permanent: 690,
+        fixedTerm: 1380,
+        sourceId: 'ade-circ-15-2007'
+      },
       truncationDigits: 4,
       truncationSourceId: 'tuir-art-13-c6',
       sourceId: 'tuir-art-13-c1'
@@ -77,7 +84,7 @@ var PARAMETERS_2026 = (function () {
         rates: [
           { upTo: 8500, rate: 0.071 },
           { upTo: 15000, rate: 0.053 },
-          { upTo: 20000, rate: 0.048 }
+          { upTo: null, rate: 0.048 }
         ]
       },
       deduction: {
@@ -167,6 +174,13 @@ var PARAMETERS_2026 = (function () {
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917',
         inForceFrom: '2025-01-01',
         note: 'Unica componente della detrazione non ragguagliata ai giorni lavorati.'
+      },
+      'ade-circ-15-2007': {
+        label: 'circ. Agenzia Entrate 15/2007',
+        title: 'I minimi di 690 e 1.380 euro non si rapportano al periodo di lavoro nell anno',
+        url: null,
+        inForceFrom: '2007-01-01',
+        note: 'Si confrontano con la detrazione gia ragguagliata ai giorni. Non ho aperto il documento originale: vedi il README.'
       },
       'tuir-art-13-c6': {
         label: 'art. 13 co. 6 TUIR',

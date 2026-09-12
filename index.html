@@ -16,8 +16,8 @@
     accanto la norma che la produce, così ogni numero si può risalire alla fonte.
   </p>
   <p class="case-note">
-    Caso modellato: impiegato, tempo indeterminato, full time, rapporto di lavoro
-    per l'intero anno, residente a Milano (Lombardia). Nessun familiare a carico,
+    Caso modellato: impiegato residente a Milano (Lombardia), con la retribuzione
+    effettivamente percepita nell'anno. Nessun familiare a carico,
     nessuna agevolazione, nessun onere deducibile o detraibile. L'elenco completo
     delle semplificazioni e la fonte primaria di ogni parametro sono nel README
     del repository.
@@ -46,6 +46,22 @@
         <option value="14">14</option>
       </select>
       <p class="hint" id="hint-months">La RAL le include già.</p>
+    </div>
+
+    <div class="field">
+      <label for="input-days">Giorni di rapporto</label>
+      <input id="input-days" name="days" type="number" min="1" max="365" step="1"
+             value="365" aria-describedby="hint-days">
+      <p class="hint" id="hint-days">Giorni utili alla detrazione, non giornate lavorate.</p>
+    </div>
+
+    <div class="field">
+      <label for="input-contract">Contratto</label>
+      <select id="input-contract" aria-describedby="hint-contract">
+        <option value="permanent" selected>tempo indeterminato</option>
+        <option value="fixed-term">tempo determinato</option>
+      </select>
+      <p class="hint" id="hint-contract">Cambia il minimo garantito di detrazione.</p>
     </div>
 
     <div class="field field-action">

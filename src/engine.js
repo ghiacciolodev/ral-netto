@@ -108,7 +108,8 @@ var createEngine = function createEngine(source, taxYear) {
    * for Lazio returns an error instead of a Lombardy figure with the wrong label.
    *
    * @param {{grossAnnual: number, months?: number, daysWorked?: number,
-   *          region?: string, municipality?: string, taxYear?: number}} input
+   *          contractType?: string, region?: string, municipality?: string,
+   *          taxYear?: number}} input
    */
   function normalizePosition(input) {
     if (input === null || typeof input !== 'object') {
@@ -125,6 +126,7 @@ var createEngine = function createEngine(source, taxYear) {
       grossAnnual: input.grossAnnual,
       months: fallback(input.months, parameters.payrollMonths.defaultValue),
       daysWorked: fallback(input.daysWorked, parameters.employmentYear.days),
+      contractType: String(fallback(input.contractType, 'permanent')).toLowerCase(),
       region: String(fallback(input.region, parameters.region.key)).toLowerCase(),
       municipality: String(fallback(input.municipality, parameters.municipality.key)).toLowerCase()
     };
@@ -151,10 +153,17 @@ var createEngine = function createEngine(source, taxYear) {
         '. Valori consentiti: ' + parameters.payrollMonths.allowed.join(', ') + '.');
     }
 
-    if (position.daysWorked !== parameters.employmentYear.days) {
+    if (typeof position.daysWorked !== 'number' || !isFinite(position.daysWorked) ||
+        position.daysWorked <= 0 || position.daysWorked > parameters.employmentYear.days) {
       throw new RangeError(
-        'Il modello copre solo il rapporto per l intero anno, ' +
-        parameters.employmentYear.days + ' giorni. Il ragguaglio ai giorni non e implementato.');
+        'I giorni di rapporto devono stare fra 1 e ' + parameters.employmentYear.days +
+        '. Ricevuto: ' + position.daysWorked + '.');
+    }
+
+    if (position.contractType !== 'permanent' && position.contractType !== 'fixed-term') {
+      throw new RangeError(
+        'Tipo di contratto non riconosciuto: ' + position.contractType +
+        '. Valori ammessi: permanent, fixed-term.');
     }
 
     if (position.region !== parameters.region.key) {
@@ -220,29 +229,51 @@ var createEngine = function createEngine(source, taxYear) {
    * The step is worth at most `coefficient * 1e-4`, so under 20 cents. Passing
    * `exactRatios` drops the truncation to recover the underlying affine model.
    */
-  function computeEmploymentDeduction(income, exactRatios) {
+  function computeEmploymentDeduction(income, exactRatios, position) {
     var d = parameters.employmentDeduction;
+    var share = position.daysWorked / parameters.employmentYear.days;
 
     var amount = 0;
     var ratio = null;
+    var minimumApplied = false;
 
     if (income <= d.flatUpTo) {
-      amount = d.flatAmount;
+      amount = d.flatAmount * share;
+
+      // The guaranteed minimum is compared against the already apportioned
+      // amount and is not itself apportioned: circ. Agenzia Entrate 15/2007.
+      // It belongs to the first band only, which is why it never binds over a
+      // full year, where the plain deduction sits well above it.
+      var floor = position.contractType === 'fixed-term'
+        ? d.minimum.fixedTerm
+        : d.minimum.permanent;
+
+      if (amount < floor) {
+        amount = floor;
+        minimumApplied = true;
+      }
     } else {
       for (var i = 0; i < d.bands.length; i++) {
         var band = d.bands[i];
         if (income <= band.upTo) {
           ratio = (band.upTo - income) / band.span;
           if (!exactRatios) ratio = truncate(ratio, d.truncationDigits);
-          amount = band.base + band.coefficient * ratio;
+          amount = (band.base + band.coefficient * ratio) * share;
           break;
         }
       }
     }
 
+    // The comma 1.1 increase is the one piece that is never apportioned.
     var bonus = (income > d.bonus.over && income <= d.bonus.upTo) ? d.bonus.amount : 0;
 
-    return { employment: amount, bonus: bonus, ratio: ratio, total: amount + bonus };
+    return {
+      employment: amount,
+      bonus: bonus,
+      ratio: ratio,
+      minimumApplied: minimumApplied,
+      total: amount + bonus
+    };
   }
 
   /**
@@ -250,27 +281,49 @@ var createEngine = function createEngine(source, taxYear) {
    * employment income applied to the whole amount, not by bracket, and it never
    * passes through IRPEF.
    */
-  function computeWedgeRelief(totalIncome, employmentIncome) {
+  function computeWedgeRelief(totalIncome, employmentIncome, position) {
     var w = parameters.wedgeRelief;
+    var share = position.daysWorked / parameters.employmentYear.days;
 
     if (totalIncome <= w.exempt.maxTotalIncome) {
+      /**
+       * Two incomes do two different jobs here, and swapping them is the easy
+       * mistake. The band is picked on what a full year at this rate would have
+       * paid; the percentage then applies to what was actually received.
+       *
+       * Worked example from circ. 4/E 2025: 2.000 euro over 62 days projects to
+       * 11.744,19, which selects 5,3%, and 5,3% of 2.000 is 106.
+       *
+       * The last band has no ceiling on purpose. What limits entitlement is the
+       * total income test above, not the rate table, so a short contract whose
+       * projection lands above 20.000 still takes the last rate.
+       */
+      var projected = employmentIncome / share;
       var rate = 0;
+
       for (var i = 0; i < w.exempt.rates.length; i++) {
-        if (employmentIncome <= w.exempt.rates[i].upTo) {
+        var upTo = w.exempt.rates[i].upTo;
+        if (upTo === null || projected <= upTo) {
           rate = w.exempt.rates[i].rate;
           break;
         }
       }
-      return { type: 'exempt', amount: employmentIncome * rate, rate: rate };
+
+      return {
+        type: 'exempt',
+        amount: employmentIncome * rate,
+        rate: rate,
+        projectedIncome: projected
+      };
     }
 
     var d = w.deduction;
     if (totalIncome <= d.fullUpTo) {
-      return { type: 'deduction', amount: d.amount, rate: null };
+      return { type: 'deduction', amount: d.amount * share, rate: null };
     }
     if (totalIncome <= d.taperTo) {
       var taper = (d.taperTo - totalIncome) / (d.taperTo - d.fullUpTo);
-      return { type: 'deduction', amount: d.amount * taper, rate: null };
+      return { type: 'deduction', amount: d.amount * taper * share, rate: null };
     }
 
     return { type: 'none', amount: 0, rate: null };
@@ -289,13 +342,16 @@ var createEngine = function createEngine(source, taxYear) {
    * @param {number} grossTax
    * @param {number} employmentDeduction art. 13 comma 1, without the bonus
    */
-  function computeSupplementaryAllowance(totalIncome, grossTax, employmentDeduction) {
+  function computeSupplementaryAllowance(totalIncome, grossTax, employmentDeduction, position) {
     var s = parameters.supplementaryAllowance;
+    var share = position.daysWorked / parameters.employmentYear.days;
 
     if (totalIncome <= s.incomeUpTo) {
-      var floor = employmentDeduction - s.capacityAllowance;
+      // Both the allowance and the 75 euro of the capacity test follow the
+      // period worked; the deduction they are compared against already does.
+      var floor = employmentDeduction - s.capacityAllowance * share;
       return grossTax > floor
-        ? { amount: s.amount, band: 'flat' }
+        ? { amount: s.amount * share, band: 'flat' }
         : { amount: 0, band: 'incapiente' };
     }
 
@@ -303,7 +359,7 @@ var createEngine = function createEngine(source, taxYear) {
       // Art. 12 and art. 15 deductions are out of scope, so the only term left
       // is art. 13, which never exceeds gross tax in this band: zero in practice.
       var excess = employmentDeduction - grossTax;
-      return { amount: Math.min(s.amount, Math.max(0, excess)), band: 'differenziale' };
+      return { amount: Math.min(s.amount * share, Math.max(0, excess)), band: 'differenziale' };
     }
 
     return { amount: 0, band: 'nessuno' };
@@ -361,8 +417,8 @@ var createEngine = function createEngine(source, taxYear) {
     var employmentIncome = taxable;
 
     var irpefGross = applyBrackets(taxable, parameters.irpef.brackets);
-    var deduction = computeEmploymentDeduction(totalIncome, opts.exactRatios);
-    var wedge = computeWedgeRelief(totalIncome, employmentIncome);
+    var deduction = computeEmploymentDeduction(totalIncome, opts.exactRatios, position);
+    var wedge = computeWedgeRelief(totalIncome, employmentIncome, position);
 
     var wedgeDeduction = wedge.type === 'deduction' ? wedge.amount : 0;
     var deductionsTotal = deduction.total + wedgeDeduction;
@@ -373,7 +429,7 @@ var createEngine = function createEngine(source, taxYear) {
     var exemptSum = wedge.type === 'exempt' ? wedge.amount : 0;
 
     var supplementary = computeSupplementaryAllowance(
-      totalIncome, irpefGross.total, deduction.employment);
+      totalIncome, irpefGross.total, deduction.employment, position);
 
     var netAnnual = ral - contributions.total - irpefNet - surtaxes.total +
       exemptSum + supplementary.amount;
@@ -409,13 +465,19 @@ var createEngine = function createEngine(source, taxYear) {
           employment: deduction.employment,
           bonus65: deduction.bonus,
           ratio: deduction.ratio,
+          minimumApplied: deduction.minimumApplied,
           wedge: wedgeDeduction,
           total: deductionsTotal,
           lostToInsufficientTax: lostToInsufficientTax
         },
         net: irpefNet
       },
-      wedge: { type: wedge.type, amount: wedge.amount, rate: wedge.rate },
+      wedge: {
+        type: wedge.type,
+        amount: wedge.amount,
+        rate: wedge.rate,
+        projectedIncome: wedge.projectedIncome === undefined ? null : wedge.projectedIncome
+      },
       supplementaryAllowance: { amount: supplementary.amount, band: supplementary.band },
       surtaxes: {
         regional: surtaxes.regional,
@@ -552,7 +614,9 @@ var createEngine = function createEngine(source, taxYear) {
    * annotations, the segment bounds of the exact inversion, and the choice of
    * test cases. Values are derived from the parameters, never written twice.
    */
-  function getBreakpoints() {
+  function getBreakpoints(input) {
+    var position = withGross(input, 0);
+    var share = position.daysWorked / parameters.employmentYear.days;
     var d = parameters.employmentDeduction;
     var w = parameters.wedgeRelief;
     var candidates = [];
@@ -585,8 +649,15 @@ var createEngine = function createEngine(source, taxYear) {
     add('taxable', d.bonus.over, 'bonus65-start', 'Inizio maggiorazione 65 euro');
     add('taxable', d.bonus.upTo, 'bonus65-end', 'Fine maggiorazione 65 euro');
 
+    /**
+     * The exempt bands are read on the income projected to a full year, so on
+     * a short contract they sit proportionally lower in actual income. The
+     * last band has no ceiling and therefore no threshold to mark.
+     */
     w.exempt.rates.forEach(function (r, i) {
-      add('taxable', r.upTo, 'wedge-exempt-rate-' + (i + 1), 'Cambio fascia somma esente cuneo');
+      if (r.upTo === null) return;
+      add('taxable', r.upTo * share, 'wedge-exempt-rate-' + (i + 1),
+        'Cambio fascia somma esente cuneo');
     });
     add('taxable', w.deduction.over, 'wedge-mode-switch', 'Passaggio da somma esente a detrazione');
     add('taxable', w.deduction.fullUpTo, 'wedge-taper-start', 'Inizio decalage detrazione cuneo');
@@ -647,9 +718,9 @@ var createEngine = function createEngine(source, taxYear) {
 
   // ------------------------------------------------------------- inversion
 
-  function segmentBounds() {
+  function segmentBounds(position) {
     var points = [0];
-    getBreakpoints().forEach(function (bp) {
+    getBreakpoints(position).forEach(function (bp) {
       if (bp.ral > 0 && bp.ral < MAX_RAL) points.push(bp.ral);
     });
     points.push(MAX_RAL);
@@ -699,7 +770,7 @@ var createEngine = function createEngine(source, taxYear) {
     }
 
     var smooth = { exactRatios: true };
-    var points = segmentBounds();
+    var points = segmentBounds(position);
     var solutions = [];
     var reachable = [];
 
