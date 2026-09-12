@@ -4,7 +4,7 @@
 /** Calculator page: gross to net, and the inverse. Loaded only by index.html. */
 (function () {
 
-  var engine = createEngine(PARAMETERS_2026);
+  var engine = createEngine(PARAMETERS);
   var ui = createUiHelpers(engine);
 
   var form = document.getElementById('calc-form');

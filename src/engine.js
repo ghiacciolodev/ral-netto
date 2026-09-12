@@ -4,12 +4,18 @@
 /**
  * Calculation engine. Pure functions only: no DOM, no globals, no I/O.
  *
- * Parameters are injected rather than imported so that a second tax year is a
- * second parameter file and nothing else.
+ * An engine instance is the rulebook of one tax year. Binding the year at
+ * construction rather than per call means a single calculation can never mix two
+ * years of rules, which is the failure mode that would be hardest to notice.
  *
- * @param {any} parameters
+ * @param {any} source the year registry, or a single parameter set
+ * @param {number} [taxYear] which year to bind; defaults to the latest available
  */
-var createEngine = function createEngine(parameters) {
+var createEngine = function createEngine(source, taxYear) {
+
+  var parameters = (source && typeof source.forYear === 'function')
+    ? source.forYear(taxYear)
+    : source;
 
   var MAX_RAL = 10000000;
 
@@ -102,7 +108,7 @@ var createEngine = function createEngine(parameters) {
    * for Lazio returns an error instead of a Lombardy figure with the wrong label.
    *
    * @param {{grossAnnual: number, months?: number, daysWorked?: number,
-   *          region?: string, municipality?: string}} input
+   *          region?: string, municipality?: string, taxYear?: number}} input
    */
   function normalizePosition(input) {
     if (input === null || typeof input !== 'object') {
@@ -115,12 +121,19 @@ var createEngine = function createEngine(parameters) {
     }
 
     var position = {
+      taxYear: fallback(input.taxYear, parameters.taxYear),
       grossAnnual: input.grossAnnual,
       months: fallback(input.months, parameters.payrollMonths.defaultValue),
       daysWorked: fallback(input.daysWorked, parameters.employmentYear.days),
       region: String(fallback(input.region, parameters.region.key)).toLowerCase(),
       municipality: String(fallback(input.municipality, parameters.municipality.key)).toLowerCase()
     };
+
+    if (position.taxYear !== parameters.taxYear) {
+      throw new RangeError(
+        'Questo motore calcola l anno d imposta ' + parameters.taxYear +
+        ', non ' + position.taxYear + '. Costruiscine uno per l anno voluto.');
+    }
 
     if (typeof position.grossAnnual !== 'number' || !isFinite(position.grossAnnual)) {
       throw new TypeError('La RAL deve essere un numero.');
@@ -763,6 +776,7 @@ var createEngine = function createEngine(parameters) {
 
   return {
     parameters: parameters,
+    taxYear: parameters.taxYear,
     maxRal: MAX_RAL,
     truncate: truncate,
     roundTo: roundTo,

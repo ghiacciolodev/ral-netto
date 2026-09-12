@@ -40,6 +40,7 @@
 </main>
 
 <script src="../src/parameters-2026.js"></script>
+<script src="../src/parameters.js"></script>
 <script src="../src/engine.js"></script>
 <script src="harness.js"></script>
 <script src="cases.js"></script>
@@ -47,7 +48,7 @@
 (function () {
   'use strict';
 
-  var engine = createEngine(PARAMETERS_2026);
+  var engine = createEngine(PARAMETERS);
   var summary = runTests(engine, createHarness());
 
   var verdict = document.getElementById('verdict');

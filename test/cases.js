@@ -163,6 +163,11 @@ var runTests = function runTests(engine, t) {
    [0.125, '0,13'], [-2.675, '-2,68']].forEach(function (c) {
     t.equal('half-up su ' + c[0], engine.formatAmount(c[0]), c[1]);
   });
+  // I tre esempi lavorati nelle istruzioni della Certificazione Unica.
+  t.equal('esempio CU 55,505 -> 55,51', engine.formatAmount(55.505), '55,51');
+  t.equal('esempio CU 65,626 -> 65,63', engine.formatAmount(65.626), '65,63');
+  t.equal('esempio CU 65,493 -> 65,49', engine.formatAmount(65.493), '65,49');
+
   t.close('roundTo non sposta un valore gia netto', engine.roundTo(1234.56, 2), 1234.56, 1e-12);
   t.close('roundTo sotto la meta arrotonda per difetto', engine.roundTo(2.674, 2), 2.67, 1e-12);
 
@@ -176,6 +181,14 @@ var runTests = function runTests(engine, t) {
   t.equal('RAL 74.600: IRPEF netta al centesimo giusto',
     engine.formatAmount(engine.calculateNet({ grossAnnual: 74600, months: 13 }).irpef.net),
     '21.251,02');
+
+  t.group('Anno d imposta');
+  t.equal('il motore e legato a un anno solo', engine.taxYear, engine.parameters.taxYear);
+  t.ok('la posizione eredita l anno del motore',
+    engine.calculateNet({ grossAnnual: 30000 }).position.taxYear === engine.taxYear);
+  t.throws('un anno diverso da quello legato viene rifiutato', function () {
+    engine.calculateNet({ grossAnnual: 30000, taxYear: engine.taxYear - 1 });
+  });
 
   t.group('Validazione input');
   t.throws('RAL negativa', function () { engine.calculateNet({ grossAnnual: -1 }); });

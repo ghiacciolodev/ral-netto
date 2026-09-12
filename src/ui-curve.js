@@ -4,7 +4,7 @@
 /** Marginal rate page. Loaded only by curva.html. */
 (function () {
 
-  var engine = createEngine(PARAMETERS_2026);
+  var engine = createEngine(PARAMETERS);
   var ui = createUiHelpers(engine);
 
   // Starts well below 10.000 on purpose: the two lowest thresholds sit at 9.001

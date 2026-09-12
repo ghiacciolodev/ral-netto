@@ -2,7 +2,7 @@
 'use strict';
 
 /** Command line runner. Same engine, same cases, same harness as the browser. */
-var parameters = require('../src/parameters-2026.js');
+var parameters = require('../src/parameters.js');
 var createEngine = require('../src/engine.js');
 var createHarness = require('./harness.js');
 var cases = require('./cases.js');

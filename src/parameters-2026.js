@@ -20,19 +20,18 @@ var PARAMETERS_2026 = (function () {
     employmentYear: { days: 365 },
 
     /**
-     * How money is rounded when it is finally shown.
+     * Money is carried to the cent, half-up on the third decimal.
      *
-     * `appliedAt` says where: only at presentation. Real payroll also rounds at
-     * points inside the calculation, and those points are deliberately not
-     * modelled because I have not pinned them down on a primary source. Saying so
-     * here is the point: an unmodelled rule stays visible instead of turning into
-     * an accidental one.
+     * This is the granularity of the Certificazione Unica, which is the document
+     * certifying what the employer withheld over the year: the same figure this
+     * annual model computes. Rounding inside the month belongs to the payslip
+     * mechanics, which this model does not reproduce.
      */
     rounding: {
       decimals: 2,
       mode: 'half-up',
-      appliedAt: 'presentation',
-      sourceId: 'inps-uniemens-rounding'
+      appliedAt: 'annual-total',
+      sourceId: 'ade-cu-istruzioni'
     },
 
     // Employee social security. The cap truncates both the IVS rate and the
@@ -218,12 +217,12 @@ var PARAMETERS_2026 = (function () {
         inForceFrom: '1982-06-01',
         note: 'Da non confondere con il Fondo di garanzia TFR, che e l art. 2 della stessa legge ed e lo 0,20%.'
       },
-      'inps-uniemens-rounding': {
-        label: 'arrotondamento al centesimo',
-        title: 'Se la terza cifra decimale e pari o superiore a 5 si arrotonda per eccesso, altrimenti per difetto',
-        url: null,
-        inForceFrom: '2026-01-01',
-        note: 'Regola confermata dalle istruzioni INPS per la compilazione dei flussi. Non ho individuato il documento primario: vedi il README.'
+      'ade-cu-istruzioni': {
+        label: 'istruzioni Certificazione Unica',
+        title: 'Gli importi si indicano in centesimi, arrotondando per eccesso se la terza cifra decimale e pari o superiore a 5',
+        url: 'https://www.agenziaentrate.gov.it/portale/documents/d/guest/cu_istr_2025_13feb',
+        inForceFrom: '2025-02-13',
+        note: 'Esempi dell Agenzia: 55,505 diventa 55,51; 65,626 diventa 65,63; 65,493 diventa 65,49.'
       },
       'inps-fpld-rates': {
         label: 'aliquote FPLD settore privato',

@@ -170,12 +170,18 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-303 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
+309 asserzioni. Se il codice e un valore atteso non concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
 
 Si copia `src/parameters-2026.js` in `src/parameters-2027.js`, si aggiornano valori e
-fonti, e si cambia il nome nei due tag `<script>` delle pagine.
+fonti, si aggiunge una riga al registro in `src/parameters.js` e si carica il file
+nuovo nelle pagine.
+
+Nel fisco le regole valgono "a decorrere dal periodo d'imposta X", quindi l'anno è
+l'unità di validità naturale: una regola cambiata a metà anno sarebbe due voci del
+registro, non un intervallo di date dentro una. **Un motore è legato a un anno solo**,
+scelto alla costruzione, così un singolo calcolo non può mescolare due regolamenti.
 
 Il motore non si tocca, perché non contiene nessun numero: aliquote, soglie, formule
 e perfino la posizione delle soglie sul grafico sono derivate dai parametri. Se un
@@ -186,6 +192,7 @@ aggiornamento richiedesse di modificare il motore, sarebbe un difetto del motore
 ```
 index.html                 calcolatore, inversa, costo azienda
 curva.html                 aliquota marginale e soglie
+src/parameters.js          registro degli anni d imposta disponibili
 src/parameters-2026.js     valori normativi e fonti, unico posto con dei numeri
 src/engine.js              logica di calcolo, funzioni pure
 src/ui-common.js           helper di rendering condivisi
