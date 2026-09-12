@@ -20,7 +20,23 @@ var SUITE_LOCAL = function (context) {
 
   t.equal('venti regioni piu la provincia autonoma di Bolzano e quella di Trento',
     regionKeys.length, 21);
-  t.equal('un comune per regione, il capoluogo', municipalityKeys.length, 21);
+  t.equal('tutti i comuni italiani', municipalityKeys.length, 7894);
+  t.equal('una fonte per ogni ente', Object.keys(engine.sources).filter(function (id) {
+    return id.indexOf('addcom-') === 0 || id.indexOf('addreg-') === 0;
+  }).length, 7915);
+
+  /**
+   * Le chiavi sono nome piu provincia perche i nomi non bastano: in Italia ci
+   * sono comuni omonimi in province diverse.
+   */
+  var omonimi = {};
+  municipalityKeys.forEach(function (key) {
+    var name = local.municipalities[key].name;
+    omonimi[name] = (omonimi[name] || 0) + 1;
+  });
+  t.equal('cinque nomi sono usati da due comuni diversi',
+    Object.keys(omonimi).filter(function (name) { return omonimi[name] > 1; }).sort().join(', '),
+    'Castro, Livo, Peglio, Samone, San Teodoro');
 
   var homeless = municipalityKeys.filter(function (key) {
     return !local.regions[local.municipalities[key].region];
@@ -59,29 +75,29 @@ var SUITE_LOCAL = function (context) {
     });
   }
 
-  var roma = at('lazio', 'roma');
+  var roma = at('lazio', 'roma-rm');
   t.close('Lazio, 1,73% fino a 15.000 poi 3,33%', roma.surtaxes.regional, 667.19);
   t.close('Roma, 0,9% oltre l esenzione di 14.000', roma.surtaxes.municipal, 245.19);
   t.close('netto annuo a Roma', roma.netAnnual, 23108.99);
 
   /** Torino and Genova really do have a progressive comunale. */
-  var torino = at('piemonte', 'torino');
+  var torino = at('piemonte', 'torino-to');
   t.equal('Torino ha quattro scaglioni comunali',
-    local.municipalities.torino.brackets.length, 4);
+    local.municipalities['torino-to'].brackets.length, 4);
   t.close('Piemonte, quattro scaglioni', torino.surtaxes.regional, 571.11);
   t.close('Torino, 0,8% sui primi 28.000 di imponibile', torino.surtaxes.municipal, 217.94);
   t.equal('il dettaglio comunale segue gli scaglioni', torino.surtaxes.municipalDetail.length, 2);
 
-  var genova = at('liguria', 'genova');
+  var genova = at('liguria', 'genova-ge');
   t.close('Genova, 1% sotto i 28.000', genova.surtaxes.municipal, 272.43);
 
   /** Two places where the comunale is simply not levied, for different reasons. */
-  var trento = at('trento', 'trento');
+  var trento = at('trento', 'trento-tn');
   t.equal('Trento non ha mai deliberato',
-    local.municipalities.trento.deliberatedFor, null);
+    local.municipalities['trento-tn'].deliberatedFor, null);
   t.close('e quindi non ha addizionale comunale', trento.surtaxes.municipal, 0, 1e-9);
 
-  var bolzano = at('bolzano', 'bolzano');
+  var bolzano = at('bolzano', 'bolzano-bz');
   t.close('Bolzano delibera un aliquota a zero', bolzano.surtaxes.municipal, 0, 1e-9);
 
   t.ok('la stessa RAL rende di piu dove il comune non preleva',
@@ -91,32 +107,69 @@ var SUITE_LOCAL = function (context) {
    * The exemption is a threshold, not an allowance. Firenze has the highest of
    * the twenty one, so the cliff is easy to stand on.
    */
-  var soglia = local.municipalities.firenze.exemptionThreshold;
+  var soglia = local.municipalities['firenze-fi'].exemptionThreshold;
   t.close('Firenze esenta fino a 25.000 di imponibile', soglia, 25000, 1e-9);
   t.close('un euro sotto non si paga niente',
     engine.calculateNet({
       grossAnnual: engine.grossFromTaxable(soglia - 1), months: 13,
-      region: 'toscana', municipality: 'firenze'
+      region: 'toscana', municipality: 'firenze-fi'
     }).surtaxes.municipal, 0, 1e-9);
   t.ok('un euro sopra si paga su tutto l imponibile',
     engine.calculateNet({
       grossAnnual: engine.grossFromTaxable(soglia + 1), months: 13,
-      region: 'toscana', municipality: 'firenze'
+      region: 'toscana', municipality: 'firenze-fi'
     }).surtaxes.municipal > 49);
 
   /** Palermo is the one capital that deliberated for the current year. */
   t.equal('Palermo ha deliberato per il 2026',
-    local.municipalities.palermo.deliberatedFor, engine.taxYear);
-  t.ok('gli altri venti valgono per proroga',
-    municipalityKeys.filter(function (key) {
-      return local.municipalities[key].deliberatedFor === engine.taxYear;
-    }).length === 1);
+    local.municipalities['palermo-pa'].deliberatedFor, engine.taxYear);
+
+  /**
+   * La proroga non e un caso di bordo: meno della meta dei comuni ha deliberato
+   * per l anno in corso, e ottocentocinquantanove non lo hanno mai fatto.
+   */
+  var perAnno = { deliberato: 0, proroga: 0, mai: 0 };
+  municipalityKeys.forEach(function (key) {
+    var anno = local.municipalities[key].deliberatedFor;
+    if (anno === null) perAnno.mai++;
+    else if (anno < engine.taxYear) perAnno.proroga++;
+    else perAnno.deliberato++;
+  });
+
+  t.equal('hanno deliberato per l anno in corso', perAnno.deliberato, 3208);
+  t.equal('valgono per proroga', perAnno.proroga, 3827);
+  t.equal('non hanno mai deliberato', perAnno.mai, 859);
+
+  var senzaDelibera = municipalityKeys.filter(function (key) {
+    return local.municipalities[key].deliberatedFor === null;
+  });
+  var nessunaAddizionale = senzaDelibera.filter(function (key) {
+    return engine.calculateNet({
+      grossAnnual: 30000, months: 13,
+      region: local.municipalities[key].region, municipality: key
+    }).surtaxes.municipal !== 0;
+  });
+  t.ok('chi non ha mai deliberato non preleva niente',
+    nessunaAddizionale.length === 0, nessunaAddizionale.slice(0, 3).join(', '));
+
+  /**
+   * Centoventisette comuni esentano per tipo di reddito, pensione o lavoro
+   * dipendente, non per soglia sull imponibile. Non sono applicate, e il
+   * dataset lo dichiara invece di far finta che la soglia sia zero.
+   */
+  var conAgevolazione = municipalityKeys.filter(function (key) {
+    return local.municipalities[key].unmodelledRelief;
+  });
+  t.equal('esenzioni soggettive dichiarate e non applicate', conAgevolazione.length, 127);
+  t.ok('e ognuna lo dice nella nota della fonte', conAgevolazione.every(function (key) {
+    return engine.sources[local.municipalities[key].sourceId].note.indexOf('non applica') !== -1;
+  }));
 
   /**
    * The affine completeness check again, on a place whose local rules are
    * progressive on both levels. A missing local threshold shows up here.
    */
-  var torinoPosition = { months: 13, region: 'piemonte', municipality: 'torino' };
+  var torinoPosition = { months: 13, region: 'piemonte', municipality: 'torino-to' };
   var torinoSmooth = { exactRatios: true };
   var torinoEdges = [0].concat(
     engine.getBreakpoints(torinoPosition)

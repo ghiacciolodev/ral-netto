@@ -59,6 +59,9 @@
       var option = document.createElement('option');
       option.value = key;
       option.textContent = all[key].name;
+      // Il capoluogo della regione di partenza va scelto, non lasciato al
+      // primo in ordine alfabetico: con millecinquecento comuni si notava.
+      option.selected = key === engine.local.defaults.municipality;
       inputMunicipality.appendChild(option);
     });
 
@@ -75,14 +78,24 @@
     var hint = document.getElementById('hint-municipality');
     if (!chosen) { hint.textContent = ''; return; }
 
+    var righe = [];
+
     if (chosen.deliberatedFor === null) {
-      hint.textContent = 'Non applica l\'addizionale comunale.';
+      righe.push('Non ha mai deliberato: non applica l\'addizionale comunale.');
     } else if (chosen.deliberatedFor < engine.taxYear) {
-      hint.textContent = 'Aliquote del ' + chosen.deliberatedFor +
-        ', prorogate in mancanza di una delibera per il ' + engine.taxYear + '.';
+      righe.push('Aliquote del ' + chosen.deliberatedFor +
+        ', prorogate in mancanza di una delibera per il ' + engine.taxYear + '.');
     } else {
-      hint.textContent = 'Aliquote deliberate per il ' + engine.taxYear + '.';
+      righe.push('Aliquote deliberate per il ' + engine.taxYear + '.');
     }
+
+    // Un'esenzione legata al tipo di reddito non e una soglia sull'imponibile:
+    // il modello non la applica, e chi legge il numero deve saperlo.
+    if (chosen.unmodelledRelief) {
+      righe.push('Prevede un\'esenzione legata al tipo di reddito che il calcolo non applica.');
+    }
+
+    hint.textContent = righe.join(' ');
   }
 
   function recalculate() {

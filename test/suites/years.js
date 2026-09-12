@@ -77,24 +77,46 @@ var SUITE_YEARS = function (context) {
      * between the two years, so the only difference allowed is the year itself.
      * The day a comune moves its rate, this says so out loud.
      */
-    var localExpected = [
-      'taxYear',
-      'regions.emilia-romagna.brackets.2.rate',
-      'regions.piemonte.brackets.1.rate',
-      'regions.piemonte.brackets.2.rate',
-      'regions.puglia.brackets.1.rate',
-      'regions.puglia.brackets.2.rate',
-      'regions.puglia.brackets.3.rate',
-      'municipalities.palermo.brackets.0.rate',
-      'municipalities.palermo.deliberatedFor'
-    ].sort();
-
+    /**
+     * Sul locale la guardia cambia forma. Con quasi ottomila comuni un elenco
+     * di percorsi non si legge, e i comuni **devono** poter cambiare aliquota
+     * da un anno all altro: e il loro mestiere. Quello che non deve cambiare e
+     * la loro identita, e quello che va tenuto d occhio e quanti si muovono.
+     */
     var localFound = diffPaths(registry.localByYear[2025], registry.localByYear[2026], '')
-      .filter(function (path) { return path.indexOf('sources') !== 0; })
-      .sort();
+      .filter(function (path) { return path.indexOf('sources') !== 0; });
 
-    t.equal('fra 2025 e 2026 hanno cambiato aliquota solo quattro enti',
-      localFound.join(' | '), localExpected.join(' | '));
+    var regionDiff = localFound.filter(function (path) {
+      return path.indexOf('regions.') === 0;
+    }).sort();
+
+    t.equal('fra 2025 e 2026 hanno cambiato aliquota tre regioni',
+      regionDiff.join(' | '), [
+        'regions.emilia-romagna.brackets.2.rate',
+        'regions.piemonte.brackets.1.rate',
+        'regions.piemonte.brackets.2.rate',
+        'regions.puglia.brackets.1.rate',
+        'regions.puglia.brackets.2.rate',
+        'regions.puglia.brackets.3.rate'
+      ].sort().join(' | '));
+
+    var mutevoli = /\.(brackets(\.\d+(\.(upTo|rate))?)?|exemptionThreshold|deliberatedFor|unmodelledRelief)$/;
+    var illeciti = localFound.filter(function (path) {
+      return path.indexOf('municipalities.') === 0 && !mutevoli.test(path);
+    });
+    t.ok('nessun comune cambia nome, provincia o regione fra i due anni',
+      illeciti.length === 0, illeciti.slice(0, 5).join(', '));
+
+    var chiavi2025 = Object.keys(registry.localByYear[2025].municipalities).sort();
+    var chiavi2026 = Object.keys(registry.localByYear[2026].municipalities).sort();
+    t.equal('i due anni contengono gli stessi comuni',
+      chiavi2025.join(',') === chiavi2026.join(','), true);
+
+    var mossi = chiavi2026.filter(function (key) {
+      return JSON.stringify(registry.localByYear[2025].municipalities[key]) !==
+        JSON.stringify(registry.localByYear[2026].municipalities[key]);
+    });
+    t.equal('e 3.208 comuni hanno deliberato qualcosa di nuovo', mossi.length, 3208);
   }
 };
 

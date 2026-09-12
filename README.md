@@ -129,32 +129,58 @@ soglia dell'addizionale comunale.
 
 ### Le addizionali locali, e le due cose che la tabella non dice
 
-Ci sono tutte e 21 le regioni e province autonome, e un comune per ognuna, il
-capoluogo. La fonte è il portale del federalismo fiscale del MEF, che raccoglie le
-delibere e pubblica le aliquote applicabili: ogni voce del dataset porta il link alla
-propria pagina.
+Ci sono tutte e 21 le regioni e province autonome e **tutti i 7.894 comuni**. La fonte
+è il portale del federalismo fiscale del MEF, che raccoglie le delibere e pubblica le
+aliquote applicabili: ogni voce del dataset porta il link alla propria pagina.
+
+Le regioni sono ventuno e stanno scritte per esteso, lette una per una. I comuni sono
+un **estratto di massa**, una richiesta per comune, e stanno in una tabella compatta
+con il suo decodificatore: 663 KB per anno d'imposta. Il file è generato, non scritto
+a mano, e va riletto come si rilegge una tabella.
+
+La chiave di un comune è il nome più la sigla della provincia, perché i nomi non
+bastano: Castro, Livo, Peglio, Samone e San Teodoro esistono due volte ciascuno, in
+province diverse.
 
 Il calcolo passa dagli scaglioni su entrambi i livelli. Non è una generalizzazione
 prudente: **Torino, Genova, Cagliari e Potenza hanno l'addizionale comunale
-progressiva**, con aliquote diverse per scaglione di reddito, esattamente come le
-regioni.
+progressiva**, con aliquote diverse per scaglione, esattamente come le regioni.
+
+### La proroga non è un caso di bordo
 
 **Un ente che non delibera non azzera il tributo.** Le aliquote in vigore si intendono
-prorogate di anno in anno (art. 1 co. 169 L. 296/2006). Per l'anno d'imposta 2026,
-venti capoluoghi su ventuno non hanno deliberato: valgono le aliquote del 2025.
-L'unico che ha deliberato è Palermo, che è passato dall'1,014% all'1,03%. Ogni comune
-porta `deliberatedFor`, l'anno dell'ultima delibera pubblicata, e l'interfaccia lo
-dice invece di lasciare che il numero sembri una decisione fresca.
+prorogate di anno in anno (art. 1 co. 169 L. 296/2006). Per l'anno d'imposta 2026:
 
-Due capoluoghi non prelevano affatto, per ragioni diverse. **Bolzano** delibera
-un'aliquota dello 0%. **Trento** non ha mai deliberato: il portale non riporta nulla,
-in nessun anno.
+| | Comuni |
+|---|---|
+| Hanno deliberato per il 2026 | 3.208 |
+| Valgono per proroga dal 2025 o prima | 3.827 |
+| Non hanno mai deliberato, addizionale zero | 859 |
 
-**Le agevolazioni soggettive non sono applicate.** Diverse regioni prevedono
-detrazioni per figli a carico, per disabilità, soglie di esenzione legate alla
-persona: Bolzano, Campania, Sardegna e Umbria lo dicono esplicitamente sul portale. Il
-modello calcola le aliquote ordinarie per scaglione, e la nota della fonte segnala
-dove c'è dell'altro.
+Tredici comuni stanno ancora sulla loro delibera del **2002**. Ogni comune porta
+`deliberatedFor`, l'anno dell'ultima delibera pubblicata, e l'interfaccia lo dice
+invece di lasciare che il numero sembri una decisione fresca.
+
+### Le esenzioni che il modello non applica
+
+**127 comuni** esentano per tipo di reddito e non per soglia sull'imponibile: redditi
+di pensione fino a 7.500 €, redditi di lavoro dipendente fino a 8.000 €, redditi di
+terreni sotto 185,92 €, reddito dell'abitazione principale. Non sono una soglia
+sull'imponibile complessivo e **il modello non le applica**: quei comuni portano
+`unmodelledRelief`, la fonte lo scrive nella nota e l'interfaccia lo mostra.
+
+Lo stesso vale per le **agevolazioni soggettive regionali**, detrazioni per figli a
+carico o per disabilità: Bolzano, Campania, Sardegna e Umbria le dichiarano sul
+portale. Il modello calcola le aliquote ordinarie per scaglione.
+
+### Come è stato verificato
+
+Un estratto di massa non si legge riga per riga, ma si campiona. **120 comuni presi a
+caso sono stati riscaricati dal portale e confrontati con il dataset: 120 su 120
+identici.** Prima di generare, ho classificato tutte le diciture della colonna "Fascia
+di applicazione": le varianti tipografiche, entità HTML non decodificate, spazi
+mancanti, "ad euro" invece di "a euro", refusi, sono normalizzate; quello che resta
+non viene indovinato, viene marcato.
 
 Quanto pesa il posto, a parità di tutto il resto? Con RAL 30.000 su 13 mensilità:
 
@@ -178,7 +204,8 @@ Ogni riga è una cosa che il modello **non** fa, con il motivo.
 | Nessun onere deducibile o detraibile | Ridurrebbero rispettivamente imponibile e imposta. |
 | Il part-time non è un input separato | Non cambia il calcolo fiscale: un part-time con 15.000 di RAL è tassato come un full time con 15.000, perché la RAL riflette già l'orario. Entra solo attraverso i giorni, che il part-time verticale riduce e quello orizzontale no. |
 | Iscrizione previdenziale successiva al 31/12/1995 | Senza questa, il massimale di 122.295 € non si applicherebbe. La circolare INPS 6/2026 distingue esplicitamente le due platee. |
-| Un comune per regione, il capoluogo | Ci sono tutte e 21 le regioni e province autonome, ma 21 comuni su quasi 8.000. Gli altri richiedono un'estrazione di massa dal portale MEF, una pagina per comune. |
+| Il dataset comunale non è verificato voce per voce | 7.894 comuni estratti in blocco dal portale MEF. Un campione di 120, riscaricato e ricontrollato, è risultato identico, ma non è la stessa cosa di aver letto ogni riga. |
+| 127 comuni hanno esenzioni che il modello non applica | Sono legate al tipo di reddito, pensione, lavoro dipendente, terreni, abitazione principale, non a una soglia sull'imponibile. Quei comuni sono marcati e l'interfaccia lo dice. |
 | Agevolazioni soggettive regionali non applicate | Diverse regioni prevedono detrazioni per figli a carico, per disabilità, esenzioni legate alla persona. Il modello calcola le aliquote ordinarie per scaglione. Dove ci sono, la nota della fonte lo dice. |
 | Nessun regime agevolato (impatriati, forfettario) né agevolazione contributiva | Ognuno avrebbe una base imponibile propria. |
 | TFR escluso dal netto | È accantonato, non erogato. Compare solo nel costo azienda. |
@@ -201,8 +228,12 @@ Ogni riga è una cosa che il modello **non** fa, con il motivo.
 ## Parametri e fonti
 
 Solo fonti primarie: Normattiva per le norme, l'ente emittente per la prassi, il
-portale del federalismo fiscale del MEF per le addizionali locali. Ogni indirizzo è
-stato aperto e controllato che porti al documento che dichiara.
+portale del federalismo fiscale del MEF per le addizionali locali.
+
+Per i **parametri statali e le 21 regioni** ogni indirizzo è stato aperto e
+controllato che porti al documento che dichiara. Per i **7.894 comuni** no, e non
+sarebbe onesto sostenerlo: sono un estratto di massa, una richiesta per comune, e la
+verifica è campionaria.
 
 | Parametro | Valore | Fonte |
 |---|---|---|
@@ -218,7 +249,7 @@ stato aperto e controllato che porti al documento che dichiara.
 | Prassi applicativa del cuneo | | [circ. Agenzia delle Entrate 4/E del 16 maggio 2025](https://www.agenziaentrate.gov.it/portale/documents/20143/8410823/Circolare+lavoro+dipendente+LB2025+DD+IRPEF+n.+4+del+16+maggio+2025.pdf/36979eaa-9fc5-a4ec-a7aa-136497c53f91) |
 | Prima fascia e massimale | 56.224 € e 122.295 € | [circ. INPS n. 6 del 30 gennaio 2026](https://www.inps.it/it/it/inps-comunica/atti/circolari-messaggi-e-normativa/dettaglio.circolari-e-messaggi.2026.01.circolare-numero-6-del-30-01-2026_15151.html) |
 | Addizionali regionali | 21 regioni e province autonome | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/addregirpef/addregirpef.php?reg=10), una pagina per regione, linkata da ogni voce del dataset |
-| Addizionali comunali | 21 capoluoghi | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/risultato.htm?anno=9999&lista=1&r=1&pagina=lombardia.htm&pr=MI&cc=F205), una pagina per comune, linkata da ogni voce |
+| Addizionali comunali | 7.894 comuni | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/risultato.htm?anno=9999&lista=1&r=1&pagina=lombardia.htm&pr=MI&cc=F205), una pagina per comune, linkata da ogni voce |
 | Proroga delle aliquote non rideliberate | | [art. 1 co. 169 L. 296/2006](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2006-12-27;296) |
 | TFR | quota annua pari a RAL / 13,5 | [art. 2120 codice civile](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:regio.decreto:1942-03-16;262) |
 | Contributo aggiuntivo IVS sul TFR | 0,50%, detratto dalla quota | [art. 3 L. 297/1982](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:1982-05-29;297). Non è il Fondo di garanzia TFR, che è l'art. 2 della stessa legge ed è lo 0,20% |
@@ -277,7 +308,7 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-488 asserzioni, divise in undici suite per area. Se il codice e un valore atteso non
+498 asserzioni, divise in undici suite per area. Se il codice e un valore atteso non
 concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
@@ -364,8 +395,8 @@ curva.html                 aliquota marginale e soglie
 src/parameters.js          registro degli anni: parametri statali e tabella locale
 src/parameters-2025.js     valori normativi statali e fonti dell anno 2025
 src/parameters-2026.js     valori normativi statali e fonti dell anno 2026
-src/local-2025.js          addizionali di 21 regioni e 21 capoluoghi, 2025
-src/local-2026.js          addizionali di 21 regioni e 21 capoluoghi, 2026
+src/local-2025.js          addizionali di 21 regioni e 7.894 comuni, 2025
+src/local-2026.js          addizionali di 21 regioni e 7.894 comuni, 2026
 src/engine.js              il cablaggio: monta i moduli e ne espone l interfaccia
 src/engine/numbers.js      troncamento, arrotondamento, scaglioni, formattazione
 src/engine/position.js     chi viene pagato, e la validazione di quel che si chiede
@@ -384,6 +415,7 @@ test/suites/*.js           una suite per area, undici file
 test/harness.js            runner di asserzioni
 test/run.js                esecuzione da riga di comando
 test/runner.html           esecuzione in browser
+tools/estrai-comuni.js     scarica le aliquote comunali dal portale MEF
 .nojekyll                  dice a GitHub Pages di pubblicare i file cosi come sono
 ```
 
