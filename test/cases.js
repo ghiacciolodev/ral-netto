@@ -27,6 +27,11 @@ var CASES = (function () {
   // parte che sbaglierebbe piu silenziosamente: i test la seguono dove sta.
   var fasce = resolve(typeof FASCE !== 'undefined' ? FASCE : undefined, '../tools/fasce.js');
 
+  // Le spiegazioni sono prosa dell interfaccia, ma una che manca lascia una
+  // voce senza risposta: il test le tiene allineate alle voci di traccia.
+  var spiegazioni = resolve(
+    typeof SPIEGAZIONI !== 'undefined' ? SPIEGAZIONI : undefined, '../src/explanations.js');
+
   var SUITES = [
     resolve(typeof SUITE_NUMBERS !== 'undefined' ? SUITE_NUMBERS : undefined,
       './suites/numbers.js'),
@@ -74,7 +79,8 @@ var CASES = (function () {
         registry: registry,
         createEngine: createEngine,
         fixtures: fixtures,
-        fasce: fasce
+        fasce: fasce,
+        spiegazioni: spiegazioni
       };
 
       SUITES.forEach(function (suite) {

@@ -324,7 +324,7 @@ var ENGINE_RULES = function (parameters, local, numbers, steps) {
     {
       id: 'surtaxes',
       apply: function (ctx) {
-        ctx.surtaxes = computeSurtaxes(ctx.taxable, ctx.position);
+        ctx.surtaxes = computeSurtaxes(ctx.taxable, ctx.position, ctx.irpefNet > 0);
       },
       ledger: function (ctx) {
         var municipality = ctx.surtaxes.municipality;
@@ -342,7 +342,9 @@ var ENGINE_RULES = function (parameters, local, numbers, steps) {
             label: 'Addizionale regionale ' + ctx.surtaxes.region.name,
             sign: -1,
             base: ctx.taxable,
-            formula: describe(ctx.surtaxes.region.brackets),
+            formula: ctx.surtaxes.netTaxDue
+              ? describe(ctx.surtaxes.region.brackets)
+              : 'non dovuta: IRPEF netta a zero',
             amount: ctx.surtaxes.regional,
             sourceId: ctx.surtaxes.region.sourceId
           },
@@ -351,10 +353,12 @@ var ENGINE_RULES = function (parameters, local, numbers, steps) {
             label: 'Addizionale comunale ' + municipality.name,
             sign: -1,
             base: ctx.taxable,
-            formula: ctx.surtaxes.municipalExempt
-              ? 'esente, imponibile non superiore a ' +
-                formatAmount(municipality.exemptionThreshold)
-              : describe(municipality.brackets),
+            formula: !ctx.surtaxes.netTaxDue
+              ? 'non dovuta: IRPEF netta a zero'
+              : ctx.surtaxes.municipalExempt
+                ? 'esente, imponibile non superiore a ' +
+                  formatAmount(municipality.exemptionThreshold)
+                : describe(municipality.brackets),
             amount: ctx.surtaxes.municipal,
             sourceId: municipality.sourceId
           }

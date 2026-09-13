@@ -288,14 +288,14 @@ var PARAMETERS_2025 = (function () {
         title: 'Addizionale regionale, trattenuta in un massimo di undici rate dopo il conguaglio',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1997-12-15;446',
         inForceFrom: '1998-01-01',
-        note: 'Nessun acconto: l addizionale regionale di un anno si preleva per intero l anno successivo.'
+        note: 'Comma 2: l addizionale e dovuta solo se per lo stesso anno risulta dovuta l IRPEF al netto delle detrazioni, quindi chi e incapiente non la paga. Comma 4: nessun acconto, si preleva per intero l anno successivo.'
       },
       'dlgs-360-1998-art-1': {
         label: 'art. 1 co. 4 e 5 D.Lgs. 360/1998',
         title: 'Addizionale comunale, acconto del 30% in nove rate da marzo e saldo in undici rate',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1998-09-28;360',
         inForceFrom: '1999-01-01',
-        note: 'L acconto si calcola sull imponibile dell anno precedente. Il comma 3-bis e la base della soglia di esenzione, che i comuni possono legare a specifici requisiti reddituali.'
+        note: 'Comma 4: l addizionale e dovuta solo se risulta dovuta l IRPEF al netto delle detrazioni. L acconto si calcola sull imponibile dell anno precedente. Il comma 3-bis e la base della soglia di esenzione, che i comuni possono legare a specifici requisiti reddituali.'
       },
       'giorni-anno': {
         label: 'assunzione dichiarata',

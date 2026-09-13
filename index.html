@@ -102,7 +102,7 @@
         </div>
 
         <div class="field">
-          <label for="input-children-young">Figli a carico sotto i 21 anni</label>
+          <label for="input-children-young">Figli sotto i 21 anni</label>
           <input id="input-children-young" type="number" min="0" max="10" step="1" value="0"
                  aria-describedby="hint-children-young">
           <p class="hint" id="hint-children-young">
@@ -197,12 +197,44 @@
       </div>
     </div>
 
+    <div class="section-lead">
+      <h2 class="section-title">Dal lordo al netto</h2>
+      <p>
+        Cosa viene tolto e cosa viene aggiunto, in ordine. Ogni voce si può
+        aprire per leggere che cos'è, e porta accanto la norma che la produce.
+      </p>
+    </div>
+
     <section class="block">
-      <h3>Dal lordo al netto</h3>
       <div class="chart-scroll">
         <div id="waterfall"></div>
       </div>
     </section>
+
+    <section class="block">
+      <h3>Voce per voce</h3>
+      <table class="ledger" id="ledger-table">
+        <thead>
+          <tr>
+            <th scope="col">Voce</th>
+            <th scope="col">Come si calcola</th>
+            <th scope="col" class="num">Importo</th>
+            <th scope="col">Riferimento</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot></tfoot>
+      </table>
+    </section>
+
+    <div class="section-lead">
+      <h2 class="section-title">Come arriva nel tempo</h2>
+      <p>
+        Il netto mensile qui sopra è una media annua. I periodi di paga non sono
+        uguali fra loro, e la differenza si vede soprattutto sulla tredicesima e
+        a dicembre.
+      </p>
+    </div>
 
     <section class="block">
       <h3>Mese per mese</h3>
@@ -226,21 +258,14 @@
       </div>
     </section>
 
-    <section class="block">
-      <h3>Voce per voce</h3>
-      <table class="ledger" id="ledger-table">
-        <thead>
-          <tr>
-            <th scope="col">Voce</th>
-            <th scope="col">Come si calcola</th>
-            <th scope="col" class="num">Importo</th>
-            <th scope="col">Riferimento</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-        <tfoot></tfoot>
-      </table>
-    </section>
+
+    <div class="section-lead">
+      <h2 class="section-title">Il dettaglio del calcolo</h2>
+      <p>
+        Come si compone l'imposta lorda, e da cosa sono fatte le detrazioni che
+        la riducono.
+      </p>
+    </div>
 
     <div class="detail-grid">
       <section class="block">
@@ -377,6 +402,7 @@
 <script src="src/engine/inverse.js"></script>
 <script src="src/engine/monthly.js"></script>
 <script src="src/engine.js"></script>
+<script src="src/explanations.js"></script>
 <script src="src/ui-common.js"></script>
 <script src="src/ui-calculator.js"></script>
 

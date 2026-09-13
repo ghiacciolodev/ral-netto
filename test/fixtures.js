@@ -16,22 +16,22 @@ var VALUE_CASES = [
     ral: 9001, months: 13, note: 'imposta lorda sotto la capienza, trattamento integrativo non spetta',
     contributions: 827.19, taxable: 8173.81, irpefGross: 1879.98,
     deductionsTotal: 1955.00, irpefNet: 0.00,
-    regional: 100.54, municipal: 0.00,
-    wedgeType: 'exempt', wedgeAmount: 580.34, supplementary: 0.00, netAnnual: 8653.61
+    regional: 0.00, municipal: 0.00,
+    wedgeType: 'exempt', wedgeAmount: 580.34, supplementary: 0.00, netAnnual: 8754.15
   },
   {
     ral: 9002, months: 13, note: 'capienza superata, entrano 1.200 di trattamento integrativo',
     contributions: 827.28, taxable: 8174.72, irpefGross: 1880.18,
     deductionsTotal: 1955.00, irpefNet: 0.00,
-    regional: 100.55, municipal: 0.00,
-    wedgeType: 'exempt', wedgeAmount: 580.40, supplementary: 1200.00, netAnnual: 9854.57
+    regional: 0.00, municipal: 0.00,
+    wedgeType: 'exempt', wedgeAmount: 580.40, supplementary: 1200.00, netAnnual: 9955.12
   },
   {
     ral: 9360, months: 13, note: 'incapienza piena, fascia esente 7,1%',
     contributions: 860.18, taxable: 8499.82, irpefGross: 1954.96,
     deductionsTotal: 1955.00, irpefNet: 0.00,
-    regional: 104.55, municipal: 0.00,
-    wedgeType: 'exempt', wedgeAmount: 603.49, supplementary: 1200.00, netAnnual: 10198.76
+    regional: 0.00, municipal: 0.00,
+    wedgeType: 'exempt', wedgeAmount: 603.49, supplementary: 1200.00, netAnnual: 10303.30
   },
   {
     ral: 9361, months: 13, note: 'uscita dall incapienza, fascia esente scende a 5,3%',

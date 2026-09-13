@@ -288,17 +288,37 @@ var ENGINE_STEPS = function (parameters, local, numbers) {
   }
 
   /**
-   * Charged on taxable income, never reduced by tax credits.
+   * Si calcolano sull imponibile e le detrazioni non le riducono, ma esistono
+   * solo se l IRPEF netta esiste.
    *
-   * The only step that depends on where the taxpayer lives, so it is also the
-   * only one that reads the position to find its own rates. Both surtaxes go
-   * through the bracket machinery even where a comune has a single rate: many
-   * have a progressive one, and a shape that only fits Milano would have to be
-   * rewritten the day the second comune arrives.
+   * Art. 50 co. 2 D.Lgs. 446/1997 per la regionale e art. 1 co. 4 D.Lgs.
+   * 360/1998 per la comunale dicono la stessa cosa con parole quasi identiche:
+   * l addizionale e dovuta se per lo stesso anno l imposta sul reddito, al
+   * netto delle detrazioni, risulta dovuta. Chi e incapiente non le paga.
+   *
+   * E l unico passo che dipende da dove si abita, quindi anche l unico che
+   * legge la posizione per trovare le proprie aliquote. Entrambe passano dagli
+   * scaglioni anche dove un comune ha un aliquota sola: molti ce l hanno
+   * progressiva, e una forma che sta bene solo a Milano andrebbe riscritta il
+   * giorno del secondo comune.
    */
-  function computeSurtaxes(taxable, position) {
+  function computeSurtaxes(taxable, position, netTaxDue) {
     var region = local.regions[position.region];
     var municipality = local.municipalities[position.municipality];
+
+    if (!netTaxDue) {
+      return {
+        region: region,
+        municipality: municipality,
+        regional: 0,
+        regionalDetail: [],
+        municipal: 0,
+        municipalDetail: [],
+        municipalExempt: false,
+        netTaxDue: false,
+        total: 0
+      };
+    }
 
     var regional = applyBrackets(taxable, region.brackets);
     var exempt = taxable <= municipality.exemptionThreshold;
@@ -314,6 +334,7 @@ var ENGINE_STEPS = function (parameters, local, numbers) {
       municipal: municipal.total,
       municipalDetail: municipal.detail,
       municipalExempt: exempt,
+      netTaxDue: true,
       total: regional.total + municipal.total
     };
   }

@@ -36,15 +36,23 @@
   --radius: 12px;
   --radius-sm: 8px;
 
-  /* Scala tipografica e spaziature. Sono arrivate tardi, quando le pagine sono
-     diventate quattro e ognuna aveva i suoi valori a occhio: i componenti piu
-     vecchi portano ancora numeri letterali, i nuovi usano solo questi. */
+  /* Scala tipografica e spaziature.
+     Sono arrivate tardi, quando le pagine sono diventate quattro e ognuna
+     aveva i suoi valori a occhio: venti dimensioni di testo diverse fra 0,64 e
+     1,5rem, quattordici delle quali schiacciate in mezzo rem. Non era una
+     scala, era deriva. Adesso sono otto, e ogni accorpamento sposta di meno
+     del sei per cento: la pagina e la stessa, il disordine no.
+
+     Le spaziature invece sono ancora letterali quasi ovunque. Accorparle
+     sposterebbe davvero le cose, e non e questo il momento. */
+  --text-2xs: 0.68rem;
   --text-xs: 0.74rem;
   --text-sm: 0.83rem;
   --text-base: 0.95rem;
   --text-md: 1.05rem;
-  --text-lg: 1.25rem;
+  --text-lg: 1.35rem;
   --text-xl: 1.6rem;
+  --text-figure: 1.5rem;
   --text-2xl: clamp(1.9rem, 5vw, 2.9rem);
 
   --space-1: 0.35rem;
@@ -77,13 +85,16 @@ body {
 
 .num, table { font-variant-numeric: tabular-nums; }
 
-.page-header, main, .page-footer {
+body > nav, .page-header, main, .page-footer {
   max-width: var(--measure);
   margin: 0 auto;
   padding: 0 var(--gutter);
 }
 
 /* ------------------------------------------------------------------ header */
+
+/* La nav e un fratello di header e main, non un loro figlio: senza questa riga
+   restava incollata al bordo della finestra mentre tutto il resto rientrava. */
 
 .page-header { padding-top: 2.75rem; padding-bottom: 1.75rem; }
 
@@ -126,7 +137,7 @@ body {
 
 .eyebrow {
   margin: 0 0 0.85rem;
-  font-size: 0.74rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -145,7 +156,7 @@ h1 {
 .lede {
   margin: 0 0 1.1rem;
   max-width: var(--prose);
-  font-size: 1.05rem;
+  font-size: var(--text-md);
   color: var(--text-muted);
 }
 
@@ -153,7 +164,7 @@ h1 {
   margin: 0;
   max-width: var(--prose);
   padding: 0.85rem 1rem;
-  font-size: 0.83rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--text-muted);
   background: var(--surface-sunken);
@@ -177,7 +188,9 @@ h1 {
 }
 
 .field { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
-.field-action { align-self: end; }
+/* Il campo e una colonna flex, e un bottone dentro una colonna flex si stira
+   per tutta la larghezza: erano seicento pixel di "Calcola". */
+.field-action { align-self: end; align-items: start; }
 
 /* Collapsed by default: most people have no dependants and should not have to
    scroll past five fields that do not apply to them. */
@@ -190,7 +203,7 @@ h1 {
 
 .field-group > summary {
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -205,14 +218,23 @@ h1 {
 
 .field-group[open] > summary { margin-bottom: 1rem; }
 
+/* auto-fill e non auto-fit: con un campo solo, come nei fringe benefit, auto-fit
+   collassa le tracce vuote e quell unico input si prende milleduecento pixel. */
 .field-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
   gap: 1rem;
   align-items: start;
 }
 
-.field-check { justify-content: start; padding-top: 1.35rem; }
+/* Le etichette vanno a capo in modo diverso da un campo all altro, e senza un
+   minimo comune gli input finivano sfalsati di venti pixel dentro la stessa
+   riga. Due righe di etichetta sono il caso peggiore che serve reggere. */
+.field-grid > .field > label { min-height: 2.4em; }
+
+/* Il campo con la spunta non ha etichetta sopra: si allinea agli altri
+   lasciando lo spazio che l etichetta occuperebbe, due righe piu il gap. */
+.field-check { justify-content: start; padding-top: calc(2.4em * 0.74 + 0.4rem); }
 
 .check {
   flex-direction: row;
@@ -220,7 +242,7 @@ h1 {
   gap: 0.55rem;
   text-transform: none;
   letter-spacing: 0;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   font-weight: 500;
   color: var(--text);
   cursor: pointer;
@@ -231,7 +253,7 @@ h1 {
 .hint-block { margin-top: 1rem; }
 
 label {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -240,7 +262,9 @@ label {
 
 .input-wrap { position: relative; display: flex; align-items: center; }
 
-input[type="text"], select {
+/* Il tipo number era rimasto fuori e restava un campo di sistema alto la meta
+   degli altri, in mezzo a una riga di select. */
+input[type="text"], input[type="number"], select {
   width: 100%;
   padding: 0.72rem 0.85rem;
   background: var(--surface);
@@ -250,7 +274,7 @@ input[type="text"], select {
   font: inherit;
   font-variant-numeric: tabular-nums;
 }
-.input-wrap input { padding-right: 3.4rem; font-size: 1.05rem; font-weight: 600; }
+.input-wrap input { padding-right: 3.4rem; font-size: var(--text-md); font-weight: 600; }
 
 input:focus-visible, select:focus-visible,
 button:focus-visible, a:focus-visible {
@@ -261,12 +285,12 @@ button:focus-visible, a:focus-visible {
 .unit {
   position: absolute;
   right: 0.85rem;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--text-faint);
   pointer-events: none;
 }
 
-.hint { margin: 0; font-size: 0.74rem; color: var(--text-faint); }
+.hint { margin: 0; font-size: var(--text-xs); color: var(--text-faint); }
 
 button[type="submit"] {
   padding: 0.78rem 1.6rem;
@@ -288,7 +312,7 @@ button[type="submit"]:hover { opacity: 0.88; }
   border: 1px solid color-mix(in srgb, var(--negative) 40%, var(--surface));
   border-radius: var(--radius-sm);
   color: var(--negative);
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   font-weight: 500;
 }
 
@@ -321,7 +345,7 @@ button[type="submit"]:hover { opacity: 0.88; }
 
 .summary-label {
   margin: 0 0 0.35rem;
-  font-size: 0.7rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -335,11 +359,11 @@ button[type="submit"]:hover { opacity: 0.88; }
   letter-spacing: -0.03em;
   line-height: 1.12;
 }
-.summary-secondary .summary-value { font-size: 1.35rem; }
+.summary-secondary .summary-value { font-size: var(--text-lg); }
 
 .summary-note {
   margin: 0.45rem 0 0;
-  font-size: 0.76rem;
+  font-size: var(--text-xs);
   line-height: 1.45;
   color: var(--text-muted);
 }
@@ -354,7 +378,7 @@ button[type="submit"]:hover { opacity: 0.88; }
 
 .block h3 {
   margin: 0 0 1rem;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -368,11 +392,11 @@ main > .section-lead:first-child { margin-top: 0.25rem; }
 
 .section-title {
   margin: 0 0 0.4rem;
-  font-size: 1.35rem;
+  font-size: var(--text-lg);
   font-weight: 700;
   letter-spacing: -0.022em;
 }
-.section-lead p { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--text-muted); }
+.section-lead p { margin: 0; font-size: var(--text-base); line-height: 1.55; color: var(--text-muted); }
 
 .section-lead-extra {
   border-top: 1px solid var(--line-strong);
@@ -396,7 +420,7 @@ main > .section-lead:first-child { margin-top: 0.25rem; }
 
 .learned-label {
   margin: 0 0 0.6rem;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 650;
@@ -405,7 +429,7 @@ main > .section-lead:first-child { margin-top: 0.25rem; }
 .learned-headline {
   margin: 0 0 0.5rem;
   max-width: var(--prose);
-  font-size: 1.05rem;
+  font-size: var(--text-md);
   font-weight: 650;
   line-height: 1.4;
   letter-spacing: -0.012em;
@@ -413,13 +437,13 @@ main > .section-lead:first-child { margin-top: 0.25rem; }
 .learned-body {
   margin: 0 0 0.9rem;
   max-width: var(--prose);
-  font-size: 0.87rem;
+  font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--text-muted);
 }
 .learned-cta {
   display: inline-block;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-weight: 650;
   color: var(--link);
   text-decoration: underline;
@@ -436,7 +460,7 @@ main > .section-lead:first-child { margin-top: 0.25rem; }
 
 /* ------------------------------------------------------------------ tables */
 
-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 
 th, td { text-align: left; padding: 0.6rem; vertical-align: baseline; }
 th:first-child, td:first-child { padding-left: 0; }
@@ -444,7 +468,7 @@ th:last-child, td:last-child { padding-right: 0; }
 .num, th.num, td.num { text-align: right; }
 
 thead th {
-  font-size: 0.68rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -460,14 +484,14 @@ tbody tr:last-child { border-bottom: 0; }
 td.amount { font-weight: 650; white-space: nowrap; }
 
 .ledger .voice { font-weight: 600; }
-.ledger .formula { color: var(--text-muted); font-size: 0.83rem; }
+.ledger .formula { color: var(--text-muted); font-size: var(--text-sm); }
 .ledger .amount.is-negative { color: var(--negative); }
 .ledger .amount.is-positive { color: var(--positive); }
 .ledger .amount.is-zero { color: var(--text-faint); font-weight: 400; }
 
 .ref a {
   color: var(--link);
-  font-size: 0.79rem;
+  font-size: var(--text-sm);
   text-decoration-color: color-mix(in srgb, var(--link) 35%, transparent);
   text-underline-offset: 2px;
 }
@@ -476,7 +500,7 @@ tfoot td {
   border-top: 2px solid var(--text);
   font-weight: 700;
   padding-top: 0.75rem;
-  font-size: 0.95rem;
+  font-size: var(--text-base);
 }
 
 .detail td:first-child { color: var(--text-muted); }
@@ -492,7 +516,7 @@ tfoot td {
 .block-note {
   margin: -0.35rem 0 1.1rem;
   max-width: var(--prose);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--text-muted);
 }
@@ -522,7 +546,7 @@ tfoot td {
   padding: 1rem 1.1rem;
   outline: 1px solid var(--line);
 }
-.inverse-figure .summary-value { font-size: 1.5rem; }
+.inverse-figure .summary-value { font-size: var(--text-figure); }
 
 .inverse-gap-head {
   margin: 1.1rem 0 0;
@@ -530,13 +554,13 @@ tfoot td {
   background: color-mix(in srgb, var(--negative) 8%, var(--surface));
   border: 1px solid color-mix(in srgb, var(--negative) 30%, var(--surface));
   border-radius: var(--radius-sm);
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   color: var(--text);
 }
 
 .inverse-note {
   margin: 0.8rem 0 0;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
@@ -558,7 +582,7 @@ tfoot td {
   margin-right: 0.35rem;
   background: var(--surface-strong);
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
   color: var(--text-muted);
 }
@@ -571,7 +595,7 @@ tfoot td {
 .breakpoints .is-positive { color: var(--positive); }
 .breakpoints .is-negative { color: var(--negative); }
 .breakpoints .is-flat { color: var(--text-faint); font-weight: 400; }
-.breakpoints td.effect { color: var(--text-muted); font-weight: 400; font-size: 0.82rem; }
+.breakpoints td.effect { color: var(--text-muted); font-weight: 400; font-size: var(--text-sm); }
 
 /* The estimate block is deliberately set apart from the statutory calculation. */
 .block.estimate { background: var(--surface-sunken); border-style: dashed; }
@@ -583,7 +607,7 @@ tfoot td {
   background: color-mix(in srgb, var(--negative) 12%, var(--surface));
   color: var(--negative);
   border-radius: 999px;
-  font-size: 0.64rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: none;
@@ -611,7 +635,7 @@ tfoot td {
 
 .employer-caveat {
   margin: 1rem 0 0;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   line-height: 1.55;
   color: var(--text-muted);
 }
@@ -628,9 +652,9 @@ tfoot td {
   border-left: 3px solid var(--accent);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
-.finding p { margin: 0 0 0.5rem; font-size: 0.87rem; line-height: 1.55; color: var(--text-muted); }
+.finding p { margin: 0 0 0.5rem; font-size: var(--text-sm); line-height: 1.55; color: var(--text-muted); }
 .finding p:last-child { margin-bottom: 0; }
-.finding-title { color: var(--text) !important; font-weight: 650; font-size: 0.95rem !important; }
+.finding-title { color: var(--text) !important; font-weight: 650; font-size: var(--text-base) !important; }
 
 .reading-grid {
   display: grid;
@@ -638,12 +662,12 @@ tfoot td {
   gap: 1.4rem;
 }
 
-.reading-item p { margin: 0; font-size: 0.86rem; line-height: 1.55; color: var(--text-muted); }
+.reading-item p { margin: 0; font-size: var(--text-sm); line-height: 1.55; color: var(--text-muted); }
 .reading-title {
   margin: 0 0 0.35rem !important;
   color: var(--text) !important;
   font-weight: 650;
-  font-size: 0.9rem !important;
+  font-size: var(--text-base) !important;
 }
 
 /* --------------------------------------------------------------- waterfall */
@@ -659,6 +683,58 @@ tfoot td {
 .wf-connector { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 2 2; }
 .wf-axis { stroke: var(--line); stroke-width: 1; }
 
+
+/* ------------------------------------------------------- voci che si aprono */
+
+/* Sembra la cella di prima, e un pulsante solo quando ci si passa sopra: la
+   traccia resta una tabella da leggere, non una fila di controlli. */
+.explain {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px dotted var(--line-strong);
+}
+
+.explain:hover { border-bottom-color: var(--text); }
+
+.explain:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.explain::after {
+  content: '';
+  display: inline-block;
+  width: 0.42em;
+  height: 0.42em;
+  margin-left: 0.5em;
+  border-right: 1.6px solid var(--text-faint);
+  border-bottom: 1.6px solid var(--text-faint);
+  transform: translateY(-0.15em) rotate(45deg);
+}
+
+.explain[aria-expanded='true']::after { transform: translateY(0.1em) rotate(-135deg); }
+
+.explanation > td {
+  padding: 0.2rem 0.9rem 1.1rem;
+  background: var(--surface-sunken);
+}
+
+.explanation p {
+  margin: 0 0 0.6rem;
+  max-width: var(--prose);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.explanation p:last-child { margin-bottom: 0; }
 
 /* ------------------------------------------------------------------- prose */
 
@@ -749,15 +825,44 @@ tfoot td {
   color: var(--on-accent);
 }
 
+/* --------------------------------------------------- tabelle della curva */
+
+/* Senza larghezze il browser distribuisce a caso: la colonna di testo si
+   prendeva tre quarti della tabella e i numeri finivano a mezzo schermo di
+   distanza dalla loro etichetta. Qui le colonne strette sono fissate e quella
+   di testo si prende quello che resta. */
+.bands, .breakpoints { table-layout: fixed; }
+
+/* Le soglie sono cinque colonne fitte e si prendono lo schermo. Le bande sono
+   tre, di cui due numeri corti: allargarle a tutta pagina lasciava un metro di
+   vuoto fra la fascia e la sua aliquota. */
+.bands { max-width: 46rem; }
+
+.bands th:first-child, .bands td:first-child { width: auto; }
+.bands th:nth-child(2), .bands td:nth-child(2) { width: 9rem; }
+.bands th:nth-child(3), .bands td:nth-child(3) { width: 11rem; }
+
+.breakpoints th:nth-child(1), .breakpoints td:nth-child(1) { width: 8.5rem; }
+.breakpoints th:nth-child(2), .breakpoints td:nth-child(2) { width: auto; }
+.breakpoints th:nth-child(3), .breakpoints td:nth-child(3) { width: 12rem; }
+.breakpoints th:nth-child(4), .breakpoints td:nth-child(4) { width: 9.5rem; }
+.breakpoints th:nth-child(5), .breakpoints td:nth-child(5) { width: 13rem; }
+
 /* ------------------------------------------------------------------ footer */
 
-.page-footer { padding-top: 2rem; padding-bottom: 3rem; font-size: 0.8rem; color: var(--text-faint); }
+.page-footer { padding-top: 2rem; padding-bottom: 3rem; font-size: var(--text-sm); color: var(--text-faint); }
 .page-footer p { margin: 0 0 0.4rem; max-width: var(--prose); }
 .page-footer p:last-child { margin-bottom: 0; }
 
 /* ------------------------------------------------------------------ mobile */
 
 @media (max-width: 46rem) {
+  /* Le larghezze fisse servono a riequilibrare le colonne su uno schermo largo.
+     Su uno stretto costringerebbero la tabella a scorrere di lato dove prima si
+     riadattava: il problema da risolvere era l altro. */
+  .bands, .breakpoints { table-layout: auto; max-width: none; }
+  .bands th, .bands td, .breakpoints th, .breakpoints td { width: auto; }
+
   .calc-form { grid-template-columns: 1fr; }
   .field-action { align-self: stretch; }
   button[type="submit"] { width: 100%; }
@@ -766,7 +871,7 @@ tfoot td {
   .ledger thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .ledger tbody tr, .ledger tfoot tr { display: grid; grid-template-columns: 1fr auto; padding: 0.75rem 0; }
   .ledger td { padding: 0; }
-  .ledger td.voice { grid-column: 1; font-size: 0.95rem; }
+  .ledger td.voice { grid-column: 1; font-size: var(--text-base); }
   .ledger td.amount { grid-column: 2; grid-row: 1; }
   .ledger td.formula { grid-column: 1 / -1; margin-top: 0.2rem; }
   .ledger td.ref { grid-column: 1 / -1; margin-top: 0.2rem; }

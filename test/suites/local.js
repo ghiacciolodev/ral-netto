@@ -203,6 +203,41 @@ var SUITE_LOCAL = function (context) {
   t.ok('a Torino il modello resta affine fra le soglie (' +
     torinoWorst.toExponential(2) + ')', torinoWorst <= torinoTolerance);
 
+  t.group('Le addizionali seguono l IRPEF netta');
+
+  /**
+   * Art. 50 co. 2 D.Lgs. 446/1997 e art. 1 co. 4 D.Lgs. 360/1998 dicono la
+   * stessa cosa con parole quasi identiche: l addizionale e dovuta se per lo
+   * stesso anno l imposta sul reddito, al netto delle detrazioni, risulta
+   * dovuta. Non e una riduzione proporzionale, e un interruttore.
+   */
+  var incapiente = engine.calculateNet({ grossAnnual: 9360, months: 13 });
+  t.close('a 9.360 l IRPEF netta e zero', incapiente.irpef.net, 0, 1e-9);
+  t.close('quindi la regionale non e dovuta', incapiente.surtaxes.regional, 0, 1e-9);
+  t.close('e nemmeno la comunale', incapiente.surtaxes.municipal, 0, 1e-9);
+  t.ok('e il risultato lo dichiara', incapiente.surtaxes.netTaxDue === false);
+
+  /**
+   * La soglia e netta: basta un euro di imposta dovuta e l addizionale si paga
+   * per intero sull imponibile, non sulla parte eccedente.
+   */
+  var soglia = engine.getBreakpoints({ months: 13 }).filter(function (bp) {
+    return bp.ids.indexOf('no-tax-area') !== -1;
+  })[0];
+
+  var sotto = engine.calculateNet({ grossAnnual: soglia.ral - 1, months: 13 });
+  var sopra = engine.calculateNet({ grossAnnual: soglia.ral + 1, months: 13 });
+
+  t.close('un euro sotto non si paga nulla', sotto.surtaxes.total, 0, 1e-9);
+  t.ok('un euro sopra si paga su tutto l imponibile', sopra.surtaxes.regional > 100);
+  t.ok('e il netto scende attraversando la soglia', sopra.netAnnual < sotto.netAnnual);
+
+  /** La traccia lo dice invece di mostrare uno zero senza spiegazione. */
+  var voce = incapiente.ledger.filter(function (entry) {
+    return entry.id === 'surtax.regional';
+  })[0];
+  t.ok('la traccia spiega perche e zero', voce.formula.indexOf('non dovuta') === 0);
+
   t.group('Addizionali locali');
 
   /**

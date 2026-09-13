@@ -303,6 +303,37 @@ cinque anni, che una detrazione non la prende perché dal marzo 2022 c'è l'asse
 al suo posto. Nel modello i figli sotto i 21 anni sono un campo separato proprio per
 questo: non danno detrazione, ma alzano la soglia.
 
+## Le addizionali seguono l'IRPEF netta
+
+Le addizionali si calcolano sull'imponibile e le detrazioni non le riducono, ma esistono
+solo se esiste l'IRPEF netta. Le due norme lo dicono con parole quasi identiche:
+
+> L'addizionale regionale **è dovuta se per lo stesso anno l'imposta sul reddito delle
+> persone fisiche, al netto delle detrazioni** per essa riconosciute e dei crediti di cui
+> agli articoli 14 e 15 del citato testo unico, **risulta dovuta.**
+>
+> *(art. 50 co. 2 D.Lgs. 446/1997; art. 1 co. 4 D.Lgs. 360/1998 per la comunale)*
+
+**Chi è incapiente non le paga.** Non è una riduzione proporzionale, è un interruttore:
+un euro di imposta dovuta e l'addizionale si paga per intero sull'imponibile.
+
+Il modello le addebitava sempre. Corretto, e sono cambiati tre casi di valore: a RAL
+9.360 il netto passa da 10.198,76 a **10.303,30 €**. E con RAL 20.000, coniuge e tre
+figli a carico, succede una cosa che prima non si vedeva:
+
+| | |
+|---|---|
+| RAL | 20.000,00 € |
+| Contributi | − 1.838,00 € |
+| IRPEF netta | 0,00 € |
+| Addizionali | **0,00 €** |
+| Somma esente cuneo | + 871,78 € |
+| Trattamento integrativo | + 1.200,00 € |
+| **Netto** | **20.233,78 €** |
+
+Il netto supera il lordo. È corretto: a quel reddito, con quella famiglia, lo Stato dà
+più di quanto prende.
+
 ## Assunzioni e semplificazioni
 
 Ogni riga è una cosa che il modello **non** fa, con il motivo.
@@ -434,7 +465,7 @@ node test/run.js
 Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
 verde o rosso.
 
-645 asserzioni, divise in quattordici suite per area. Se il codice e un valore atteso non
+657 asserzioni, divise in quattordici suite per area. Se il codice e un valore atteso non
 concordano, si guarda il codice.
 
 ## Come si aggiorna all'anno successivo
@@ -515,7 +546,12 @@ che i parametri usavano gia: globale in pagina, `require` sotto Node.
 
 ## Il sito
 
-Quattro pagine, non una sola con dentro tutto. Il **calcolatore** fa il calcolo,
+Quattro pagine, non una sola con dentro tutto. Nel calcolatore i risultati sono
+raggruppati in tre parti, **dal lordo al netto**, **come arriva nel tempo** e **il
+dettaglio del calcolo**, invece di essere sei blocchi allo stesso livello. E ogni voce
+della traccia si apre e spiega sé stessa, invece di rimandare a un'altra pagina: le
+spiegazioni stanno in `src/explanations.js`, e un test verifica che ogni voce che il
+motore può produrre ne abbia una. Il **calcolatore** fa il calcolo,
 **come si calcola** lo spiega passo per passo e dichiara cosa il modello non fa,
 **parametri e fonti** elenca ogni valore usato con la norma che lo fissa, e
 **aliquota marginale** mostra dove la curva del netto smette di salire.
@@ -525,6 +561,30 @@ dell'anno scelto e costruisce la tabella da lì. È una scelta precisa. Se un pa
 nuovo viene aggiunto, compare da solo, magari con un'etichetta brutta, invece di
 restare invisibile perché nessuno si è ricordato di aggiungerlo a un elenco. E un
 parametro senza fonte scrive **senza fonte** invece di lasciare la cella vuota.
+
+### Il CSS
+
+Le dimensioni del testo erano **venti valori diversi fra 0,64 e 1,5rem**, quattordici
+dei quali schiacciati in mezzo rem: 0,82 accanto a 0,83, 0,86 accanto a 0,87. Non era
+una scala, era deriva accumulata in sei fasi di lavoro. Adesso sono otto gradini, e
+nessun accorpamento sposta più del sei per cento: la pagina è la stessa, il disordine
+no.
+
+Le spaziature restano letterali quasi ovunque, di proposito. Accorparle sposterebbe
+davvero le cose, e la grafica va bene com'è.
+
+Quattro difetti di layout corretti nello stesso passaggio:
+
+| Dove | Cos'era |
+|---|---|
+| La navigazione | Era un fratello di `header` e `main` ma non ne condivideva il contenitore: restava incollata al bordo della finestra mentre tutto il resto rientrava di 40px. |
+| Giorni di rapporto, e tutti i campi numerici | Lo stile vestiva `input[type=text]` e `select`, non `number`: restavano campi di sistema alti la metà degli altri, in mezzo a una riga di select. |
+| Il bottone Calcola | Un bottone dentro una colonna flex si stira: erano seicento pixel di "Calcola". |
+| Le tabelle della curva | Senza larghezze di colonna il browser distribuiva a caso: la colonna di testo si prendeva tre quarti della tabella e i numeri finivano a mezzo schermo dalla loro etichetta. |
+
+Più due sfalsamenti trovati misurando: le etichette che vanno a capo disallineavano gli
+input della stessa riga, e il campo dei fringe benefit, unico nella sua griglia, si
+prendeva milleduecento pixel perché `auto-fit` collassa le tracce vuote.
 
 Costruendola ha subito trovato due parametri che non citavano niente: le mensilità
 ammesse, che dipendono dal CCNL, e i 365 giorni del ragguaglio, che restano 365 anche
@@ -554,6 +614,7 @@ src/engine/inverse.js      dal netto alla RAL, piu l oracolo binario dei test
 src/engine/monthly.js      il prospetto dei periodi di paga e il conguaglio
 src/ui-common.js           helper di rendering condivisi
 src/ui-parameters.js       pagina parametri, generata dai dati
+src/explanations.js        le spiegazioni delle voci del calcolo
 src/ui-calculator.js       pagina calcolatore
 src/ui-curve.js            pagina curva
 src/styles.css

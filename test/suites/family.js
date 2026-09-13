@@ -84,9 +84,15 @@ var SUITE_FAMILY = function (context) {
   t.equal('siamo nella seconda fascia', lowIncomeFamily.supplementaryAllowance.band, 'differenziale');
   t.close('e il trattamento integrativo arriva al massimo',
     lowIncomeFamily.supplementaryAllowance.amount, 1200.00);
-  t.ok('con una RAL di 20.000 arriva a casa quasi tutto',
-    lowIncomeFamily.netAnnual > 19990 && lowIncomeFamily.netAnnual < 20000);
-  t.close('netto annuo', lowIncomeFamily.netAnnual, 19999.32);
+  /**
+   * Qui il netto supera il lordo, e non e un errore: l IRPEF netta e zero,
+   * quindi le addizionali non sono dovute, e sopra ci si mettono il cuneo come
+   * somma esente e i 1.200 del trattamento integrativo.
+   */
+  t.ok('con una RAL di 20.000 il netto supera il lordo',
+    lowIncomeFamily.netAnnual > 20000);
+  t.close('netto annuo', lowIncomeFamily.netAnnual, 20233.78);
+  t.close('e le addizionali non si pagano', lowIncomeFamily.surtaxes.total, 0, 1e-9);
 
   /**
    * The list in DL 3/2020 does not include the wedge deduction, so a taxpayer

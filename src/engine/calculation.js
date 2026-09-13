@@ -102,6 +102,7 @@ var ENGINE_CALCULATION = function (RULES, position, steps) {
         municipal: ctx.surtaxes.municipal,
         municipalDetail: ctx.surtaxes.municipalDetail,
         municipalExempt: ctx.surtaxes.municipalExempt,
+        netTaxDue: ctx.surtaxes.netTaxDue,
         total: ctx.surtaxes.total
       },
       netAnnual: netAnnual,

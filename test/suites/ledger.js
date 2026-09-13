@@ -19,6 +19,35 @@ var SUITE_LEDGER = function (context) {
     t.close('RAL ' + c.ral, rebuilt, r.netAnnual, 1e-9);
   });
 
+  t.group('Ogni voce della traccia ha una spiegazione');
+
+  /**
+   * L interfaccia apre ogni voce per dire che cos e. Una voce senza
+   * spiegazione lascerebbe un pulsante che non si apre, e sarebbe invisibile
+   * fino a che qualcuno non ci clicca sopra: meglio che fallisca qui.
+   */
+  var spiegazioni = context.spiegazioni;
+  var mute = [];
+
+  [
+    { grossAnnual: 9500, months: 13 },
+    { grossAnnual: 30000, months: 13 },
+    { grossAnnual: 150000, months: 13 },
+    { grossAnnual: 20000, months: 13, family: { spouse: true, children: 3 } }
+  ].forEach(function (position) {
+    engine.calculateNet(position).ledger.forEach(function (entry) {
+      if (!spiegazioni[entry.id] && mute.indexOf(entry.id) === -1) mute.push(entry.id);
+    });
+  });
+
+  t.ok('nessuna voce senza spiegazione', mute.length === 0, mute.join(', '));
+  t.ok('e la riga di apertura ce l ha', !!spiegazioni.ral);
+  t.ok('ogni spiegazione e fatta di paragrafi', Object.keys(spiegazioni).every(function (id) {
+    return Array.isArray(spiegazioni[id]) && spiegazioni[id].every(function (p) {
+      return typeof p === 'string' && p.length > 40;
+    });
+  }));
+
   t.group('Ogni voce della traccia cita una fonte esistente');
   var orphans = [];
   VALUE_CASES.forEach(function (c) {

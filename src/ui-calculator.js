@@ -153,33 +153,89 @@
       'Imponibile fiscale ' + ui.euro(result.taxableIncome) + '.';
   }
 
+  var apertura = 0;
+
+  /**
+   * Una voce della traccia, con sotto la sua spiegazione nascosta.
+   *
+   * La riga che si apre e una seconda `tr` invece di un `details` dentro la
+   * cella: dentro una tabella il testo lungo vuole tutta la larghezza, non la
+   * colonna della voce. Il pulsante porta `aria-expanded` e `aria-controls`,
+   * cosi chi legge con lo schermo sa che c e dell altro e dove va a finire.
+   */
+  function ledgerRow(tbody, id, label, formula, amountCell, sourceId) {
+    var row = document.createElement('tr');
+    var voice = ui.cell(row, '', 'voice');
+    var spiegazione = SPIEGAZIONI[id];
+
+    if (spiegazione) {
+      apertura += 1;
+      var idSpiegazione = 'spiegazione-' + apertura;
+
+      var bottone = document.createElement('button');
+      bottone.type = 'button';
+      bottone.className = 'explain';
+      bottone.textContent = label;
+      bottone.setAttribute('aria-expanded', 'false');
+      bottone.setAttribute('aria-controls', idSpiegazione);
+      voice.appendChild(bottone);
+
+      var dettaglio = document.createElement('tr');
+      dettaglio.id = idSpiegazione;
+      dettaglio.className = 'explanation';
+      dettaglio.hidden = true;
+
+      var cella = document.createElement('td');
+      cella.colSpan = 4;
+      spiegazione.forEach(function (paragrafo) {
+        var p = document.createElement('p');
+        p.textContent = paragrafo;
+        cella.appendChild(p);
+      });
+      dettaglio.appendChild(cella);
+
+      bottone.addEventListener('click', function () {
+        var aperta = bottone.getAttribute('aria-expanded') === 'true';
+        bottone.setAttribute('aria-expanded', aperta ? 'false' : 'true');
+        dettaglio.hidden = aperta;
+      });
+
+      ui.cell(row, formula, 'formula');
+      amountCell(row);
+      ui.sourceCell(row, sourceId);
+      tbody.appendChild(row);
+      tbody.appendChild(dettaglio);
+      return;
+    }
+
+    voice.textContent = label;
+    ui.cell(row, formula, 'formula');
+    amountCell(row);
+    ui.sourceCell(row, sourceId);
+    tbody.appendChild(row);
+  }
+
   function renderLedger(result) {
     var table = document.getElementById('ledger-table');
     var tbody = table.querySelector('tbody');
     var tfoot = table.querySelector('tfoot');
     ui.clear(tbody);
     ui.clear(tfoot);
+    apertura = 0;
 
-    var opening = document.createElement('tr');
-    ui.cell(opening, 'RAL, retribuzione annua lorda', 'voice');
-    ui.cell(opening, 'importo di partenza', 'formula');
-    ui.cell(opening, ui.euro(result.ral), 'num amount');
-    ui.sourceCell(opening, null);
-    tbody.appendChild(opening);
+    ledgerRow(tbody, 'ral', 'RAL, retribuzione annua lorda', 'importo di partenza',
+      function (row) { ui.cell(row, ui.euro(result.ral), 'num amount'); }, null);
 
     result.ledger.forEach(function (entry) {
-      var row = document.createElement('tr');
-      ui.cell(row, entry.label, 'voice');
-      ui.cell(row, entry.formula, 'formula');
-
       var signed = entry.amount === 0
         ? ui.euro(0)
-        : (entry.sign < 0 ? '− ' : '+ ') + ui.euro(entry.amount);
+        : (entry.sign < 0 ? '\− ' : '+ ') + ui.euro(entry.amount);
 
       var tone = entry.amount === 0 ? 'is-zero' : (entry.sign < 0 ? 'is-negative' : 'is-positive');
-      ui.cell(row, signed, 'num amount ' + tone);
-      ui.sourceCell(row, entry.sourceId);
-      tbody.appendChild(row);
+
+      ledgerRow(tbody, entry.id, entry.label, entry.formula, function (row) {
+        ui.cell(row, signed, 'num amount ' + tone);
+      }, entry.sourceId);
     });
 
     var closing = document.createElement('tr');
