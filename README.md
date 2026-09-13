@@ -86,7 +86,7 @@ perché lì la detrazione per lavoro dipendente e quella del cuneo fiscale si ri
 a ogni euro guadagnato. Il grafico mostra tutte le soglie e cosa succede a ciascuna.
 
 ![Aliquota marginale effettiva](docs/screenshots/aliquota-marginale.png)
-
+ 
 ## Il calcolo
 
 Dieci passaggi, nessuna iterazione.
