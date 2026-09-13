@@ -872,25 +872,34 @@ tfoot td {
    prendeva tre quarti della tabella e i numeri finivano a mezzo schermo di
    distanza dalla loro etichetta. Qui le colonne strette sono fissate e quella
    di testo si prende quello che resta. */
-.breakpoints { table-layout: fixed; }
+.bands, .breakpoints { table-layout: fixed; }
 
-/* Le bande sono tre colonne corte: a tutta pagina lascerebbero un metro di
-   vuoto fra la fascia e la sua aliquota. Stanno in una griglia accanto al
-   riquadro che le commenta, e insieme riempiono la card. */
-.bands-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 1.5rem;
-  align-items: start;
-}
-
-.bands-layout .finding { margin-top: 0; }
-.bands-layout .finding:empty { display: none; }
+/* Le bande occupano tutta la card: le tre colonne di numeri hanno una
+   larghezza fissa e la quarta, la barra, si prende il resto. Cosi lo spazio
+   mostra la stessa scala del grafico invece di restare vuoto. */
 .bands th, .bands td { white-space: nowrap; }
+.bands th:nth-child(1), .bands td:nth-child(1) { width: 15rem; }
+.bands th:nth-child(2), .bands td:nth-child(2) { width: 11rem; }
+.bands th:nth-child(3), .bands td:nth-child(3) { width: 12rem; }
+.bands th.band-bar-col, .bands td.band-bar-col { width: auto; padding-left: 2.5rem; }
 
-@media (max-width: 72rem) {
-  .bands-layout { grid-template-columns: minmax(0, 1fr); }
+.band-bar {
+  display: block;
+  height: 0.5rem;
+  background: var(--surface-strong);
+  border-radius: 999px;
+  overflow: hidden;
 }
+
+.band-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--text);
+  border-radius: 999px;
+}
+
+.bands tr.is-worst .band-bar > span { background: var(--negative); }
+.finding:empty { display: none; }
 
 .breakpoints th:nth-child(1), .breakpoints td:nth-child(1) { width: 8.5rem; }
 .breakpoints th:nth-child(2), .breakpoints td:nth-child(2) { width: auto; }
@@ -910,8 +919,12 @@ tfoot td {
   /* Le larghezze fisse servono a riequilibrare le colonne su uno schermo largo.
      Su uno stretto costringerebbero la tabella a scorrere di lato dove prima si
      riadattava: il problema da risolvere era l altro. */
-  .breakpoints { table-layout: auto; }
-  .breakpoints th, .breakpoints td { width: auto; }
+  .bands, .breakpoints { table-layout: auto; }
+  .bands th, .bands td, .breakpoints th, .breakpoints td { width: auto; }
+  .bands .band-bar-col { display: none; }
+  .bands th { white-space: normal; }
+  .bands th, .bands td { padding-left: 0.35rem; padding-right: 0.35rem; }
+  .bands th:first-child, .bands td:first-child { padding-left: 0; }
 
   .calc-form { grid-template-columns: 1fr; }
   .field-action { align-self: stretch; }

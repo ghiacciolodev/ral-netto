@@ -224,6 +224,16 @@
       ui.cell(row, engine.formatRate(1 - band.rate), 'num');
       ui.cell(row, engine.formatAmount(band.rate * 100) + ' €', 'num amount');
 
+      // The same step as the chart, drawn as a bar: the column reads at a glance.
+      var barCell = ui.cell(row, '', 'band-bar-col');
+      var track = document.createElement('span');
+      track.className = 'band-bar';
+      track.setAttribute('aria-hidden', 'true');
+      var fill = document.createElement('span');
+      fill.style.width = (Math.max(0, Math.min(1, band.rate)) * 100).toFixed(2) + '%';
+      track.appendChild(fill);
+      barCell.appendChild(track);
+
       tbody.appendChild(row);
     });
 
