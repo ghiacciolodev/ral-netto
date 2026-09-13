@@ -134,7 +134,7 @@ var ENGINE_BREAKPOINTS = function (parameters, maxRal, numbers, steps, RULES, po
         (relief.type === 'deduction' ? relief.amount : 0);
     }).forEach(function (root, i) {
       add('taxable', root, i === 0 ? 'no-tax-area' : 'no-tax-area-' + (i + 1),
-        'Uscita dall incapienza (no tax area)');
+        'Uscita dall\'incapienza (no tax area)');
     });
 
     // Same idea for the capacity test of the trattamento integrativo, except

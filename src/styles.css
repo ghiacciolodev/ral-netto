@@ -1,9 +1,8 @@
-/* Palette taken from the Jet HR site: white ground, near-black text with an
-   olive cast, sage surfaces, green and terracotta reserved for data semantics.
-   Inspiration only, none of their assets are reused.
+/* White ground, near-black text with an olive cast, sage surfaces, green and
+   terracotta reserved for data semantics.
 
-   Light only, on purpose: their product is light, and a single theme is one
-   less thing to justify. Fonts are the system stack, so the page makes no
+   Light only, on purpose: a single theme keeps tables and charts readable the
+   same way everywhere. Fonts are the system stack, so the page makes no
    network request of any kind. */
 
 :root {
@@ -62,15 +61,20 @@
   --space-5: 2.75rem;
   --space-6: 4rem;
 
-  /* Wide on purpose: this is a dense data tool, not an article. Only the prose
-     blocks keep a narrow measure, so lines stay readable while tables and the
-     chart use the screen they are given. */
+  /* Wide on purpose: this is a dense data tool, not an article. Every page uses
+     the same width, and long text is split into columns inside the cards. */
   --measure: 100rem;
   --gutter: clamp(1rem, 3vw, 2.5rem);
-  --prose: 46rem;
+  /* Nessuna colonna di lettura stretta: testi, tabelle e card usano tutta la
+     larghezza della pagina, uguale su tutte le pagine. */
+  --prose: none;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+
+/* Lo spazio della barra di scorrimento resta riservato anche sulle pagine
+   corte, cosi passando da una pagina all altra la navigazione non si sposta. */
+html { scrollbar-gutter: stable; }
 
 body {
   margin: 0;
@@ -738,45 +742,82 @@ tfoot td {
 
 /* ------------------------------------------------------------------- prose */
 
-/* Le pagine di testo hanno una misura stretta, il calcolatore no: una tabella
-   di tredici periodi vuole lo schermo, un paragrafo no. */
-.prose { max-width: var(--prose); }
+/* Le pagine di testo usano le stesse card del calcolatore: il testo si divide
+   in colonne invece di restringersi a meta pagina. */
 
-.prose h2 {
-  margin: var(--space-5) 0 var(--space-2);
-  font-size: var(--text-xl);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+.steps {
+  margin: 0;
+  padding-left: 1.4rem;
+  columns: 2 24rem;
+  column-gap: 3rem;
 }
 
-.prose h3 {
-  margin: var(--space-4) 0 var(--space-2);
-  font-size: var(--text-lg);
-  line-height: 1.2;
+.steps li {
+  break-inside: avoid;
+  margin: 0 0 0.8rem;
+  padding-left: 0.2rem;
+  font-size: var(--text-base);
+  line-height: 1.55;
+  color: var(--text-muted);
 }
 
-.prose p, .prose li { font-size: var(--text-md); line-height: 1.6; }
-.prose p { margin: 0 0 var(--space-3); }
-.prose ul, .prose ol { margin: 0 0 var(--space-3); padding-left: 1.3rem; }
-.prose li { margin-bottom: var(--space-1); }
-.prose a { color: var(--link); }
+.steps li strong { color: var(--text); }
+.steps li::marker { color: var(--text-faint); font-weight: 650; }
 
-.prose strong { font-weight: 700; }
+.text-columns {
+  columns: 2 24rem;
+  column-gap: 3rem;
+}
+
+.text-columns p {
+  break-inside: avoid;
+  margin: 0 0 0.8rem;
+  font-size: var(--text-base);
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.text-columns strong { color: var(--text); }
+
+.note-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.note-list li {
+  margin: 0 0 0.45rem;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.note-list li:last-child { margin-bottom: 0; }
+
+.reading-item a, .callout a { color: var(--link); }
+.reading-item strong, .note-list strong { color: var(--text); }
 
 /* Un punto che vale la pena leggere due volte, non un riquadro decorativo. */
-.prose .callout {
-  margin: var(--space-3) 0 var(--space-4);
-  padding: var(--space-3);
-  background: var(--surface);
-  border: 1px solid var(--line);
+.callout {
+  margin: 1.25rem 0 0;
+  padding: 0.9rem 1.15rem;
+  background: var(--surface-sunken);
   border-left: 3px solid var(--accent);
-  border-radius: var(--radius-sm);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
-.prose .callout p:last-child { margin-bottom: 0; }
+
+.callout p { margin: 0; font-size: var(--text-sm); line-height: 1.55; color: var(--text-muted); }
 
 /* ------------------------------------------------------------- parametri */
 
-.param-group { margin-bottom: var(--space-5); }
+/* Ogni gruppo di parametri e una card, come i blocchi del calcolatore. */
+.param-group {
+  margin-bottom: 1.25rem;
+  padding: 1.3rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
 
 .param-group > h2 {
   margin: 0 0 var(--space-1);
@@ -831,16 +872,25 @@ tfoot td {
    prendeva tre quarti della tabella e i numeri finivano a mezzo schermo di
    distanza dalla loro etichetta. Qui le colonne strette sono fissate e quella
    di testo si prende quello che resta. */
-.bands, .breakpoints { table-layout: fixed; }
+.breakpoints { table-layout: fixed; }
 
-/* Le soglie sono cinque colonne fitte e si prendono lo schermo. Le bande sono
-   tre, di cui due numeri corti: allargarle a tutta pagina lasciava un metro di
-   vuoto fra la fascia e la sua aliquota. */
-.bands { max-width: 46rem; }
+/* Le bande sono tre colonne corte: a tutta pagina lascerebbero un metro di
+   vuoto fra la fascia e la sua aliquota. Stanno in una griglia accanto al
+   riquadro che le commenta, e insieme riempiono la card. */
+.bands-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1.5rem;
+  align-items: start;
+}
 
-.bands th:first-child, .bands td:first-child { width: auto; }
-.bands th:nth-child(2), .bands td:nth-child(2) { width: 9rem; }
-.bands th:nth-child(3), .bands td:nth-child(3) { width: 11rem; }
+.bands-layout .finding { margin-top: 0; }
+.bands-layout .finding:empty { display: none; }
+.bands th, .bands td { white-space: nowrap; }
+
+@media (max-width: 72rem) {
+  .bands-layout { grid-template-columns: minmax(0, 1fr); }
+}
 
 .breakpoints th:nth-child(1), .breakpoints td:nth-child(1) { width: 8.5rem; }
 .breakpoints th:nth-child(2), .breakpoints td:nth-child(2) { width: auto; }
@@ -860,8 +910,8 @@ tfoot td {
   /* Le larghezze fisse servono a riequilibrare le colonne su uno schermo largo.
      Su uno stretto costringerebbero la tabella a scorrere di lato dove prima si
      riadattava: il problema da risolvere era l altro. */
-  .bands, .breakpoints { table-layout: auto; max-width: none; }
-  .bands th, .bands td, .breakpoints th, .breakpoints td { width: auto; }
+  .breakpoints { table-layout: auto; }
+  .breakpoints th, .breakpoints td { width: auto; }
 
   .calc-form { grid-template-columns: 1fr; }
   .field-action { align-self: stretch; }

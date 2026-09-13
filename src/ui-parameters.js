@@ -13,10 +13,10 @@
 (function () {
 
   var ETICHETTE = {
-    taxYear: 'Anno d imposta',
-    payrollMonths: 'Mensilita ammesse',
+    taxYear: 'Anno d\'imposta',
+    payrollMonths: 'Mensilità ammesse',
     payroll: 'Periodi di paga e conguaglio',
-    employmentYear: 'Giorni dell anno',
+    employmentYear: 'Giorni dell\'anno',
     rounding: 'Arrotondamento',
     contributions: 'Contributi a carico del dipendente',
     irpef: 'Scaglioni IRPEF',
@@ -157,8 +157,8 @@
 
     var nota = document.createElement('p');
     nota.textContent = 'Lette una per una sul portale del federalismo fiscale. ' +
-      'Il calcolo passa dagli scaglioni, e la scala di ogni regione e quella ' +
-      'che il portale pubblica per l anno.';
+      'Il calcolo passa dagli scaglioni, e la scala di ogni regione è quella ' +
+      'che il portale pubblica per l\'anno.';
     section.appendChild(nota);
 
     var wrap = document.createElement('div');
@@ -214,8 +214,8 @@
 
     var nota = document.createElement('p');
     nota.textContent = 'Tutti i ' + chiavi.length + ' comuni, estratti in blocco dal ' +
-      'portale del federalismo fiscale. La fonte di ciascuno e linkata dal ' +
-      'calcolatore quando lo si sceglie: qui ci sono i numeri d insieme.';
+      'portale del federalismo fiscale. La fonte di ciascuno è indicata dal ' +
+      'calcolatore quando lo si sceglie: qui ci sono i numeri d\'insieme.';
     section.appendChild(nota);
 
     var wrap = document.createElement('div');
@@ -251,7 +251,7 @@
 
     while (container.firstChild) container.removeChild(container.firstChild);
 
-    summary.textContent = 'Anno d imposta ' + engine.taxYear + '. ' +
+    summary.textContent = 'Anno d\'imposta ' + engine.taxYear + '. ' +
       Object.keys(engine.sources).length + ' fonti citate, di cui ' +
       Object.keys(engine.local.municipalities).length + ' comuni e ' +
       Object.keys(engine.local.regions).length + ' regioni. ' +

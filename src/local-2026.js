@@ -335,7 +335,7 @@ var LOCAL_2026 = (function () {
       title: 'Art. 2 L.R. 9/2013, art. 1 co. 174 L. 311/2004, art. 2 co. 86 L. 191/2009, art. 1 L.R. 5/2023',
       url: 'https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/addregirpef/addregirpef.php?reg=12',
       inForceFrom: '2026-01-01',
-      note: 'Aliquote pubblicate sul portale il 19 giugno 2026. Per il 2026 il portale pubblica due delibere: il modello prende quella presentata per prima, la piu recente.'
+      note: 'Aliquote pubblicate sul portale il 19 giugno 2026. Per il 2026 il portale pubblica due delibere: il modello prende quella presentata per prima, la più recente.'
     },
     'addreg-piemonte': {
       label: 'addizionale regionale Piemonte',
@@ -8349,17 +8349,17 @@ var LOCAL_2026 = (function () {
       var parts = row[7] ? row[7].split('|') : null;
       var notes = [];
 
-      if ((flags & 1) !== 0) notes.push('Aliquota non inviata dal comune e inserita d ufficio.');
+      if ((flags & 1) !== 0) notes.push("Aliquota non inviata dal comune e inserita d'ufficio.");
       if (year === null) {
-        notes.push('Il portale non riporta alcuna delibera, in nessun anno: il comune non applica l addizionale.');
+        notes.push("Il portale non riporta alcuna delibera, in nessun anno: il comune non applica l'addizionale.");
       } else if (year < 2026) {
-        notes.push('Ultima delibera pubblicata per l anno ' + year +
-          ': vale per proroga, art. 1 co. 169 L. 296/2006.');
+        notes.push("Ultima delibera pubblicata per l'anno " + year +
+          ": vale per proroga, art. 1 co. 169 L. 296/2006.");
       } else {
-        notes.push('Delibera pubblicata per l anno ' + year + '.');
+        notes.push("Delibera pubblicata per l'anno " + year + ".");
       }
       if ((flags & 2) !== 0) {
-        notes.push('Il comune prevede un esenzione legata al tipo di reddito che il modello non applica.');
+        notes.push("Il comune prevede un'esenzione legata al tipo di reddito che il modello non applica.");
       }
 
       sources[sourceId] = {

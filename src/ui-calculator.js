@@ -551,7 +551,7 @@
 
     figures.appendChild(ui.figure('Arriva netto al dipendente',
       engine.formatRate(result.netAnnual / cost.total),
-      'Di ogni 100 € spesi dall azienda, ' +
+      'Di ogni 100 € spesi dall\'azienda, ' +
       engine.formatAmount((result.netAnnual / cost.total) * 100) + ' € finiscono in busta.'));
 
     var tbody = document.getElementById('employer-table').querySelector('tbody');
@@ -606,7 +606,7 @@
     var ral = ui.parseAmount(inputRal.value);
 
     if (isNaN(ral)) {
-      showError('La RAL inserita non e un importo valido. Usa il punto per le migliaia e la virgola per i decimali.');
+      showError('La RAL inserita non è un importo valido. Usa il punto per le migliaia e la virgola per i decimali.');
       employerBlock.hidden = true;
       return;
     }
@@ -706,7 +706,7 @@
     var entered = ui.parseAmount(inputNet.value);
 
     if (isNaN(entered) || entered < 0) {
-      inverseError.textContent = 'Il netto inserito non e un importo valido.';
+      inverseError.textContent = 'Il netto inserito non è un importo valido.';
       inverseError.hidden = false;
       ui.clear(inverseResult);
       return;
@@ -768,8 +768,10 @@
     document.getElementById('learned-body').textContent =
       'Di 100 € lordi in più ne restano ' + engine.formatAmount(low * 100) + ' nel primo caso e ' +
       engine.formatAmount(high * 100) + ' nel secondo, pur essendo il secondo in uno scaglione ' +
-      'IRPEF più alto. Non me lo aspettavo, e non l\'ho letto da nessuna parte: è uscito ' +
-      'dal modello quando ho provato a disegnare quanto rende ogni euro aggiuntivo.';
+      'IRPEF più alto. Succede perché intorno ai ' + round(LEARNT_LOW) + ' € la detrazione ' +
+      'per lavoro dipendente e quella per il cuneo fiscale si riducono a ogni euro in più, ' +
+      'e quella perdita pesa più del salto di aliquota. A ' + round(LEARNT_HIGH) + ' € sono ' +
+      'già esaurite.';
   }
 
   // ----------------------------------------------------------------- events

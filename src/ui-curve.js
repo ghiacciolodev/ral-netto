@@ -131,7 +131,7 @@
 
     document.getElementById('curve').innerHTML =
       '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' +
-      'Aliquota marginale effettiva da ' + engine.formatAmount(CURVE_FROM) + ' a ' +
+      'Quota di ogni euro lordo aggiuntivo che resta netta, da ' + engine.formatAmount(CURVE_FROM) + ' a ' +
       engine.formatAmount(CURVE_TO) + ' euro di RAL">' + parts.join('') + '</svg>';
 
     return marks;
@@ -219,8 +219,9 @@
       var row = document.createElement('tr');
       if (band === worst) row.className = 'is-worst';
 
-      ui.cell(row, engine.formatAmount(band.from) + '  -  ' + engine.formatAmount(band.to));
-      ui.cell(row, engine.formatRate(band.rate), 'num');
+      // band.rate is the share that survives: the marginal rate is what is left.
+      ui.cell(row, engine.formatAmount(band.from) + ' - ' + engine.formatAmount(band.to));
+      ui.cell(row, engine.formatRate(1 - band.rate), 'num');
       ui.cell(row, engine.formatAmount(band.rate * 100) + ' €', 'num amount');
 
       tbody.appendChild(row);
@@ -253,7 +254,8 @@
       engine.formatAmount(COMPARE_HIGH) + ' ne rende ' + engine.formatAmount(high * 100) +
       ', pur ricadendo in uno scaglione IRPEF più alto. La fascia peggiore è ' +
       engine.formatAmount(worst.from) + ' - ' + engine.formatAmount(worst.to) +
-      ', dove la marginale scende al ' + engine.formatRate(worst.rate) + '.';
+      ', dove l\'aliquota marginale effettiva arriva al ' + engine.formatRate(1 - worst.rate) +
+      ' e di 100 € lordi ne restano ' + engine.formatAmount(worst.rate * 100) + '.';
     box.appendChild(body);
 
     var why = document.createElement('p');

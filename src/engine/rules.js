@@ -277,7 +277,7 @@ var ENGINE_RULES = function (parameters, local, numbers, steps) {
         });
         list.push({
           space: 'taxable', threshold: w.deduction.fullUpTo,
-          id: 'wedge-taper-start', label: 'Inizio decalage detrazione cuneo'
+          id: 'wedge-taper-start', label: 'Inizio décalage detrazione cuneo'
         });
         list.push({
           space: 'taxable', threshold: w.deduction.taperTo,
@@ -414,7 +414,7 @@ var ENGINE_RULES = function (parameters, local, numbers, steps) {
           sign: 1,
           base: ctx.taxable,
           formula: ctx.supplementary.band === 'differenziale'
-            ? 'eccedenza delle detrazioni art. 12 e 13 co. 1 sull imposta lorda, non concorre al reddito'
+            ? 'eccedenza delle detrazioni art. 12 e 13 co. 1 sull\'imposta lorda, non concorre al reddito'
             : 'spetta fino a ' + formatAmount(s.incomeUpTo) +
               ' di reddito, non concorre al reddito',
           amount: ctx.supplementary.amount,

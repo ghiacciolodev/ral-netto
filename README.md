@@ -1,643 +1,238 @@
-# Da RAL a netto, anni d'imposta 2025 e 2026
+<p align="center">
+  <img src="favicon.svg" width="88" height="88" alt="">
+</p>
 
-Calcolatore che, data una retribuzione annua lorda, mostra il netto annuo e mensile
-di un dipendente e ogni voce trattenuta, con accanto la norma che la produce.
+<h1 align="center">Da RAL a netto</h1>
 
-> **Sito live:** https://ghiacciolodev.github.io/ral-netto/
+<p align="center">
+  Il calcolo dello stipendio netto di un lavoratore dipendente in Italia,<br>
+  voce per voce, con la norma che produce ogni numero.
+</p>
 
-## Perché esiste
+<p align="center">
+  <a href="https://ghiacciolodev.github.io/ral-netto/"><strong>Apri il calcolatore</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://ghiacciolodev.github.io/ral-netto/metodo.html">Come si calcola</a>
+  &nbsp;·&nbsp;
+  <a href="https://ghiacciolodev.github.io/ral-netto/parametri.html">Parametri e fonti</a>
+  &nbsp;·&nbsp;
+  <a href="https://ghiacciolodev.github.io/ral-netto/curva.html">Aliquota marginale</a>
+</p>
 
-L'ho costruito come esercizio per una selezione da Product Builder in Jet HR. La
-richiesta era un prototipo funzionante su un caso semplice e standard, con libertà
-di fare le semplificazioni che ritenevo opportune.
+<p align="center">
+  Anni d'imposta 2025 e 2026 &nbsp;·&nbsp; 21 regioni e 7.894 comuni &nbsp;·&nbsp; 657 test &nbsp;·&nbsp; nessuna dipendenza
+</p>
 
-Ho scelto di spendere il tempo sulla parte verificabile invece che sull'interfaccia.
-Da qui tre decisioni che spiegano tutto il resto: ogni numero mostrato è risalibile
-alla fonte primaria che lo stabilisce, ogni valore atteso nei test è calcolato a mano
-dalle formule di legge e mai preso dall'output del codice, e tutto quello che il
-modello non copre è scritto qui sotto invece che lasciato implicito.
+<br>
 
-Caso modellato: **impiegato residente a Milano (Lombardia), nessuna agevolazione,
-nessun onere deducibile o detraibile.** Il rapporto può coprire l'intero anno o una
-parte, a tempo indeterminato o determinato, con o senza familiari a carico. Fuori da questo caso il modello non è valido;
-l'elenco completo di cosa non copre è più sotto, in
-[Assunzioni e semplificazioni](#assunzioni-e-semplificazioni).
+![Il calcolatore](docs/screenshots/calcolatore.png)
 
-Sito statico: zero dipendenze, zero build, nessun cookie e nessuna richiesta di rete.
-Il calcolo avviene interamente nel browser.
+## Cosa fa
 
-## Come si usa
+Si inserisce la retribuzione annua lorda e il sito restituisce il netto annuo e
+mensile, insieme a tutto quello che sta in mezzo: contributi, IRPEF, detrazioni,
+cuneo fiscale, trattamento integrativo, addizionale regionale e comunale. Ogni voce
+porta accanto l'articolo di legge o la delibera che la stabilisce, con il link alla
+fonte ufficiale.
 
-Due pagine:
+Il calcolo tiene conto di residenza, mensilità, rapporti di lavoro inferiori
+all'anno, contratto a tempo determinato, familiari a carico e fringe benefit. Funziona
+anche al contrario: dato un netto obiettivo, trova la RAL che serve per ottenerlo.
 
-- **`index.html`** calcolo da lordo a netto, modalità inversa da netto a RAL, costo azienda
-- **`curva.html`** aliquota marginale effettiva e le soglie che la determinano
+Tutto avviene nel browser. Il sito non salva nulla, non usa cookie, non carica
+risorse esterne e non invia da nessuna parte quello che si scrive.
 
-Si aprono con un doppio clic, oppure servendole da una qualsiasi cartella statica.
+## Le quattro pagine
 
-## Il modello di calcolo
+### Calcolatore
 
-Nove passi, nessuna iterazione.
+Il netto scomposto in un grafico a cascata e in una tabella voce per voce. Ogni riga
+si apre e spiega in parole semplici che cos'è quella trattenuta e perché vale quanto
+vale.
 
-1. **Contributi.** IVS 9,19% sulla RAL, più 1% sulla quota oltre 56.224 €. Il massimale di 122.295 € tronca entrambe le componenti, non solo l'IVS.
-2. **Imponibile fiscale** = RAL meno contributi. È anche il reddito complessivo che parametra detrazioni, cuneo e addizionali: **non si usa la RAL**.
-3. **IRPEF lorda** a scaglioni, 23% / 33% / 43%.
+![Dal lordo al netto, voce per voce](docs/screenshots/dal-lordo-al-netto.png)
+
+Il netto mensile del riepilogo è una media. Il prospetto dei periodi di paga mostra
+come arriva davvero mese per mese, secondo l'art. 23 DPR 600/1973: la tredicesima
+senza detrazioni, le addizionali trattenute a rate l'anno dopo, il conguaglio di
+dicembre.
+
+![Il prospetto mese per mese](docs/screenshots/prospetto-mensile.png)
+
+Nella stessa pagina ci sono il calcolo inverso da netto a RAL e una stima del costo
+azienda, tenuta separata e dichiarata come stima perché dipende dal contratto
+collettivo e non solo dalla legge.
+
+### Come si calcola
+
+I dieci passaggi dalla RAL al netto nell'ordine in cui la norma li applica, gli
+effetti che sorprendono e l'elenco completo di quello che il calcolo non fa.
+
+![Come si calcola](docs/screenshots/come-si-calcola.png)
+
+### Parametri e fonti
+
+Ogni valore usato dal calcolo, anno per anno, con la norma che lo fissa. La pagina
+non è scritta a mano: è generata dagli stessi dati che fanno il calcolo, quindi non
+può dire una cosa diversa.
+
+![Parametri e fonti](docs/screenshots/parametri-e-fonti.png)
+
+### Aliquota marginale
+
+Quanto resta di ogni euro lordo in più. La risposta non è l'aliquota IRPEF del
+proprio scaglione: fra 35.000 e 44.000 € di RAL se ne va il 60,68%, più che a 70.000 €,
+perché lì la detrazione per lavoro dipendente e quella del cuneo fiscale si riducono
+a ogni euro guadagnato. Il grafico mostra tutte le soglie e cosa succede a ciascuna.
+
+![Aliquota marginale effettiva](docs/screenshots/aliquota-marginale.png)
+
+## Il calcolo
+
+Dieci passaggi, nessuna iterazione.
+
+1. **Contributi.** IVS 9,19% sulla RAL, più 1% sulla quota oltre 56.224 €. Il massimale di 122.295 € tronca entrambe le componenti.
+2. **Imponibile fiscale**, cioè RAL meno contributi. È la base di detrazioni, cuneo e addizionali: **non si usa la RAL**.
+3. **IRPEF lorda** a scaglioni, 23%, 33% e 43%.
 4. **Detrazione per lavoro dipendente**, art. 13 TUIR, con la maggiorazione di 65 € e il troncamento del rapporto a quattro decimali.
-5. **Riduzione del cuneo fiscale**: somma esente sotto i 20.000 di reddito, oppure ulteriore detrazione fra 20.000 e 40.000. Le due misure sono alternative fra loro.
-6. **Detrazioni per carichi di famiglia** (art. 12 TUIR): coniuge, figli dai 21 ai 29 anni e ascendenti conviventi. Sotto i 21 anni c'è l'assegno unico, che dal marzo 2022 ha sostituito la detrazione.
-7. **Trattamento integrativo**: 1.200 € fino a 15.000 di reddito, se l'imposta lorda supera la detrazione art. 13 co. 1 ridotta di 75 €. Fra 15.000 e 28.000 spetta invece per l'eccedenza delle detrazioni art. 12 e 13 co. 1 sull'imposta lorda. È una misura distinta dal cuneo e **cumulabile** con esso.
-
-Su un rapporto che non copre l'intero anno, quasi tutto si ragguaglia ai giorni, ma
-non tutto, e le eccezioni contano:
-
-| Voce | Si ragguaglia ai giorni? |
-|---|---|
-| Detrazione art. 13 co. 1 | sì |
-| Minimo garantito, 690 € o 1.380 € a tempo determinato | **no**, e si confronta con la detrazione già ragguagliata (circ. AdE 15/2007) |
-| Maggiorazione di 65 € | **no** |
-| Ulteriore detrazione cuneo | sì (L. 207/2024 co. 6) |
-| Somma esente cuneo | la **fascia** si sceglie sul reddito proiettato all'anno, la percentuale si applica al reddito percepito |
-| Trattamento integrativo, e i 75 € della capienza | sì |
-| Addizionali | no, sono sull'imponibile effettivo |
-
-Il minimo garantito esiste proprio per questo: su un anno intero non scatta mai,
-perché la detrazione piena vale 1.955 €. Su mezzo anno a tempo determinato la
-detrazione ragguagliata scende a 964 € e il minimo di 1.380 € la supera.
-8. **IRPEF netta** = max(0, lorda meno detrazioni). L'eccedenza per incapienza si perde e non è rimborsabile.
-9. **Addizionali**: regionale Lombardia a scaglioni, comunale Milano ad aliquota unica con soglia di esenzione. Entrambe sull'imponibile, non ridotte dalle detrazioni.
-10. **Netto** = RAL meno contributi meno IRPEF netta meno addizionali, più la somma esente del cuneo e il trattamento integrativo.
-
-Il netto mensile è il netto annuo diviso le mensilità. **La RAL le include già**: la
-tredicesima non si somma al netto, ne fa parte.
-
-### Due dettagli facili da perdere
-
-**La seconda aliquota è al 33%,** scesa dal 35% con la legge di bilancio 2026
-(L. 199/2025 art. 1 co. 3) a decorrere dal periodo d'imposta 2026. Durante la ricerca
-ho trovato parecchie fonti secondarie che riportano ancora il 35%.
-
-**Il rapporto nelle formule della detrazione si tronca a quattro decimali, non si
-arrotonda** (art. 13 co. 6 TUIR). Vale pochi centesimi ma è una regola di legge, ed è
-implementato: nella tabella delle detrazioni il rapporto troncato è mostrato a schermo.
-
-### Una proprietà emergente
-
-`1.955 / 0,23 = 8.500` esatto.
-
-La detrazione minima per lavoro dipendente è calibrata al centesimo perché la no tax
-area cada esattamente a 8.500 € di imponibile. Il numero 8.500 non compare da nessuna
-parte nei parametri: emerge dal vincolo di capienza del passo 6, e c'è un test che lo
-verifica.
-
-### I familiari a carico hanno un orologio diverso
-
-L'art. 12 si rapporta **ai mesi in cui la condizione di famiglia è durata**, l'art. 13
-**ai giorni di lavoro**. Non è una sfumatura: chi lavora sei mesi con il coniuge a
-carico tutto l'anno prende metà della detrazione da lavoro dipendente e **l'intera**
-detrazione per il coniuge.
-
-| RAL 30.000, coniuge a carico | Detrazione art. 13 | Detrazione coniuge |
-|---|---|---|
-| 365 giorni, 12 mesi a carico | 1.979,26 € | 690,00 € |
-| 180 giorni, 12 mesi a carico | 976,07 € | 690,00 € |
-| 365 giorni, 6 mesi a carico | 1.979,26 € | 345,00 € |
-
-### Le detrazioni per famiglia accendono il trattamento integrativo
-
-La seconda fascia del trattamento integrativo, fra 15.000 e 28.000 € di reddito, paga
-l'eccedenza delle detrazioni art. 12 e art. 13 co. 1 sull'imposta lorda. Senza
-familiari a carico quell'eccedenza non si forma mai e la fascia resta a zero: era
-codice morto fino a qui.
-
-Con RAL 20.000, coniuge e tre figli a carico al 100%, l'imposta lorda è 4.177,26 € e le
-detrazioni arrivano a 5.936,37 €. L'IRPEF si azzera, 1.759,11 € di detrazioni restano
-inutilizzate, e il trattamento integrativo paga il massimo, 1.200 €. **Il netto è
-19.999,32 € su una RAL di 20.000.**
-
-Un dettaglio che va detto: l'elenco del DL 3/2020 è chiuso e **non comprende la
-detrazione per il cuneo fiscale**. Con RAL 25.000, coniuge e due figli, 371,19 € di
-detrazioni si perdono per incapienza e il trattamento integrativo resta comunque zero.
-Le due prove di capienza non sono la stessa prova.
-
-### La maggiorazione per il coniuge rompe la monotonia una terza volta
-
-L'art. 12 co. 1 lett. b) aumenta la detrazione per il coniuge di 10, 20 o 30 € in cinque
-scalini fra 29.000 e 35.200 € di reddito. Sono gradini, non un decalage: la detrazione
-sale e poi torna giù. Due euro di imponibile in più sopra 35.200 fanno **scendere** il
-netto di circa nove euro. Si aggiunge ai due casi già noti, il gradino dell'art. 13 e la
-soglia dell'addizionale comunale.
-
-### Le addizionali locali, e le due cose che la tabella non dice
-
-Ci sono tutte e 21 le regioni e province autonome e **tutti i 7.894 comuni**. La fonte
-è il portale del federalismo fiscale del MEF, che raccoglie le delibere e pubblica le
-aliquote applicabili: ogni voce del dataset porta il link alla propria pagina.
-
-Le regioni sono ventuno e stanno scritte per esteso, lette una per una. I comuni sono
-un **estratto di massa**, una richiesta per comune, e stanno in una tabella compatta
-con il suo decodificatore: 663 KB per anno d'imposta. Il file è generato, non scritto
-a mano, e va riletto come si rilegge una tabella.
-
-La chiave di un comune è il nome più la sigla della provincia, perché i nomi non
-bastano: Castro, Livo, Peglio, Samone e San Teodoro esistono due volte ciascuno, in
-province diverse.
-
-Il calcolo passa dagli scaglioni su entrambi i livelli. Non è una generalizzazione
-prudente: **Torino, Genova, Cagliari e Potenza hanno l'addizionale comunale
-progressiva**, con aliquote diverse per scaglione, esattamente come le regioni.
-
-### La proroga non è un caso di bordo
-
-**Un ente che non delibera non azzera il tributo.** Le aliquote in vigore si intendono
-prorogate di anno in anno (art. 1 co. 169 L. 296/2006). Per l'anno d'imposta 2026:
-
-| | Comuni |
-|---|---|
-| Hanno deliberato per il 2026 | 3.208 |
-| Valgono per proroga dal 2025 o prima | 3.827 |
-| Non hanno mai deliberato, addizionale zero | 859 |
-
-Tredici comuni stanno ancora sulla loro delibera del **2002**. Ogni comune porta
-`deliberatedFor`, l'anno dell'ultima delibera pubblicata, e l'interfaccia lo dice
-invece di lasciare che il numero sembri una decisione fresca.
-
-### Le esenzioni che il modello non applica
-
-**127 comuni** esentano per tipo di reddito e non per soglia sull'imponibile: redditi
-di pensione fino a 7.500 €, redditi di lavoro dipendente fino a 8.000 €, redditi di
-terreni sotto 185,92 €, reddito dell'abitazione principale. Non sono una soglia
-sull'imponibile complessivo e **il modello non le applica**: quei comuni portano
-`unmodelledRelief`, la fonte lo scrive nella nota e l'interfaccia lo mostra.
-
-Lo stesso vale per le **agevolazioni soggettive regionali**, detrazioni per figli a
-carico o per disabilità: Bolzano, Campania, Sardegna e Umbria le dichiarano sul
-portale. Il modello calcola le aliquote ordinarie per scaglione.
-
-### Come è stato verificato
-
-Un estratto di massa non si legge riga per riga, ma si campiona. **120 comuni presi a
-caso sono stati riscaricati dal portale e confrontati con il dataset: 120 su 120
-identici.**
-
-Prima di generare, ho classificato tutte le diciture della colonna "Fascia di
-applicazione": le varianti tipografiche, entità HTML non decodificate, spazi mancanti,
-"ad euro" invece di "a euro", refusi, sono normalizzate; quello che resta non viene
-indovinato, viene marcato. Quella lettura è l'unica parte di `tools/` con una suite di
-test propria, `test/suites/fasce.js`, con casi presi tutti dal portale: un errore lì
-non si vedrebbe, si propagherebbe in un netto credibile.
-
-`src/local-2025.js` e `src/local-2026.js` sono file generati e si rigenerano in due
-comandi, documentati in [tools/README.md](tools/README.md).
-
-Quanto pesa il posto, a parità di tutto il resto? Con RAL 30.000 su 13 mensilità:
-
-| Dove | Netto mensile | Addizionali |
-|---|---|---|
-| Trento | 1.822,02 € | 335,09 € |
-| Firenze | 1.813,75 € | 442,56 € |
-| Milano | 1.801,96 € | 595,88 € |
-| Torino | 1.787,10 € | 789,06 € |
-| Roma | 1.777,61 € | 912,38 € |
-
-Quarantaquattro euro al mese fra Trento e Roma, che sulla RAL da offrire per lo stesso
-netto diventano **1.565 €**.
-
-## Mese per mese
-
-Il netto mensile del riepilogo è una media: netto annuo diviso le mensilità. Il
-prospetto dei periodi di paga mostra che i mesi non sono uguali fra loro, e perché.
-La fonte è l'**art. 23 DPR 600/1973**, che dice tre cose.
-
-**Comma 2 lett. a)**, periodi ordinari: la ritenuta si calcola ragguagliando al periodo
-di paga gli scaglioni annui, e applicando le detrazioni degli articoli 12 e 13
-rapportate allo stesso periodo.
-
-**Comma 2 lett. b)**, mensilità aggiuntive: si ragguagliano a mese gli scaglioni, e le
-detrazioni **non sono nominate**. Non è una dimenticanza: le detrazioni spettano per il
-periodo di paga, e la tredicesima non aggiunge giorni.
-
-**Comma 3**, conguaglio: si confronta il già trattenuto con il dovuto sull'ammontare
-complessivo.
-
-### La tredicesima è tassata di più, e non torna indietro
-
-Con RAL 30.000 su 13 mensilità, a Milano:
-
-| Periodo | Lordo | IRPEF | Netto |
-|---|---|---|---|
-| un mese ordinario | 2.307,69 € | 228,30 € | 1.811,82 € |
-| tredicesima | 2.307,69 € | **481,99 €** | **1.613,62 €** |
-
-Stesso lordo, imposta lorda identica, ma sulla tredicesima non c'è niente da
-sottrarre: quasi **duecento euro di differenza**. E non è un anticipo che si recupera,
-perché le detrazioni vengono comunque usate per intero sui dodici mesi ordinari. Il
-totale dell'anno è lo stesso, è la distribuzione a non esserlo.
-
-A redditi alti l'effetto sparisce, perché non ci sono detrazioni da perdere.
-
-### Il conguaglio non è sempre zero
-
-Su una retribuzione costante tutta dentro uno scaglione il conguaglio è nullo, ed è un
-risultato, non una mancanza. Ma non sempre:
-
-| Caso | Conguaglio a dicembre |
-|---|---|
-| RAL 30.000 | 0,00 € |
-| RAL 80.000 | **+ 650,00 €** da trattenere |
-| RAL 20.000 con coniuge e tre figli | **− 321,33 €** da restituire |
-
-A 80.000 ogni periodo vede un tredicesimo della RAL attraverso scaglioni ragguagliati a
-un dodicesimo: si presenta più povero di quello che è, la progressività morde meno, e a
-dicembre arriva il conto in una volta sola. A 12 mensilità l'effetto non esiste.
-
-Nel caso opposto, quando le detrazioni superano l'imposta del mese, la ritenuta si
-ferma a zero e quello che avanza non si perde: torna al conguaglio.
-
-### Le addizionali non si pagano nell'anno di competenza
-
-Il saldo si determina al conguaglio e si trattiene l'anno dopo in un massimo di
-**undici rate** ([art. 50 co. 4 D.Lgs. 446/1997](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1997-12-15;446) per la regionale,
-[art. 1 co. 5 D.Lgs. 360/1998](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1998-09-28;360) per la comunale). Il solo acconto comunale, il **30%**
-calcolato sull'imponibile dell'anno precedente, si trattiene nell'anno stesso in
-**nove rate da marzo**.
-
-Su una retribuzione costante i due anni coincidono, quindi quello che esce per cassa in
-un anno è esattamente l'addizionale dovuta per quell'anno: è la distribuzione dentro
-l'anno a non essere uniforme. La differenza fra cassa e competenza esiste solo nel
-primo e nell'ultimo anno di un rapporto, che questo modello non copre.
-
-### Come si sa che è giusto
-
-Il modello annuale e il prospetto sono **due strade diverse per lo stesso numero**. La
-somma dei netti di periodo deve fare il netto annuo, al centesimo, su qualunque
-posizione: nove casi lo verificano, dall'incapiente al reddito oltre il massimale, con
-familiari a carico, su rapporto parziale e in comuni diversi. Se il prospetto sbagliasse
-una regola, la somma smetterebbe di tornare.
-
-## I fringe benefit sono una scogliera
-
-L'art. 51 co. 3 TUIR lo scrive con parole sue: il valore dei beni ceduti e dei servizi
-prestati non concorre al reddito se non supera il limite, **"se il predetto valore è
-superiore al citato limite, lo stesso concorre interamente a formare il reddito"**.
-
-Non è una franchigia da scorporare. Per i periodi d'imposta 2025, 2026 e 2027 il limite
-è **1.000 €**, che diventano **2.000 € per chi ha figli a carico** (L. 207/2024 art. 1
-co. 390).
-
-Con RAL 30.000 su 13 mensilità, a Milano:
-
-| Fringe benefit | Netto in busta | Busta più benefit |
-|---|---|---|
-| 1.000,00 € | 23.425,48 € | 24.425,48 € |
-| 1.000,01 € | **23.005,35 €** | **24.005,36 €** |
-
-**Un centesimo in più costa 420 €.** Il benefit arriva in beni e servizi, le imposte in
-euro: superare la soglia fa pagare imposte e contributi sull'intero valore, senza che
-entri un euro in più in busta. Con due figli a carico, dove la soglia è 2.000 €, il
-centesimo di troppo costa **929 €**, perché il reddito più alto erode anche le
-detrazioni dell'art. 12.
-
-Una precisazione che fa la differenza: la soglia doppia guarda la condizione
-dell'art. 12 co. 2, che parla di **reddito e non di età**. Spetta anche per un figlio di
-cinque anni, che una detrazione non la prende perché dal marzo 2022 c'è l'assegno unico
-al suo posto. Nel modello i figli sotto i 21 anni sono un campo separato proprio per
-questo: non danno detrazione, ma alzano la soglia.
-
-## Le addizionali seguono l'IRPEF netta
-
-Le addizionali si calcolano sull'imponibile e le detrazioni non le riducono, ma esistono
-solo se esiste l'IRPEF netta. Le due norme lo dicono con parole quasi identiche:
-
-> L'addizionale regionale **è dovuta se per lo stesso anno l'imposta sul reddito delle
-> persone fisiche, al netto delle detrazioni** per essa riconosciute e dei crediti di cui
-> agli articoli 14 e 15 del citato testo unico, **risulta dovuta.**
->
-> *(art. 50 co. 2 D.Lgs. 446/1997; art. 1 co. 4 D.Lgs. 360/1998 per la comunale)*
-
-**Chi è incapiente non le paga.** Non è una riduzione proporzionale, è un interruttore:
-un euro di imposta dovuta e l'addizionale si paga per intero sull'imponibile.
-
-Il modello le addebitava sempre. Corretto, e sono cambiati tre casi di valore: a RAL
-9.360 il netto passa da 10.198,76 a **10.303,30 €**. E con RAL 20.000, coniuge e tre
-figli a carico, succede una cosa che prima non si vedeva:
+5. **Riduzione del cuneo fiscale**: somma esente sotto i 20.000 € di reddito, ulteriore detrazione fra 20.000 e 40.000 €.
+6. **Detrazioni per carichi di famiglia**, art. 12 TUIR: coniuge, figli dai 21 ai 29 anni, ascendenti conviventi.
+7. **Trattamento integrativo**: 1.200 € fino a 15.000 € di reddito; fra 15.000 e 28.000 € spetta per l'eccedenza delle detrazioni sull'imposta lorda.
+8. **IRPEF netta**, lorda meno detrazioni e mai sotto zero. L'eccedenza per incapienza si perde.
+9. **Addizionali** regionale e comunale, sull'imponibile e non ridotte dalle detrazioni. Sono dovute solo se è dovuta l'IRPEF netta.
+10. **Netto**: RAL meno contributi, IRPEF netta e addizionali, più la somma esente del cuneo e il trattamento integrativo.
+
+### Cose che un conto a mente non vede
 
 | | |
 |---|---|
-| RAL | 20.000,00 € |
-| Contributi | − 1.838,00 € |
-| IRPEF netta | 0,00 € |
-| Addizionali | **0,00 €** |
-| Somma esente cuneo | + 871,78 € |
-| Trattamento integrativo | + 1.200,00 € |
-| **Netto** | **20.233,78 €** |
+| **La seconda aliquota è al 33%** | Dal 2026, scesa dal 35% con la L. 199/2025. Molte fonti secondarie riportano ancora il vecchio valore. |
+| **La no tax area è a 8.500 € esatti** | Perché 1.955 diviso 0,23 fa 8.500. Il numero non compare fra i parametri: emerge dalle regole, e un test lo verifica. |
+| **Il netto non sale sempre con il lordo** | Al gradino dell'art. 13, alla soglia di esenzione dell'addizionale comunale e agli scalini della detrazione per il coniuge un euro lordo in più fa scendere il netto. |
+| **La tredicesima è tassata di più** | Sulle mensilità aggiuntive le detrazioni non spettano: con RAL 30.000 la tredicesima netta 1.613,62 € contro 1.811,82 € di un mese ordinario. |
+| **I fringe benefit sono una soglia, non una franchigia** | Oltre 1.000 € concorre al reddito l'intero valore: con RAL 30.000 un centesimo in più costa 420 € di netto. |
+| **Le addizionali seguono l'IRPEF netta** | Chi è incapiente non le paga (art. 50 co. 2 D.Lgs. 446/1997). Con RAL 20.000, coniuge e tre figli a carico il netto arriva a 20.233,78 €, più del lordo. |
+| **Dove si abita pesa quanto un aumento** | Con RAL 30.000 fra Trento e Roma ci sono 44 € al mese di differenza: a Roma servono 1.029 € di RAL in più per lo stesso netto. |
 
-Il netto supera il lordo. È corretto: a quel reddito, con quella famiglia, lo Stato dà
-più di quanto prende.
+## Addizionali locali
 
-## Assunzioni e semplificazioni
+Il dataset comprende tutte le **21 regioni e province autonome** e **tutti i 7.894
+comuni**, estratti dal portale del federalismo fiscale del MEF. Ogni voce porta il
+link alla propria pagina sul portale.
 
-Ogni riga è una cosa che il modello **non** fa, con il motivo.
+Un ente che non delibera non azzera il tributo: le aliquote in vigore si intendono
+prorogate di anno in anno (art. 1 co. 169 L. 296/2006). Per il 2026 hanno deliberato
+3.208 comuni, 3.827 applicano aliquote prorogate e 859 non hanno mai deliberato. Il
+calcolatore indica sempre da che anno arrivano le aliquote che sta usando.
 
-| Semplificazione | Effetto e motivo |
-|---|---|
-| Il part-time non è un input separato | Non cambia il calcolo fiscale: un part-time con 15.000 di RAL è tassato come un full time con 15.000, perché la RAL riflette già l'orario. Entra solo attraverso i giorni, che il part-time verticale riduce e quello orizzontale no. |
-| Iscrizione previdenziale successiva al 31/12/1995 | Senza questa, il massimale di 122.295 € non si applicherebbe. La circolare INPS 6/2026 distingue esplicitamente le due platee. |
-| Il dataset comunale non è verificato voce per voce | 7.894 comuni estratti in blocco dal portale MEF. Un campione di 120, riscaricato e ricontrollato, è risultato identico, ma non è la stessa cosa di aver letto ogni riga. |
-| 127 comuni hanno esenzioni che il modello non applica | Sono legate al tipo di reddito, pensione, lavoro dipendente, terreni, abitazione principale, non a una soglia sull'imponibile. Quei comuni sono marcati e l'interfaccia lo dice. |
-| Agevolazioni soggettive regionali non applicate | Diverse regioni prevedono detrazioni per figli a carico, per disabilità, esenzioni legate alla persona. Il modello calcola le aliquote ordinarie per scaglione. Dove ci sono, la nota della fonte lo dice. |
-| Nessun regime agevolato (impatriati, forfettario) né agevolazione contributiva | Ognuno avrebbe una base imponibile propria. |
-| TFR escluso dal netto | È accantonato, non erogato. Compare solo nel costo azienda. |
-| Nessuna rivalutazione del TFR | Il TFR accantonato si rivaluta di 1,5% più il 75% dell'indice ISTAT. |
-| Fringe benefit sì, welfare e premi di risultato no | I premi di produttività hanno un'imposta sostitutiva del 5% e il welfare aziendale una disciplina propria: nessuno dei due è modellato. |
-| Nessun onere deducibile o detraibile | Vedi sotto: sull'art. 15 la lettura della fonte non è chiusa. |
-| Il prospetto mensile applica l'art. 23 alla lettera | Molti software di paghe usano invece il metodo del reddito presunto annuo, che ridistribuisce lo stesso totale sui mesi e riduce il conguaglio. Il totale dell'anno è identico nei due metodi, la distribuzione no. |
-| Prospetto in regime stazionario | Le addizionali trattenute sono quelle di un anno uguale al precedente. Nel primo e nell'ultimo anno di un rapporto cassa e competenza divergono. |
-| Il mese delle mensilità aggiuntive è un'assunzione | Dicembre per la tredicesima, giugno per la quattordicesima: lo decide il CCNL, non la legge. |
-| Imponibile previdenziale assunto uguale a imponibile fiscale | Nel caso reale differiscono per alcune voci. |
-| Reddito complessivo assunto uguale al reddito da lavoro dipendente | Vero solo perché monoreddito. Nel motore restano due parametri distinti. |
-| Netto mensile come media annua | Non è un cedolino: la ritenuta reale varia di mese in mese. |
-| Costo azienda su medie CCNL Commercio | Unico blocco non normativo. Contributi datore e INAIL variano per CCNL, dimensione e mansione. |
-| Le detrazioni art. 12 valgono per tutti i familiari gli stessi mesi | Se il coniuge è a carico tutto l'anno e un figlio da settembre, servirebbero due decorrenze diverse. Il modello ne ha una sola. |
-| Nessuna verifica che i familiari siano davvero a carico | Il limite di 2.840,51 € di reddito proprio, 4.000 € per i figli fino a 24 anni, è dichiarato nel form ma non controllato: chi calcola afferma la condizione. |
-| Nessuna detrazione art. 15 | Interessi su mutui, spese sanitarie e le altre detrazioni d'imposta non ci sono. Contano anche per la seconda fascia del trattamento integrativo, che le somma all'art. 12 e all'art. 13. |
-| Arrotondamenti interni al calcolo non modellati | Il risultato mostrato è arrotondato al centesimo con la regola del terzo decimale. Il payroll reale arrotonda anche in punti interni al calcolo: quei punti non sono modellati perché non li ho chiusi su fonte primaria, ed è dichiarato nel parametro invece di essere deciso per caso. |
-| Aritmetica in virgola mobile | Senza arrotondamenti intermedi la deriva resta sotto 1e-12, molto sotto il centesimo. Diventerà rappresentazione esatta in centesimi quando i punti di arrotondamento interni saranno modellati: prima non servirebbe a niente. |
-| Sterilizzazione del beneficio sopra 200.000 € di reddito non implementata | Il modello **non è valido** sopra quella soglia. |
-| Décalage del cuneo senza troncamento a quattro decimali | Il troncamento è previsto dall'art. 13 TUIR, non dalla L. 207/2024 che disciplina il cuneo. Incide di circa 5 centesimi. Da verificare. |
+I comuni sono un estratto di massa: 120 comuni presi a caso sono stati riscaricati
+dal portale e confrontati con il dataset, e sono risultati identici tutti e 120. La
+procedura di estrazione e rigenerazione è in [tools/README.md](tools/README.md).
 
-### Una fonte che non ho chiuso
-
-Gli oneri detraibili dell'art. 15 TUIR erano il primo candidato di questa fase, e mi
-sono fermato. Il testo consolidato su Normattiva, in vigore dal 1° gennaio 2025, dice
-che dall'imposta lorda si detrae **il 22 per cento** degli oneri elencati. L'aliquota
-che tutti applicano, e che l'Agenzia delle Entrate indica nelle sue istruzioni, è il
-**19 per cento**.
-
-Dentro le note dello stesso articolo si legge un rinvio legislativo a *"gli oneri la cui
-detraibilità è fissata nella misura del 19 per cento dal citato testo unico"*. Quindi
-il 19% è la misura applicata, ma la norma che la fissa non è quella che ho sotto gli
-occhi, e finché non la trovo non scrivo nessuna delle due cifre in un parametro.
-
-Questa è esattamente la ragione per cui i parametri di questo progetto portano una
-fonte ciascuno: un numero che nessuno sa da dove viene è un numero che prima o poi
-sbaglia.
-
-## Parametri e fonti
+## Fonti
 
 Solo fonti primarie: Normattiva per le norme, l'ente emittente per la prassi, il
-portale del federalismo fiscale del MEF per le addizionali locali.
-
-Per i **parametri statali e le 21 regioni** ogni indirizzo è stato aperto e
-controllato che porti al documento che dichiara. Per i **7.894 comuni** no, e non
-sarebbe onesto sostenerlo: sono un estratto di massa, una richiesta per comune, e la
-verifica è campionaria.
+portale del federalismo fiscale del MEF per le addizionali locali. L'elenco completo,
+valore per valore, è nella pagina [Parametri e fonti](https://ghiacciolodev.github.io/ral-netto/parametri.html).
 
 | Parametro | Valore | Fonte |
 |---|---|---|
-| Scaglioni IRPEF | 23% / 33% / 43% | [art. 11 TUIR](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917), modificato da [L. 199/2025 art. 1 co. 3](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2025-12-30;199) |
-| Detrazione lavoro dipendente | 1.955 € e formule per fascia | [art. 13 co. 1 TUIR](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917), formulazione D.Lgs. 216/2023 confermata da L. 207/2024 |
-| Maggiorazione | 65 € fra 25.000 e 35.000 | art. 13 **co. 1.1** TUIR |
-| Troncamento del rapporto | 4 cifre decimali | art. 13 **co. 6** TUIR |
-| Trattamento integrativo | 1.200 € fino a 15.000 di reddito | [DL 3/2020 art. 1](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legge:2020-02-05;3), reso strutturale da L. 207/2024 e non modificato da L. 199/2025 |
-| Cuneo fiscale | 7,1% / 5,3% / 4,8% e 1.000 € con décalage | [L. 207/2024 art. 1 co. 4-9 e 11](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2024-12-30;207), confermata strutturale da L. 199/2025 |
-| Detrazioni per carichi di famiglia | 800 / 690 € coniuge, 950 € per figlio, 750 € per ascendente | [art. 12 TUIR](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917) |
-| Restrizione della platea dal 2025 | figli fino a 30 anni non compiuti, solo ascendenti conviventi | [L. 207/2024 art. 1 co. 11](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2024-12-30;207) |
-| Minimi garantiti non ragguagliati | 690 € e 1.380 € | circ. Agenzia delle Entrate 15/2007 |
-| Prassi applicativa del cuneo | | [circ. Agenzia delle Entrate 4/E del 16 maggio 2025](https://www.agenziaentrate.gov.it/portale/documents/20143/8410823/Circolare+lavoro+dipendente+LB2025+DD+IRPEF+n.+4+del+16+maggio+2025.pdf/36979eaa-9fc5-a4ec-a7aa-136497c53f91) |
-| Prima fascia e massimale | 56.224 € e 122.295 € | [circ. INPS n. 6 del 30 gennaio 2026](https://www.inps.it/it/it/inps-comunica/atti/circolari-messaggi-e-normativa/dettaglio.circolari-e-messaggi.2026.01.circolare-numero-6-del-30-01-2026_15151.html) |
-| Addizionali regionali | 21 regioni e province autonome | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/addregirpef/addregirpef.php?reg=10), una pagina per regione, linkata da ogni voce del dataset |
-| Addizionali comunali | 7.894 comuni | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/risultato.htm?anno=9999&lista=1&r=1&pagina=lombardia.htm&pr=MI&cc=F205), una pagina per comune, linkata da ogni voce |
-| Proroga delle aliquote non rideliberate | | [art. 1 co. 169 L. 296/2006](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2006-12-27;296) |
-| TFR | quota annua pari a RAL / 13,5 | [art. 2120 codice civile](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:regio.decreto:1942-03-16;262) |
-| Contributo aggiuntivo IVS sul TFR | 0,50%, detratto dalla quota | [art. 3 L. 297/1982](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:1982-05-29;297). Non è il Fondo di garanzia TFR, che è l'art. 2 della stessa legge ed è lo 0,20% |
-| Costo azienda | 29,4% datore, INAIL 0,5% | Nessuna fonte primaria: sono medie di categoria |
+| Scaglioni IRPEF | 23%, 33%, 43% | [art. 11 TUIR](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917), modificato da [L. 199/2025](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2025-12-30;199) |
+| Detrazione lavoro dipendente | 1.955 € e formule per fascia | [art. 13 TUIR](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917) |
+| Detrazioni per familiari | 800 o 690 € coniuge, 950 € figlio, 750 € ascendente | [art. 12 TUIR](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917) |
+| Cuneo fiscale | 7,1%, 5,3%, 4,8% e 1.000 € con décalage | [L. 207/2024 art. 1](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2024-12-30;207) |
+| Trattamento integrativo | 1.200 € fino a 15.000 € | [DL 3/2020 art. 1](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legge:2020-02-05;3) |
+| Fringe benefit | 1.000 €, 2.000 € con figli a carico | art. 51 co. 3 TUIR, [L. 207/2024 art. 1 co. 390](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2024-12-30;207) |
+| Ritenute mensili e conguaglio | | art. 23 DPR 600/1973 |
+| Prima fascia e massimale contributivo | 56.224 € e 122.295 € | [circ. INPS n. 6 del 30 gennaio 2026](https://www.inps.it/it/it/inps-comunica/atti/circolari-messaggi-e-normativa/dettaglio.circolari-e-messaggi.2026.01.circolare-numero-6-del-30-01-2026_15151.html) |
+| Addizionale regionale | condizione e rate | [art. 50 D.Lgs. 446/1997](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1997-12-15;446) |
+| Addizionale comunale | condizione, acconto e rate | [art. 1 D.Lgs. 360/1998](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1998-09-28;360) |
+| Aliquote locali | 21 regioni, 7.894 comuni | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/risultato.htm?anno=9999&lista=1&r=1&pagina=lombardia.htm&pr=MI&cc=F205) |
+| Proroga delle aliquote | | [art. 1 co. 169 L. 296/2006](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2006-12-27;296) |
+| TFR | RAL diviso 13,5 | [art. 2120 codice civile](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:regio.decreto:1942-03-16;262) |
 
-**Due fonti non le ho aperte in originale.** La circolare 15/2007 sui minimi non
-ragguagliati e la regola di arrotondamento al centesimo arrivano da fonti che le
-citano, non dal documento stesso. L'esempio lavorato del cuneo su periodo parziale
-viene invece dalla circolare 4/E 2025, che è linkata.
+## Ipotesi e limiti
 
-**Il 9,19% è un'assunzione dichiarata del modello,** non un'aliquota universale.
-Assumo un lavoratore iscritto al FPLD con aliquota ordinaria a carico del dipendente,
-e non modello le contribuzioni minori che dipendono dall'inquadramento aziendale.
-L'aliquota è pacifica e confermata dalla prassi INPS; non ho individuato su fonte
-primaria la norma che fissa il riparto 23,81 / 9,19 del 33% complessivo, ed è
-segnalato anche nella nota del parametro.
+Un calcolo che non dice cosa ha lasciato fuori non è verificabile, quindi i limiti
+sono dichiarati. L'elenco completo è nella pagina
+[Come si calcola](https://ghiacciolodev.github.io/ral-netto/metodo.html); questi sono
+i principali.
 
-## Scelte di architettura
+| Non compreso | Perché |
+|---|---|
+| Oneri deducibili e detraibili | Sull'aliquota dell'art. 15 TUIR, 22% nel testo consolidato e 19% nella prassi, la fonte non è ancora chiusa. |
+| Welfare aziendale e premi di risultato | Hanno una tassazione propria. |
+| Regimi agevolati, impatriati, forfettario | Hanno una base imponibile propria. |
+| Esenzioni comunali per tipo di reddito | 127 comuni esentano pensioni o redditi specifici invece di fissare una soglia: sono segnalati nell'interfaccia. |
+| Agevolazioni soggettive regionali | Si applicano le aliquote ordinarie per scaglione. |
+| Redditi oltre 200.000 € | La sterilizzazione del beneficio non è implementata e il calcolo non è valido. |
+| Costo azienda | È una stima su medie di categoria, non un calcolo di legge. |
 
-**Il motore non restituisce un numero, restituisce il percorso.** Ogni calcolo
-produce l'elenco ordinato delle voci che portano dal lordo al netto, ciascuna con il
-proprio segno, la base su cui si applica, la formula in chiaro e la norma che la
-stabilisce. Il grafico a cascata, la tabella voce per voce e le citazioni sono tre
-modi di guardare quello stesso elenco. Ne segue che l'interfaccia non fa conti e non
-contiene testo normativo scritto a mano, quindi non può mostrare qualcosa di diverso
-da ciò che è stato calcolato. Un test verifica che sommando le voci si riottenga
-esattamente il netto.
+Il prospetto mensile applica l'art. 23 alla lettera; molti software paghe usano il
+metodo del reddito presunto annuo, che distribuisce diversamente lo stesso totale.
 
-**Fra due soglie il netto è una retta.** Cambia pendenza solo quando si attraversa
-una soglia di legge. Accorgersene ha risolto tre problemi in una volta: il grafico
-dell'aliquota marginale diventa una scala leggibile invece di una curva rumorosa, la
-modalità inversa si risolve in forma chiusa invece che per tentativi, e i casi di
-test si scelgono da soli, perché i punti che vale la pena provare sono le soglie. Un
-test verifica che l'elenco delle soglie sia completo: se ne mancasse una, il tratto
-corrispondente non risulterebbe più una retta.
+## Come è costruito
 
-**Le soglie stanno sull'imponibile, il grafico ha la RAL sull'asse.** Sono due
-grandezze diverse, separate dalla trattenuta contributiva: la soglia dei 23.000 di
-imponibile cade a 25.327,61 di RAL. La conversione è calcolata, non stimata.
+**Il motore restituisce il percorso, non solo il numero.** Ogni calcolo produce
+l'elenco ordinato delle voci dal lordo al netto, ciascuna con formula e norma. Grafico,
+tabella e citazioni sono tre modi di leggere lo stesso elenco, e un test verifica che
+la somma delle voci ricostruisca il netto al centesimo.
 
-**Zero dipendenze e zero build.** Il deliverable è un link, quindi il repository è il
-sito: quello che si legge è esattamente quello che viene eseguito, senza passare da
-una toolchain. Il costo è l'interfaccia scritta a mano, accettato perché la superficie
-è una form e qualche tabella. Niente moduli ES e niente lettura di file JSON, perché
-il protocollo `file://` li blocca entrambi e il requisito era che funzionasse anche
-con un doppio clic.
+**Ogni provvedimento è una regola** con tre facce tenute insieme: cosa calcola, cosa
+scrive nella traccia, quali soglie introduce. Aggiungerne una senza le altre non è
+possibile.
 
-## Come far girare i test
+**Fra due soglie il netto è una retta.** Da qui il grafico dell'aliquota marginale, il
+calcolo inverso in forma chiusa e la scelta dei casi di test proprio sulle soglie.
 
-Da riga di comando, senza installare niente:
+**Un anno d'imposta è un file.** Parametri e fonti di ogni anno stanno in un file
+completo, verificabile da solo; un test controlla che 2025 e 2026 differiscano solo
+nei punti previsti. Il motore non contiene numeri.
+
+**Zero dipendenze, nessuna build.** Il repository è il sito. Gli script sono caricati
+in ordine senza moduli, così le pagine funzionano anche aperte con un doppio clic.
+
+## Test
 
 ```bash
 node test/run.js
 ```
 
-Oppure aprendo `test/runner.html` nel browser, che esegue gli stessi file e mostra
-verde o rosso.
+657 asserzioni in 14 suite, eseguibili anche nel browser aprendo `test/runner.html`. I
+valori attesi sono calcolati dalle formule di legge, mai copiati dall'output del codice.
 
-657 asserzioni, divise in quattordici suite per area. Se il codice e un valore atteso non
-concordano, si guarda il codice.
+## Aggiornare all'anno successivo
 
-## Come si aggiorna all'anno successivo
-
-Si copiano `src/parameters-2026.js` e `src/local-2026.js` nei corrispondenti file
-del 2027, si aggiornano valori e fonti, si aggiungono due righe al registro in
-`src/parameters.js` e si caricano i file nuovi nelle pagine.
-
-Nel fisco le regole valgono "a decorrere dal periodo d'imposta X", quindi l'anno è
-l'unità di validità naturale: una regola cambiata a metà anno sarebbe due voci del
-registro, non un intervallo di date dentro una. **Un motore è legato a un anno solo**,
-scelto alla costruzione, così un singolo calcolo non può mescolare due regolamenti.
-
-Ogni anno è un file completo, non una variazione sull'anno vicino. Deve poter essere
-letto e verificato da solo contro le fonti di quell'anno, e una base condivisa
-significherebbe che correggere qualcosa per il 2026 cambia in silenzio quello che il
-file dice fosse la legge nel 2025. Il prezzo è la duplicazione, e contro la deriva
-accidentale c'è un test: confronta i due insiemi e pretende che differiscano
-**esattamente** nei cinque punti previsti, e in nessun altro.
-
-Le differenze fra i due anni presenti:
-
-| | 2025 | 2026 |
-|---|---|---|
-| Seconda aliquota IRPEF | 35% | 33% |
-| Prima fascia contributiva | 55.448 € | 56.224 € |
-| Massimale contributivo | 120.607 € | 122.295 € |
-
-Detrazioni, cuneo, trattamento integrativo e addizionali locali sono identici.
-
-Il motore non si tocca, perché non contiene nessun numero: aliquote, soglie, formule
-e perfino la posizione delle soglie sul grafico sono derivate dai parametri. Se un
-aggiornamento richiedesse di modificare il motore, sarebbe un difetto del motore.
-
-## Architettura
-
-I dati stanno in due posti, perche sono due tipi di dato. I **parametri statali**
-sono una manciata di valori scritti a mano, letti uno per uno sulla norma e rivisti a
-ogni modifica. Le **addizionali locali** sono una tabella: venti regioni e quasi
-ottomila comuni, che cambiano ogni anno e che nessuno rilegge. Tenerli insieme
-avrebbe voluto dire duplicare la tabella a ogni anno d'imposta.
-
-Le aliquote comunali sono a scaglioni anche dove lo scaglione e uno solo, perche
-molti comuni hanno un'addizionale progressiva e la forma deve reggerli senza che il
-motore cambi. E ogni comune dichiara la sua regione, cosi chiedere Milano nel Lazio
-viene rifiutato invece di produrre un numero con l'etichetta sbagliata.
-
-Il motore e diviso in moduli e `src/engine.js` non contiene logica: monta i pezzi e
-dichiara cosa espone. Ogni modulo e una funzione che riceve quello che gli serve e
-restituisce quello che offre, quindi il grafo delle dipendenze e scritto una volta
-sola invece di essere implicito in uno scope condiviso.
-
-Il pezzo che regge tutto sono le **regole**. Ogni provvedimento e un oggetto con fino
-a tre facce, e stanno insieme apposta:
-
-```js
-{
-  id: 'family-deduction',
-  apply:      function (ctx) { ... },      // cosa calcola
-  ledger:     function (ctx) { ... },      // cosa scrive nella traccia
-  thresholds: function (position) { ... }  // quali soglie introduce
-}
-```
-
-Prima quelle tre cose vivevano in tre funzioni diverse, e aggiungere un provvedimento
-dimenticandone due falliva in silenzio: il numero usciva giusto mentre la traccia e
-l'elenco delle soglie mentivano. Adesso l'array delle regole e anche l'ordine dei
-passi, che e quello della norma.
-
-Una duplicazione e rimasta di proposito: il netto annuo e scritto a mano invece di
-essere sommato dalla traccia. Se lo derivassi, il test che verifica che la traccia
-ricostruisce il netto diventerebbe una tautologia. Sono due strade indipendenti che
-devono arrivare allo stesso numero.
-
-Niente moduli ES: su `file://` sono bloccati come `fetch`, e il sito deve funzionare
-col doppio clic. Quindi classic script caricati in ordine, con lo stesso meccanismo
-che i parametri usavano gia: globale in pagina, `require` sotto Node.
-
-## Il sito
-
-Quattro pagine, non una sola con dentro tutto. Nel calcolatore i risultati sono
-raggruppati in tre parti, **dal lordo al netto**, **come arriva nel tempo** e **il
-dettaglio del calcolo**, invece di essere sei blocchi allo stesso livello. E ogni voce
-della traccia si apre e spiega sé stessa, invece di rimandare a un'altra pagina: le
-spiegazioni stanno in `src/explanations.js`, e un test verifica che ogni voce che il
-motore può produrre ne abbia una. Il **calcolatore** fa il calcolo,
-**come si calcola** lo spiega passo per passo e dichiara cosa il modello non fa,
-**parametri e fonti** elenca ogni valore usato con la norma che lo fissa, e
-**aliquota marginale** mostra dove la curva del netto smette di salire.
-
-La pagina dei parametri non è scritta a mano: percorre l'oggetto dei parametri
-dell'anno scelto e costruisce la tabella da lì. È una scelta precisa. Se un parametro
-nuovo viene aggiunto, compare da solo, magari con un'etichetta brutta, invece di
-restare invisibile perché nessuno si è ricordato di aggiungerlo a un elenco. E un
-parametro senza fonte scrive **senza fonte** invece di lasciare la cella vuota.
-
-### Il CSS
-
-Le dimensioni del testo erano **venti valori diversi fra 0,64 e 1,5rem**, quattordici
-dei quali schiacciati in mezzo rem: 0,82 accanto a 0,83, 0,86 accanto a 0,87. Non era
-una scala, era deriva accumulata in sei fasi di lavoro. Adesso sono otto gradini, e
-nessun accorpamento sposta più del sei per cento: la pagina è la stessa, il disordine
-no.
-
-Le spaziature restano letterali quasi ovunque, di proposito. Accorparle sposterebbe
-davvero le cose, e la grafica va bene com'è.
-
-Quattro difetti di layout corretti nello stesso passaggio:
-
-| Dove | Cos'era |
-|---|---|
-| La navigazione | Era un fratello di `header` e `main` ma non ne condivideva il contenitore: restava incollata al bordo della finestra mentre tutto il resto rientrava di 40px. |
-| Giorni di rapporto, e tutti i campi numerici | Lo stile vestiva `input[type=text]` e `select`, non `number`: restavano campi di sistema alti la metà degli altri, in mezzo a una riga di select. |
-| Il bottone Calcola | Un bottone dentro una colonna flex si stira: erano seicento pixel di "Calcola". |
-| Le tabelle della curva | Senza larghezze di colonna il browser distribuiva a caso: la colonna di testo si prendeva tre quarti della tabella e i numeri finivano a mezzo schermo dalla loro etichetta. |
-
-Più due sfalsamenti trovati misurando: le etichette che vanno a capo disallineavano gli
-input della stessa riga, e il campo dei fringe benefit, unico nella sua griglia, si
-prendeva milleduecento pixel perché `auto-fit` collassa le tracce vuote.
-
-Costruendola ha subito trovato due parametri che non citavano niente: le mensilità
-ammesse, che dipendono dal CCNL, e i 365 giorni del ragguaglio, che restano 365 anche
-negli anni bisestili per prassi ma senza una norma che l'ho trovata a dirlo. Adesso
-entrambi lo dichiarano.
+Si copiano `src/parameters-2026.js` e `src/local-2026.js` nei file del nuovo anno, si
+aggiornano valori e fonti, si registrano in `src/parameters.js` e si caricano nelle
+pagine. Il dataset comunale si rigenera con i due comandi descritti in
+[tools/README.md](tools/README.md).
 
 ## Struttura
 
 ```
-index.html                 il calcolatore
-metodo.html                come si calcola, e cosa il modello non fa
-parametri.html             ogni valore usato, con la sua fonte, per anno
-curva.html                 aliquota marginale e soglie
-src/parameters.js          registro degli anni: parametri statali e tabella locale
-src/parameters-2025.js     valori normativi statali e fonti dell anno 2025
-src/parameters-2026.js     valori normativi statali e fonti dell anno 2026
-src/local-2025.js          addizionali di 21 regioni e 7.894 comuni, 2025
-src/local-2026.js          addizionali di 21 regioni e 7.894 comuni, 2026
-src/engine.js              il cablaggio: monta i moduli e ne espone l interfaccia
-src/engine/numbers.js      troncamento, arrotondamento, scaglioni, formattazione
-src/engine/position.js     chi viene pagato, e la validazione di quel che si chiede
-src/engine/steps.js        una funzione per provvedimento, pure e senza ordine
-src/engine/rules.js        i provvedimenti come oggetti: calcolo, traccia, soglie
-src/engine/calculation.js  esegue le regole una volta e raccoglie il risultato
-src/engine/breakpoints.js  le soglie dichiarate e quelle che emergono
-src/engine/inverse.js      dal netto alla RAL, piu l oracolo binario dei test
-src/engine/monthly.js      il prospetto dei periodi di paga e il conguaglio
-src/ui-common.js           helper di rendering condivisi
-src/ui-parameters.js       pagina parametri, generata dai dati
-src/explanations.js        le spiegazioni delle voci del calcolo
-src/ui-calculator.js       pagina calcolatore
-src/ui-curve.js            pagina curva
+index.html                 calcolatore
+metodo.html                come si calcola
+parametri.html             parametri e fonti, generata dai dati
+curva.html                 aliquota marginale
+favicon.svg
+src/parameters.js          registro degli anni d'imposta
+src/parameters-2025.js     parametri statali e fonti 2025
+src/parameters-2026.js     parametri statali e fonti 2026
+src/local-2025.js          addizionali di regioni e comuni 2025, generato
+src/local-2026.js          addizionali di regioni e comuni 2026, generato
+src/engine.js              assemblaggio del motore
+src/engine/                numeri, posizione, regole, calcolo, soglie, inverso, prospetto mensile
+src/explanations.js        spiegazioni delle voci
+src/ui-*.js                una interfaccia per pagina
 src/styles.css
-test/cases.js              registro delle suite, nell ordine in cui girano
-test/fixtures.js           valori attesi condivisi fra le suite
-test/suites/*.js           una suite per area, undici file
-test/harness.js            runner di asserzioni
-test/run.js                esecuzione da riga di comando
-test/runner.html           esecuzione in browser
-tools/estrai-comuni.js     passo 1, scarica le aliquote comunali dal portale MEF
-tools/genera-locale.js     passo 2, genera src/local-YYYY.js
-tools/fasce.js             lettura delle diciture del portale, la parte fragile
-tools/regioni.js           le 21 regioni, lette a mano
-tools/README.md            come si rigenera il dataset
-.nojekyll                  dice a GitHub Pages di pubblicare i file cosi come sono
+test/                      runner, fixture e 14 suite
+tools/                     estrazione dal portale MEF e generazione del dataset locale
+docs/screenshots/          immagini di questo README
 ```
 
-## Nota finale
+<br>
 
-È stato più divertente di quanto mi aspettassi. La cosa che mi ha sorpreso di più è
-l'aliquota marginale: non avevo idea che a 40.000 € di RAL un aumento rendesse meno
-che a 70.000, e vederlo uscire dal codice invece che leggerlo da qualche parte è
-tutta un'altra cosa.
-
-Effetto collaterale non previsto: adesso so quanta RAL chiedere per arrivare a un
-certo netto, e quanto costo davvero a un'azienda. Prima avrei sparato un numero a caso.
+<p align="center">
+  <sub>I risultati sono stime basate sulla normativa in vigore e sulle ipotesi dichiarate.<br>Non sostituiscono il cedolino né il parere di un consulente del lavoro.</sub>
+</p>

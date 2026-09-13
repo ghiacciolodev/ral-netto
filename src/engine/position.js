@@ -57,15 +57,15 @@ var ENGINE_POSITION = function (parameters, local, maxRal, numbers) {
 
     if (position.taxYear !== parameters.taxYear) {
       throw new RangeError(
-        'Questo motore calcola l anno d imposta ' + parameters.taxYear +
-        ', non ' + position.taxYear + '. Costruiscine uno per l anno voluto.');
+        'Questo motore calcola l\'anno d\'imposta ' + parameters.taxYear +
+        ', non ' + position.taxYear + '. Costruiscine uno per l\'anno voluto.');
     }
 
     if (typeof position.grossAnnual !== 'number' || !isFinite(position.grossAnnual)) {
       throw new TypeError('La RAL deve essere un numero.');
     }
     if (position.grossAnnual < 0) {
-      throw new RangeError('La RAL non puo essere negativa.');
+      throw new RangeError('La RAL non può essere negativa.');
     }
     if (position.grossAnnual > MAX_RAL) {
       throw new RangeError('La RAL supera il limite gestito di ' + formatAmount(MAX_RAL) + ' euro.');
@@ -73,7 +73,7 @@ var ENGINE_POSITION = function (parameters, local, maxRal, numbers) {
 
     if (parameters.payrollMonths.allowed.indexOf(position.months) === -1) {
       throw new RangeError(
-        'Mensilita non ammesse: ' + position.months +
+        'Mensilità non ammesse: ' + position.months +
         '. Valori consentiti: ' + parameters.payrollMonths.allowed.join(', ') + '.');
     }
 

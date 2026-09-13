@@ -182,7 +182,7 @@ var REGIONI = [
     codice: '12',
     nome: 'Molise',
     norme: 'Art. 2 L.R. 9/2013, art. 1 co. 174 L. 311/2004, art. 2 co. 86 L. 191/2009, art. 1 L.R. 5/2023',
-    nota: 'Per il 2026 il portale pubblica due delibere: il modello prende quella presentata per prima, la piu recente.',
+    nota: 'Per il 2026 il portale pubblica due delibere: il modello prende quella presentata per prima, la più recente.',
     aliquote: {
       2025: [[15000, 2.03], [28000, 2.23], [50000, 3.63], [null, 3.63]],
       2026: [[15000, 2.03], [28000, 2.23], [50000, 3.63], [null, 3.63]]

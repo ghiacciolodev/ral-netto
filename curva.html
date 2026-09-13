@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aliquota marginale effettiva, anno d'imposta 2026</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
@@ -21,9 +22,9 @@
   <p class="eyebrow">Anno d'imposta <strong>2026</strong></p>
   <h1>Aliquota marginale effettiva</h1>
   <p class="lede">
-    Quanto resta in tasca di ogni euro lordo aggiuntivo. È la cosa che mi ha
-    sorpreso di più costruendo il calcolatore: la risposta non è l'aliquota IRPEF
-    del proprio scaglione, e in più di un punto scende invece di salire.
+    Quanto resta in tasca di ogni euro lordo aggiuntivo. La risposta non è
+    l'aliquota IRPEF del proprio scaglione, e in più di un punto scende invece di
+    salire.
   </p>
   <p class="case-note">
     Stesso caso modellato del calcolatore, su 13 mensilità, a Milano, con il
@@ -65,13 +66,14 @@
       sola riga.
     </p>
 
+    <div class="bands-layout">
     <div class="table-scroll">
       <table class="detail bands" id="band-table">
         <thead>
           <tr>
             <th scope="col">Fascia di RAL</th>
-            <th scope="col" class="num">Marginale</th>
-            <th scope="col" class="num">Di 100 € restano</th>
+            <th scope="col" class="num">Aliquota marginale</th>
+            <th scope="col" class="num">Di 100 € lordi restano</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -79,6 +81,7 @@
     </div>
 
     <div class="finding" id="finding"></div>
+    </div>
   </section>
 
   <div class="section-lead section-lead-extra">
@@ -151,8 +154,9 @@
 
 <footer class="page-footer">
   <p>
-    Prototipo a scopo dimostrativo. Non sostituisce un cedolino ed è valido solo
-    per il caso modellato.
+    I risultati sono stime basate sulla normativa in vigore e sulle ipotesi
+    descritte in <a href="metodo.html">come si calcola</a>. Non sostituiscono il
+    cedolino né il parere di un consulente del lavoro.
   </p>
   <p>
     Il calcolo avviene interamente nel tuo browser. La pagina non salva nulla,

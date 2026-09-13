@@ -59,7 +59,7 @@ var PARAMETERS = (function () {
 
       if (!byYear[year]) {
         throw new RangeError(
-          'Anno d imposta non disponibile: ' + year +
+          'Anno d\'imposta non disponibile: ' + year +
           '. Anni presenti: ' + years.join(', ') + '.');
       }
 
@@ -77,7 +77,7 @@ var PARAMETERS = (function () {
 
       if (!localByYear[year]) {
         throw new RangeError(
-          'Addizionali locali non disponibili per l anno ' + year +
+          'Addizionali locali non disponibili per l\'anno ' + year +
           '. Anni presenti: ' + Object.keys(localByYear).join(', ') + '.');
       }
 

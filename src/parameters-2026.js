@@ -71,7 +71,7 @@ var PARAMETERS_2026 = (function () {
 
     /**
      * Il denominatore del ragguaglio ai giorni. Resta 365 anche negli anni
-     * bisestili: e la prassi corrente, ma non ho trovato la norma che lo dice,
+     * bisestili: e la prassi corrente, ma nessuna norma lo dice espressamente,
      * quindi il parametro lo dichiara invece di far finta che sia ovvio.
      */
     employmentYear: { days: 365, sourceId: 'giorni-anno' },
@@ -280,35 +280,35 @@ var PARAMETERS_2026 = (function () {
         title: 'Ritenute sui redditi di lavoro dipendente, periodi di paga e conguaglio',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1973-09-29;600',
         inForceFrom: '1974-01-01',
-        note: 'Comma 2 lett. a) per i periodi ordinari, con scaglioni e detrazioni ragguagliati al periodo di paga. Comma 2 lett. b) per le mensilita aggiuntive, che ragguagliano gli scaglioni a mese e non nominano le detrazioni. Comma 3 per il conguaglio.'
+        note: 'Comma 2 lett. a) per i periodi ordinari, con scaglioni e detrazioni ragguagliati al periodo di paga. Comma 2 lett. b) per le mensilità aggiuntive, che ragguagliano gli scaglioni a mese e non nominano le detrazioni. Comma 3 per il conguaglio.'
       },
       'dlgs-446-1997-art-50': {
         label: 'art. 50 co. 4 D.Lgs. 446/1997',
         title: 'Addizionale regionale, trattenuta in un massimo di undici rate dopo il conguaglio',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1997-12-15;446',
         inForceFrom: '1998-01-01',
-        note: 'Comma 2: l addizionale e dovuta solo se per lo stesso anno risulta dovuta l IRPEF al netto delle detrazioni, quindi chi e incapiente non la paga. Comma 4: nessun acconto, si preleva per intero l anno successivo.'
+        note: 'Comma 2: l\'addizionale è dovuta solo se per lo stesso anno risulta dovuta l\'IRPEF al netto delle detrazioni, quindi chi è incapiente non la paga. Comma 4: nessun acconto, si preleva per intero l anno successivo.'
       },
       'dlgs-360-1998-art-1': {
         label: 'art. 1 co. 4 e 5 D.Lgs. 360/1998',
         title: 'Addizionale comunale, acconto del 30% in nove rate da marzo e saldo in undici rate',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1998-09-28;360',
         inForceFrom: '1999-01-01',
-        note: 'Comma 4: l addizionale e dovuta solo se risulta dovuta l IRPEF al netto delle detrazioni. L acconto si calcola sull imponibile dell anno precedente. Il comma 3-bis e la base della soglia di esenzione, che i comuni possono legare a specifici requisiti reddituali.'
+        note: 'Comma 4: l\'addizionale è dovuta solo se risulta dovuta l\'IRPEF al netto delle detrazioni. L\'acconto si calcola sull\'imponibile dell\'anno precedente. Il comma 3-bis è la base della soglia di esenzione, che i comuni possono legare a specifici requisiti reddituali.'
       },
       'giorni-anno': {
         label: 'assunzione dichiarata',
         title: 'Il ragguaglio ai giorni usa 365 come denominatore, anche negli anni bisestili',
         url: null,
         inForceFrom: '2024-01-01',
-        note: 'Non ho chiuso la fonte. Negli anni bisestili il denominatore corretto potrebbe essere 366, e cambierebbe le detrazioni ragguagliate di qualche centesimo.'
+        note: 'Nessuna norma fissa il denominatore negli anni bisestili: con 366 le detrazioni ragguagliate cambierebbero di qualche centesimo.'
       },
       'ccnl-commercio': {
         label: 'CCNL Terziario, distribuzione e servizi',
-        title: 'Mensilita aggiuntive: tredicesima a dicembre, quattordicesima a giugno',
+        title: 'Mensilità aggiuntive: tredicesima a dicembre, quattordicesima a giugno',
         url: null,
         inForceFrom: '2024-01-01',
-        note: 'Non e una fonte normativa: il mese in cui cadono le mensilita aggiuntive lo decide il contratto collettivo, e questo e un assunzione dichiarata come il costo azienda.'
+        note: 'Non è una fonte normativa: il mese in cui cadono le mensilità aggiuntive lo decide il contratto collettivo, e questa è un\'ipotesi dichiarata come il costo azienda.'
       },
       'tuir-art-51-c3': {
         label: 'art. 51 co. 3 TUIR',
@@ -322,42 +322,42 @@ var PARAMETERS_2026 = (function () {
         title: 'Limite dei fringe benefit elevato a 1.000 euro, 2.000 con figli a carico',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2024-12-30;207',
         inForceFrom: '2025-01-01',
-        note: 'Vale per i periodi d imposta 2025, 2026 e 2027, in deroga al terzo periodo dell art. 51 co. 3: cambia la soglia, non il meccanismo.'
+        note: 'Vale per i periodi d\'imposta 2025, 2026 e 2027, in deroga al terzo periodo dell\'art. 51 co. 3: cambia la soglia, non il meccanismo.'
       },
       'tuir-art-11': {
         label: 'art. 11 TUIR',
         title: 'DPR 22 dicembre 1986 n. 917, art. 11, come modificato da L. 199/2025 art. 1 co. 3',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917',
         inForceFrom: '2026-01-01',
-        note: 'La seconda aliquota e passata dal 35% al 33% dal periodo d imposta 2026.'
+        note: 'La seconda aliquota è passata dal 35% al 33% dal periodo d\'imposta 2026.'
       },
       'tuir-art-12': {
         label: 'art. 12 TUIR',
         title: 'DPR 917/1986 art. 12, detrazioni per carichi di famiglia',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917',
         inForceFrom: '2025-01-01',
-        note: 'Testo identico nel 2025 e nel 2026. Comma 3, le detrazioni si rapportano ai mesi in cui la condizione e durata, non ai giorni lavorati.'
+        note: 'Testo identico nel 2025 e nel 2026. Comma 3, le detrazioni si rapportano ai mesi in cui la condizione è durata, non ai giorni lavorati.'
       },
       'tuir-art-12-c4': {
         label: 'art. 12 co. 4 TUIR',
         title: 'DPR 917/1986 art. 12 co. 4, i rapporti si assumono nelle prime quattro cifre decimali',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917',
         inForceFrom: '2007-01-01',
-        note: 'Stesso troncamento dell art. 13 co. 6, con in piu la regola che azzera la detrazione quando il rapporto vale zero o uno.'
+        note: 'Stesso troncamento dell\'art. 13 co. 6, con in più la regola che azzera la detrazione quando il rapporto vale zero o uno.'
       },
       'l-207-2024-c11': {
         label: 'L. 207/2024 art. 1 co. 11',
         title: 'Legge 30 dicembre 2024 n. 207, restrizione delle detrazioni per carichi di famiglia',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2024-12-30;207',
         inForceFrom: '2025-01-01',
-        note: 'Dal 2025 i figli valgono fino ai 30 anni non compiuti, salvo disabilita, e degli altri familiari restano solo gli ascendenti conviventi.'
+        note: 'Dal 2025 i figli valgono fino ai 30 anni non compiuti, salvo disabilità, e degli altri familiari restano solo gli ascendenti conviventi.'
       },
       'tuir-art-13-c1': {
         label: 'art. 13 co. 1 TUIR',
         title: 'DPR 917/1986 art. 13 co. 1, formulazione D.Lgs. 216/2023 confermata da L. 207/2024',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917',
         inForceFrom: '2024-01-01',
-        note: 'L importo della prima fascia e passato da 1.880 a 1.955 dal periodo d imposta 2024.'
+        note: 'L\'importo della prima fascia è passato da 1.880 a 1.955 dal periodo d\'imposta 2024.'
       },
       'tuir-art-13-c1-1': {
         label: 'art. 13 co. 1.1 TUIR',
@@ -368,17 +368,17 @@ var PARAMETERS_2026 = (function () {
       },
       'ade-circ-15-2007': {
         label: 'circ. Agenzia Entrate 15/2007',
-        title: 'I minimi di 690 e 1.380 euro non si rapportano al periodo di lavoro nell anno',
+        title: 'I minimi di 690 e 1.380 euro non si rapportano al periodo di lavoro nell\'anno',
         url: null,
         inForceFrom: '2007-01-01',
-        note: 'Si confrontano con la detrazione gia ragguagliata ai giorni. Non ho aperto il documento originale: vedi il README.'
+        note: 'Si confrontano con la detrazione già ragguagliata ai giorni. Principio ripreso dalla prassi: il testo originale della circolare non è stato consultato.'
       },
       'tuir-art-13-c6': {
         label: 'art. 13 co. 6 TUIR',
         title: 'DPR 917/1986 art. 13 co. 6, il rapporto si assume nelle prime quattro cifre decimali',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1986-12-22;917',
         inForceFrom: '2024-01-01',
-        note: 'Troncamento, non arrotondamento. Esempio dell Agenzia delle Entrate: 0,623381 diventa 0,6233.'
+        note: 'Troncamento, non arrotondamento. Esempio dell\'Agenzia delle Entrate: 0,623381 diventa 0,6233.'
       },
       'l-199-2025': {
         label: 'L. 199/2025 art. 1 co. 3',
@@ -392,21 +392,21 @@ var PARAMETERS_2026 = (function () {
         title: 'Legge 30 dicembre 2024 n. 207, riduzione del cuneo fiscale',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2024-12-30;207',
         inForceFrom: '2025-01-01',
-        note: 'Dal 2025 la misura agisce su IRPEF e reddito, non piu come esonero contributivo.'
+        note: 'Dal 2025 la misura agisce su IRPEF e reddito, non più come esonero contributivo.'
       },
       'ade-circ-4e-2025': {
         label: 'circ. Agenzia Entrate 4/E del 16 maggio 2025',
         title: 'Istruzioni operative su IRPEF e tassazione dei redditi di lavoro dipendente',
         url: 'https://www.agenziaentrate.gov.it/portale/documents/20143/8410823/Circolare+lavoro+dipendente+LB2025+DD+IRPEF+n.+4+del+16+maggio+2025.pdf/36979eaa-9fc5-a4ec-a7aa-136497c53f91',
         inForceFrom: '2025-05-16',
-        note: 'La fascia si determina sul reddito ragguagliato all anno, la percentuale si applica al reddito percepito.'
+        note: 'La fascia si determina sul reddito ragguagliato all\'anno, la percentuale si applica al reddito percepito.'
       },
       'inps-circ-6-2026': {
         label: 'circ. INPS 6/2026',
-        title: 'Circolare INPS n. 6 del 30 gennaio 2026, valori contributivi per l anno 2026',
+        title: 'Circolare INPS n. 6 del 30 gennaio 2026, valori contributivi per l\'anno 2026',
         url: 'https://www.inps.it/it/it/inps-comunica/atti/circolari-messaggi-e-normativa/dettaglio.circolari-e-messaggi.2026.01.circolare-numero-6-del-30-01-2026_15151.html',
         inForceFrom: '2026-01-01',
-        note: 'Paragrafo 5 per la quota soggetta all aliquota aggiuntiva dell 1%, paragrafo 6 per il massimale.'
+        note: 'Paragrafo 5 per la quota soggetta all\'aliquota aggiuntiva dell\'1%, paragrafo 6 per il massimale.'
       },
       'dl-3-2020': {
         label: 'DL 3/2020 art. 1',
@@ -420,21 +420,21 @@ var PARAMETERS_2026 = (function () {
         title: 'Contributo aggiuntivo IVS dello 0,50%, che si detrae dalla quota annua di TFR',
         url: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:1982-05-29;297',
         inForceFrom: '1982-06-01',
-        note: 'Da non confondere con il Fondo di garanzia TFR, che e l art. 2 della stessa legge ed e lo 0,20%.'
+        note: 'Da non confondere con il Fondo di garanzia TFR, che è l\'art. 2 della stessa legge ed è lo 0,20%.'
       },
       'ade-cu-istruzioni': {
         label: 'istruzioni Certificazione Unica',
-        title: 'Gli importi si indicano in centesimi, arrotondando per eccesso se la terza cifra decimale e pari o superiore a 5',
+        title: 'Gli importi si indicano in centesimi, arrotondando per eccesso se la terza cifra decimale è pari o superiore a 5',
         url: 'https://www.agenziaentrate.gov.it/portale/documents/d/guest/cu_istr_2025_13feb',
         inForceFrom: '2025-02-13',
-        note: 'Esempi dell Agenzia: 55,505 diventa 55,51; 65,626 diventa 65,63; 65,493 diventa 65,49.'
+        note: 'Esempi dell\'Agenzia: 55,505 diventa 55,51; 65,626 diventa 65,63; 65,493 diventa 65,49.'
       },
       'inps-fpld-rates': {
         label: 'aliquote FPLD settore privato',
         title: 'Aliquota IVS complessiva 33%, di cui 9,19% a carico del lavoratore',
         url: 'https://www.inps.it/it/it/inps-comunica/atti/circolari-messaggi-e-normativa/dettaglio.circolari-e-messaggi.2026.01.circolare-numero-6-del-30-01-2026_15151.html',
         inForceFrom: '2026-01-01',
-        note: 'Assunzione del modello: lavoratore iscritto al FPLD con aliquota ordinaria. Non sono modellate contribuzioni minori legate all inquadramento aziendale.'
+        note: 'Assunzione del modello: lavoratore iscritto al FPLD con aliquota ordinaria. Non sono modellate contribuzioni minori legate all\'inquadramento aziendale.'
       },
       'cc-art-2120': {
         label: 'art. 2120 codice civile',

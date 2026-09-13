@@ -117,7 +117,7 @@ var ENGINE_MONTHLY = function (parameters, numbers, calculation) {
         month: monthIndex + 1,
         name: MESI[monthIndex],
         extra: extra,
-        label: extra ? 'mensilita aggiuntiva' : MESI[monthIndex],
+        label: extra ? 'mensilità aggiuntiva' : MESI[monthIndex],
         gross: perPayment,
         contributions: annual.contributions.total * share,
         taxable: perPayment - annual.contributions.total * share,

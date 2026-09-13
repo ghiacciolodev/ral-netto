@@ -5,9 +5,7 @@
  * Le spiegazioni delle voci del calcolo.
  *
  * Stanno fuori dal motore perche sono un altra cosa: il motore dice cosa e
- * successo e con quale formula, qui si dice a una persona perche. Sono anche
- * l unico posto del progetto scritto in italiano con gli accenti, perche e
- * prosa e non un etichetta.
+ * successo e con quale formula, qui si dice a una persona perche.
  *
  * La chiave e l id della voce di traccia. Un test verifica che ogni voce che il
  * motore puo produrre ne abbia una: una spiegazione che manca deve far rumore,

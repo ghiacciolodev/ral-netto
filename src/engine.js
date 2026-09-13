@@ -61,7 +61,7 @@ var createEngine = (function () {
 
     if (!source || typeof source.forYear !== 'function') {
       throw new TypeError(
-        'Il motore va costruito da un registro di anni d imposta, non da un singolo insieme di parametri.');
+        'Il motore va costruito da un registro di anni d\'imposta, non da un singolo insieme di parametri.');
     }
 
     var parameters = source.forYear(taxYear);
