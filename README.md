@@ -182,8 +182,17 @@ la somma delle voci ricostruisca il netto al centesimo.
 scrive nella traccia, quali soglie introduce. Aggiungerne una senza le altre non è
 possibile.
 
-**Fra due soglie il netto è una retta.** Da qui il grafico dell'aliquota marginale, il
-calcolo inverso in forma chiusa e la scelta dei casi di test proprio sulle soglie.
+**Il modello senza troncamenti è affine a tratti.** Questa struttura guida il
+grafico dell'aliquota marginale, il calcolo inverso e la scelta dei casi di test
+sulle soglie. In [src/engine/inverse.js](src/engine/inverse.js), il risolutore ricava
+un candidato in forma chiusa per ogni segmento non costante, usando due punti
+interni del modello con `exactRatios: true`. Poi `refineCandidate` lo rifinisce
+localmente contro il modello completo, con una scansione a passi di 0,001 € entro
+0,50 € dal candidato, limitata al segmento. I troncamenti dei rapporti delle
+detrazioni producono infatti una scalinata che il modello affine non rappresenta.
+Il calcolo inverso combina quindi candidati analitici e rifinitura numerica locale:
+non è interamente in forma chiusa. Gli arrotondamenti monetari riguardano la
+formattazione degli importi; il risolutore confronta il netto non arrotondato.
 
 **Un anno d'imposta è un file.** Parametri e fonti di ogni anno stanno in un file
 completo, verificabile da solo; un test controlla che 2025 e 2026 differiscano solo
