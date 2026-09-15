@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  Anni d'imposta 2025 e 2026 &nbsp;·&nbsp; 21 regioni e 7.894 comuni &nbsp;·&nbsp; 657 test &nbsp;·&nbsp; nessuna dipendenza
+  Anni d'imposta 2025 e 2026 &nbsp;·&nbsp; 21 giurisdizioni regionali/provinciali e 7.894 comuni &nbsp;·&nbsp; 657 test &nbsp;·&nbsp; nessuna dipendenza
 </p>
 
 <br>
@@ -116,8 +116,9 @@ Dieci passaggi, nessuna iterazione.
 
 ## Addizionali locali
 
-Il dataset comprende tutte le **21 regioni e province autonome** e **tutti i 7.894
-comuni**, estratti dal portale del federalismo fiscale del MEF. Ogni voce porta il
+Il dataset comprende tutte le **21 giurisdizioni dell'addizionale regionale**: 19
+regioni e le Province autonome di Trento e Bolzano, oltre a **tutti i 7.894 comuni**,
+estratti dal portale del federalismo fiscale del MEF. Ogni voce porta il
 link alla propria pagina sul portale.
 
 Un ente che non delibera non azzera il tributo: le aliquote in vigore si intendono
@@ -147,7 +148,7 @@ valore per valore, è nella pagina [Parametri e fonti](https://ghiacciolodev.git
 | Prima fascia e massimale contributivo | 56.224 € e 122.295 € | [circ. INPS n. 6 del 30 gennaio 2026](https://www.inps.it/it/it/inps-comunica/atti/circolari-messaggi-e-normativa/dettaglio.circolari-e-messaggi.2026.01.circolare-numero-6-del-30-01-2026_15151.html) |
 | Addizionale regionale | condizione e rate | [art. 50 D.Lgs. 446/1997](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1997-12-15;446) |
 | Addizionale comunale | condizione, acconto e rate | [art. 1 D.Lgs. 360/1998](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1998-09-28;360) |
-| Aliquote locali | 21 regioni, 7.894 comuni | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/risultato.htm?anno=9999&lista=1&r=1&pagina=lombardia.htm&pr=MI&cc=F205) |
+| Aliquote locali | 21 giurisdizioni regionali/provinciali, 7.894 comuni | [portale del federalismo fiscale MEF](https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/risultato.htm?anno=9999&lista=1&r=1&pagina=lombardia.htm&pr=MI&cc=F205) |
 | Proroga delle aliquote | | [art. 1 co. 169 L. 296/2006](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2006-12-27;296) |
 | TFR | RAL diviso 13,5 | [art. 2120 codice civile](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:regio.decreto:1942-03-16;262) |
 

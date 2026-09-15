@@ -254,7 +254,7 @@
     summary.textContent = 'Anno d\'imposta ' + engine.taxYear + '. ' +
       Object.keys(engine.sources).length + ' fonti citate, di cui ' +
       Object.keys(engine.local.municipalities).length + ' comuni e ' +
-      Object.keys(engine.local.regions).length + ' regioni. ' +
+      Object.keys(engine.local.regions).length + ' giurisdizioni regionali e provinciali. ' +
       'Ogni valore che il calcolatore usa compare in questa pagina.';
 
     ORDINE.forEach(function (chiave) {
